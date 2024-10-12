@@ -1,5 +1,7 @@
 # Zen Browser
 
+Originally from [MarceColl/zen-browser-flake](https://github.com/MarceColl/zen-browser-flake) deleted and re-made repo for discoverability as "GitHub does not like to show forks in the search".
+
 This is a flake for the Zen browser.
 
 Just add it to your NixOS `flake.nix` or home-manager:

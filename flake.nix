@@ -62,6 +62,7 @@
         ffmpeg
         libglvnd
         pipewire
+        speechd
       ]
       ++ (with pkgs.xorg; [
         libxcb

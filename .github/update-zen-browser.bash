@@ -3,6 +3,10 @@
 script_dir="$(dirname -- "$0")"
 
 upstream=$("$script_dir/new-version.sh" | cat -)
+if [ "$upstream" == "null" ]; then
+    echo "Unable to determine new upstream version"
+    return 1
+fi
 
 echo "Updating to $upstream"
 

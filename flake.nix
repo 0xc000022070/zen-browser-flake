@@ -10,13 +10,13 @@
     nixpkgs,
   }: let
     system = "x86_64-linux";
-    version = "1.0.1-a.9";
+    version = "1.0.1-a.10";
     downloadUrl = {
       specific.url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-specific.tar.bz2";
-      specific.sha256 = "1f4ym15gmwwxmgpwsl09a2rq1cwgybn0f715pj2icn2kmliasdkn";
+      specific.sha256 = "1iwqfz9hmkmg0b57w8928hfmav1lyxq29dfp0q029m2cb40ypmk4";
 
       generic.url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-generic.tar.bz2";
-      generic.sha256 = "0jrxs09mbv7as4nk96nx1n8isas5r4nxysxp61l0fvsqywqsj970";
+      generic.sha256 = "1sj9cmqzvi595273mixqd8zbx8xhjgzzbbklk0082x0xm4b7fshl";
     };
 
     pkgs = import nixpkgs {

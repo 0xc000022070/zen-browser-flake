@@ -2,6 +2,26 @@
 
 script_dir="$(dirname -- "$0")"
 
+upstream="null"
+
+max_attempts=10
+attempts=1
+
+while [ "$upstream" == "null" ]; do
+    upstream=$("$script_dir/new-version.sh")
+
+    if [ "$upstream" != "null" ]; then
+        break
+    elif [ $attempts -ge $max_attempts ]; then
+        echo "Unable to determine new upstream version"
+        exit 1
+    fi
+
+    echo "[attempt #${attempts}] Unable to determine new upstream version, retrying in 5 seconds..."
+    attempts=$((attempts + 1))
+    sleep 5
+done
+
 upstream=$("$script_dir/new-version.sh" | cat -)
 if [ "$upstream" == "null" ]; then
     echo "Unable to determine new upstream version"

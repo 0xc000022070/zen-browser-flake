@@ -9,6 +9,7 @@ local=$(grep -oP 'version = "\K[^"]+' flake.nix)
 
 if [ "$upstream" != "$local" ]; then
     echo "new_version=true" >>"$GITHUB_OUTPUT"
+    echo "upstream=$upstream" >>"$GITHUB_OUTPUT"
 fi
 
 echo "$upstream"

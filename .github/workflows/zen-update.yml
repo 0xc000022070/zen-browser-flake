@@ -37,5 +37,5 @@ jobs:
         if: steps.new-version.outputs.new_version == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "GitHub Action automated Zen update"
+          commit_message: "Update Zen Browser to v${{ steps.new-version.outputs.upstream }}"
           file_pattern: "*"

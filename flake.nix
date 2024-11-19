@@ -2,7 +2,7 @@
   description = "Zen Browser";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
 
   outputs = {
@@ -77,7 +77,7 @@
     mkZen = {variant}: let
       downloadData = downloadUrl."${variant}";
     in
-      pkgs.stdenvNoCC.mkDerivation {
+      pkgs.stdenv.mkDerivation {
         inherit version;
         pname = "zen-browser";
 
@@ -93,47 +93,37 @@
         nativeBuildInputs = [pkgs.makeWrapper pkgs.copyDesktopItems pkgs.wrapGAppsHook];
 
         installPhase = ''
-          runHook preInstall
+          mkdir -p $out/{bin,opt/zen} && cp -r $src/* $out/opt/zen
+          ln -s $out/opt/zen/zen $out/bin/zen
 
-          mkdir -p "$out/bin"
-          mkdir -p "$out/opt/zen"
-          cp -r $src/* "$out/opt/zen/"
-          ln -sf "$out/opt/zen/zen" "$out/bin/zen"
+          install -D $desktopSrc/zen.desktop $out/share/applications/zen.desktop
 
-          install -D "$desktopSrc/zen.desktop" "$out/share/applications/zen.desktop"
-
-          for size in 16 32 48 64 128; do
-            install -D "$src/browser/chrome/icons/default/default''${size}.png" "$out/share/icons/hicolor/''${size}x''${size}/apps/zen.png"
-          done
-
-          runHook postInstall
+          install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen.png
+          install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen.png
+          install -D $src/browser/chrome/icons/default/default48.png $out/share/icons/hicolor/48x48/apps/zen.png
+          install -D $src/browser/chrome/icons/default/default64.png $out/share/icons/hicolor/64x64/apps/zen.png
+          install -D $src/browser/chrome/icons/default/default128.png $out/share/icons/hicolor/128x128/apps/zen.png
         '';
 
         fixupPhase = ''
-          runHook preFixup
+          chmod 755 $out/bin/zen $out/opt/zen/*
 
-          chmod 755 "$out/bin/zen" $out/opt/zen/*
+          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/opt/zen/zen
+          wrapProgram $out/opt/zen/zen --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath runtimeLibs}" \
+                               --set MOZ_LEGACY_PROFILES 1 --set MOZ_ALLOW_DOWNGRADE 1 --set MOZ_APP_LAUNCHER zen --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
 
-          INTERPRETER="${pkgs.stdenv.cc.bintools.dynamicLinker}"
-          LIBS="${pkgs.lib.makeLibraryPath runtimeLibs}"
+          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/opt/zen/zen-bin
+               wrapProgram $out/opt/zen/zen-bin --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath runtimeLibs}" \
+                               --set MOZ_LEGACY_PROFILES 1 --set MOZ_ALLOW_DOWNGRADE 1 --set MOZ_APP_LAUNCHER zen --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
 
-          for bin in zen zen-bin glxtest updater vaapitest; do
-            patchelf --set-interpreter "$INTERPRETER" "$out/opt/zen/$bin"
+          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/opt/zen/glxtest
+               wrapProgram $out/opt/zen/glxtest --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath runtimeLibs}"
 
-            if [[ "$bin" == "zen" || "$bin" == "zen-bin" ]]; then
-              wrapProgram "$out/opt/zen/$bin" \
-                --set LD_LIBRARY_PATH "$LIBS" \
-                --set MOZ_LEGACY_PROFILES 1 \
-                --set MOZ_ALLOW_DOWNGRADE 1 \
-                --set MOZ_APP_LAUNCHER zen \
-                --prefix XDG_DATA_DIRS : \"$GSETTINGS_SCHEMAS_PATH\"
-            else
-              wrapProgram "$out/opt/zen/$bin" \
-                --set LD_LIBRARY_PATH "$LIBS"
-            fi
-          done
+          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/opt/zen/updater
+               wrapProgram $out/opt/zen/updater --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath runtimeLibs}"
 
-          runHook postFixup
+          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/opt/zen/vaapitest
+               wrapProgram $out/opt/zen/vaapitest --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath runtimeLibs}"
         '';
 
         meta.mainProgram = "zen";

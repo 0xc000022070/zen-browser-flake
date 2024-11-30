@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Fetching upstream version from GitHub API..." >&2
-upstream_data=$(curl -vs https://api.github.com/repos/zen-browser/desktop/releases/latest)
+upstream_data=$(curl -s https://api.github.com/repos/zen-browser/desktop/releases/latest)
 echo "Upstream data: $upstream_data" >&2
 
 upstream=$(echo "$upstream_data" | jq -r '.tag_name')

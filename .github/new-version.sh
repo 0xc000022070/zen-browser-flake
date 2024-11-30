@@ -5,7 +5,10 @@ upstream_data=$(curl -s https://api.github.com/repos/zen-browser/desktop/release
 echo "Upstream data: $upstream_data" >&2
 
 upstream=$(echo "$upstream_data" | jq -r '.tag_name')
+echo "Upstream version is: $upstream" >&2
+
 local=$(grep -oP 'version = "\K[^"]+' flake.nix)
+echo "Current version (local) is: $local" >&2
 
 if [ "$upstream" != "$local" ]; then
     echo "new_version=true" >>"$GITHUB_OUTPUT"

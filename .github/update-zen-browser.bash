@@ -35,13 +35,9 @@ base_url="https://github.com/zen-browser/desktop/releases/download/$upstream"
 # Modify with sed the nix file
 sed -i "s/version = \".*\"/version = \"$upstream\"/" ./flake.nix
 
-# Update the hash specific.sha256
-specific=$(nix-prefetch-url --type sha256 --unpack "$base_url/zen.linux-specific.tar.bz2")
-sed -i "s/specific.sha256 = \".*\"/specific.sha256 = \"$specific\"/" ./flake.nix
-
-# Update the hash generic.sha256
-generic=$(nix-prefetch-url --type sha256 --unpack "$base_url/zen.linux-generic.tar.bz2")
-sed -i "s/generic.sha256 = \".*\"/generic.sha256 = \"$generic\"/" ./flake.nix
+# Update the hash sha256
+hash=$(nix-prefetch-url --type sha256 --unpack "$base_url/zen.linux-x86_64.tar.bz2")
+sed -i "s/downloadUrl.sha256 = \".*\"/downloadUrl.sha256 = \"$hash\"/" ./flake.nix
 
 nix flake update
 nix build

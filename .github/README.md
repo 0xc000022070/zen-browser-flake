@@ -18,7 +18,7 @@ inputs = {
 To integrate `Zen Browser` to your nixos configuration, add the following to your `environment.systemPackages` in `configuration.nix`:
 
 ```nix
-inputs.zen-browser.packages."${system}"
+inputs.zen-browser.packages."${system}".default
 ```
 
 Afterwards you can just build your configuration and start the `Zen Browser`

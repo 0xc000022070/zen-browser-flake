@@ -31,7 +31,7 @@ try_to_update() {
         jq ".[\"$name\"][\"$arch-linux\"] = {\"name\":\"$name\",\"version\":\"$version\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
         mv sources.json.tmp sources.json
 
-        echo "$name was updated to $version"
+        echo "$name was updated to $version" # missing nix build!
     fi
 }
 

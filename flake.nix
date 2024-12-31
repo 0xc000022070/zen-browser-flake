@@ -109,6 +109,7 @@
           mkdir -p $out/{bin,opt/zen,lib/zen-${version}/distribution} && cp -r $src/* $out/opt/zen
           ln -s $out/opt/zen/zen $out/bin/zen
           ln -s ${policiesJson} "$out/lib/zen-${version}/distribution/policies.json"
+          ln -s $out/bin/zen $out/bin/zen-${name}
 
           install -D $desktopSrc/zen-${name}.desktop $out/share/applications/zen.desktop
 

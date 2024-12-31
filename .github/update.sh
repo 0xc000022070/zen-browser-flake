@@ -42,7 +42,7 @@ try_to_update() {
     if [ "$local_sha1" = "$remote_sha1" ]; then
         echo "Local $name version is up to date"
     else
-        echo "Local $name version is outdated"
+        echo "Local $name version mismatch with remote so we* assume it's outdated"
 
         if $only_check; then
             echo "should_update=true" >>"$GITHUB_OUTPUT"

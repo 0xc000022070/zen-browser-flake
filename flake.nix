@@ -16,6 +16,7 @@
 
     # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.5/zen.linux-x86_64.tar.bz2
     beta = {
+      name = "beta";
       url = prepareUrl beta_version "x86_64";
       sha256 = beta_hash;
       version = beta_version;
@@ -23,6 +24,7 @@
 
     # https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-x86_64.tar.bz2
     twilight = {
+      name = "twilight";
       url = prepareUrl "twilight" "x86_64";
       sha256 = "0j5dy58kammrz56j3id149k3kdnc0b2y7h03yq6l1n2fpklxq2kc";
       version = "twilight";
@@ -31,6 +33,7 @@
     pkgs = import nixpkgs {inherit system;};
 
     mkZen = {
+      name,
       url,
       sha256,
       version,
@@ -109,7 +112,7 @@
           ln -s $out/opt/zen/zen $out/bin/zen
           ln -s ${policiesJson} "$out/lib/zen-${version}/distribution/policies.json"
 
-          install -D $desktopSrc/zen.desktop $out/share/applications/zen.desktop
+          install -D $desktopSrc/zen-${name}.desktop $out/share/applications/zen.desktop
 
           install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen.png
           install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen.png

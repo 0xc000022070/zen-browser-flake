@@ -13,6 +13,13 @@ fi
 repo_tags=$(curl 'https://api.github.com/repos/zen-browser/desktop/tags' -s)
 
 twilight_tag=$(echo "$repo_tags" | jq -r '.[]|select(.name|test("twilight"))')
+
+twilight_version_name=$(curl 'https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight' -s | jq -r '.name' | grep -oE '([0-9\.])+-t.[0-9]+')
+if [ "$twilight_version_name" = "" ]; then
+    echo "No twilight version could be extracted..."
+    exit 1
+fi
+
 beta_tag=$(echo "$repo_tags" | jq -r '(map(select(.name | test("-b.")))) | first')
 
 commit_beta_targets=""
@@ -48,7 +55,12 @@ try_to_update() {
         prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
         sha256=$(echo "$prefetch_output" | jq -r '.hash')
 
-        jq ".[\"$name\"][\"$arch-linux\"] = {\"name\":\"$name\",\"version\":\"$version\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+        semver=$version
+        if [ "$name" = "twilight" ]; then
+            semver="$twilight_version_name"
+        fi
+
+        jq ".[\"$name\"][\"$arch-linux\"] = {\"name\":\"$name\",\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
         mv sources.json.tmp sources.json
 
         echo "$name was updated to $version" # missing nix build!
@@ -69,7 +81,7 @@ try_to_update() {
         if [ "$name" = "twilight" ]; then
             if [ "$commit_twilight_targets" = "" ]; then
                 commit_twilight_targets="$arch"
-                commit_twilight_version="latest"
+                commit_twilight_version="$twilight_version_name"
             else
                 commit_twilight_targets="$commit_twilight_targets && $arch"
             fi

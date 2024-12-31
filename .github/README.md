@@ -15,16 +15,21 @@ inputs = {
 
 ## Integration
 
-To integrate `Zen Browser` to your nixos configuration, add the following to your `environment.systemPackages` in `configuration.nix`:
+To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the following to your `environment.systemPackages` or `home.packages` respectively:
 
 ```nix
-inputs.zen-browser.packages."${system}".default
+# For now only 'x86_64-linux' is supported
+inputs.zen-browser.packages."${system}".default # beta
+inputs.zen-browser.packages."${system}".beta
+inputs.zen-browser.packages."${system}".twilight
 ```
+
+_With the end of the year just a few days away, **only the beta version is automatically updated**._
 
 Afterwards you can just build your configuration and start the `Zen Browser`
 
 ```shell
-$ sudo nixos-rebuild switch
+$ sudo nixos-rebuild switch # or home-manager switch
 $ zen
 ```
 

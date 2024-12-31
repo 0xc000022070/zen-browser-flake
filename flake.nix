@@ -21,6 +21,7 @@
       url,
       sha256,
       version,
+      ...
     }: let
       runtimeLibs = with pkgs;
         [

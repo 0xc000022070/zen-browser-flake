@@ -14,7 +14,6 @@
     beta_version = "1.0.2-b.5";
     beta_hash = "1xp0z86l7z661cwckgr623gwwjsy3h66900xqjq6dvgx5a3njbxi";
 
-    # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.5/zen.linux-x86_64.tar.bz2
     beta = {
       name = "beta";
       url = prepareUrl beta_version "x86_64";
@@ -22,7 +21,6 @@
       version = beta_version;
     };
 
-    # https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-x86_64.tar.bz2
     twilight = {
       name = "twilight";
       url = prepareUrl "twilight" "x86_64";

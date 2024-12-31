@@ -13,29 +13,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check new version
-        id: new-version
+      - name: Check if update is needed
+        id: check
         run: |
-          .github/new-version.sh
+          .github/update.sh --ci --only-check
 
       - name: Install Nix
-        if: steps.new-version.outputs.new_version == 'true'
+        if: steps.check.outputs.should_update == 'true'
         uses: cachix/install-nix-action@v27
         with:
           nix_path: nixpkgs=channel:nixpkgs-unstable
 
       - name: Setup Nix Magic Cache
-        if: steps.new-version.outputs.new_version == 'true'
+        if: steps.check.outputs.should_update == 'true'
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Update hashes and test build
-        if: steps.new-version.outputs.new_version == 'true'
+      - name: Update versions
+        id: update
+        if: steps.check.outputs.should_update == 'true'
         run: |
-          .github/update-zen-browser.bash
+          .github/update.sh --ci
 
       - name: Commit changes
-        if: steps.new-version.outputs.new_version == 'true'
+        if: steps.check.outputs.should_update == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Update Zen Browser to v${{ steps.new-version.outputs.upstream }}"
+          commit_message: "${{ steps.update.outputs.commit_message }}"
           file_pattern: "*"

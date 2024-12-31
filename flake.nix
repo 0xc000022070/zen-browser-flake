@@ -1,41 +1,16 @@
 {
   description = "Zen Browser";
 
-  inputs = {nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";};
+  inputs.nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
 
   outputs = {
     self,
     nixpkgs,
   }: let
-    system = "x86_64-linux";
+    mkZen = name: system: let
+      pkgs = import nixpkgs {inherit system;};
+      variant = (builtins.fromJSON (builtins.readFile ./sources.json)).${name}.${system};
 
-    prepareUrl = version: arch: "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-${arch}.tar.bz2";
-
-    beta_version = "1.0.2-b.5";
-    beta_hash = "1xp0z86l7z661cwckgr623gwwjsy3h66900xqjq6dvgx5a3njbxi";
-
-    beta = {
-      name = "beta";
-      url = prepareUrl beta_version "x86_64";
-      sha256 = beta_hash;
-      version = beta_version;
-    };
-
-    twilight = {
-      name = "twilight";
-      url = prepareUrl "twilight" "x86_64";
-      sha256 = "0yhlkyj87fylmjr8zfqv73ljx99wry8j07r19bl88078pll4ifn2";
-      version = "twilight";
-    };
-
-    pkgs = import nixpkgs {inherit system;};
-
-    mkZen = {
-      name,
-      url,
-      sha256,
-      version,
-    }: let
       runtimeLibs = with pkgs;
         [
           libGL
@@ -95,10 +70,10 @@
       });
     in
       pkgs.stdenv.mkDerivation {
-        inherit version;
+        inherit (variant) version;
         pname = "zen-browser";
 
-        src = builtins.fetchTarball {inherit url sha256;};
+        src = builtins.fetchTarball {inherit (variant) url sha256;};
         desktopSrc = ./.;
 
         phases = ["installPhase" "fixupPhase"];
@@ -106,12 +81,12 @@
         nativeBuildInputs = [pkgs.makeWrapper pkgs.copyDesktopItems pkgs.wrapGAppsHook];
 
         installPhase = ''
-          mkdir -p $out/{bin,opt/zen,lib/zen-${version}/distribution} && cp -r $src/* $out/opt/zen
+          mkdir -p $out/{bin,opt/zen,lib/zen-${variant.version}/distribution} && cp -r $src/* $out/opt/zen
           ln -s $out/opt/zen/zen $out/bin/zen
-          ln -s ${policiesJson} "$out/lib/zen-${version}/distribution/policies.json"
-          ln -s $out/bin/zen $out/bin/zen-${name}
+          ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"
+          ln -s $out/bin/zen $out/bin/zen-${variant.name}
 
-          install -D $desktopSrc/zen-${name}.desktop $out/share/applications/zen.desktop
+          install -D $desktopSrc/zen-${variant.name}.desktop $out/share/applications/zen.desktop
 
           install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen.png
           install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen.png
@@ -153,11 +128,18 @@
 
         meta.mainProgram = "zen";
       };
+
+    supportedSystems = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
+
+    forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
   in {
-    packages."${system}" = {
-      default = mkZen beta;
-      beta = mkZen beta;
-      twilight = mkZen twilight;
-    };
+    packages = forAllSystems (system: {
+      default = mkZen "beta" system;
+      beta = mkZen "beta" system;
+      twilight = mkZen "twilight" system;
+    });
   };
 }

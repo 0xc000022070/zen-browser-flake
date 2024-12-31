@@ -60,7 +60,7 @@ try_to_update() {
             semver="$twilight_version_name"
         fi
 
-        jq ".[\"$name\"][\"$arch-linux\"] = {\"name\":\"$name\",\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+        jq ".[\"$name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
         mv sources.json.tmp sources.json
 
         echo "$name was updated to $version" # missing nix build!

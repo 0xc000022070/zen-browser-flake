@@ -84,9 +84,9 @@
           mkdir -p $out/{bin,opt/zen,lib/zen-${variant.version}/distribution} && cp -r $src/* $out/opt/zen
           ln -s $out/opt/zen/zen $out/bin/zen
           ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"
-          ln -s $out/bin/zen $out/bin/zen-${variant.name}
+          ln -s $out/bin/zen $out/bin/zen-${name}
 
-          install -D $desktopSrc/zen-${variant.name}.desktop $out/share/applications/zen-${variant.name}.desktop
+          install -D $desktopSrc/zen-${name}.desktop $out/share/applications/zen-${name}.desktop
 
           install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen.png
           install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen.png

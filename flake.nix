@@ -24,7 +24,7 @@
     twilight = {
       name = "twilight";
       url = prepareUrl "twilight" "x86_64";
-      sha256 = "0j5dy58kammrz56j3id149k3kdnc0b2y7h03yq6l1n2fpklxq2kc";
+      sha256 = "0yhlkyj87fylmjr8zfqv73ljx99wry8j07r19bl88078pll4ifn2";
       version = "twilight";
     };
 

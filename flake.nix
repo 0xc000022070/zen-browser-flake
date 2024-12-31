@@ -1,7 +1,7 @@
 {
   description = "Zen Browser";
 
-  inputs = {nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";};
+  inputs.nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
 
   outputs = {
     self,
@@ -9,24 +9,10 @@
   }: let
     system = "x86_64-linux";
 
-    prepareUrl = version: arch: "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-${arch}.tar.bz2";
-
-    beta_version = "1.0.2-b.5";
-    beta_hash = "1xp0z86l7z661cwckgr623gwwjsy3h66900xqjq6dvgx5a3njbxi";
-
-    beta = {
-      name = "beta";
-      url = prepareUrl beta_version "x86_64";
-      sha256 = beta_hash;
-      version = beta_version;
-    };
-
-    twilight = {
-      name = "twilight";
-      url = prepareUrl "twilight" "x86_64";
-      sha256 = "0yhlkyj87fylmjr8zfqv73ljx99wry8j07r19bl88078pll4ifn2";
-      version = "twilight";
-    };
+    getSource = let
+      sources = builtins.fromJSON (builtins.readFile ./sources.json);
+    in
+      name: sources.${name}.${system};
 
     pkgs = import nixpkgs {inherit system;};
 
@@ -155,9 +141,9 @@
       };
   in {
     packages."${system}" = {
-      default = mkZen beta;
-      beta = mkZen beta;
-      twilight = mkZen twilight;
+      default = mkZen (getSource "beta");
+      beta = mkZen (getSource "beta");
+      twilight = mkZen (getSource "twilight");
     };
   };
 }

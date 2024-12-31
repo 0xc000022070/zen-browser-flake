@@ -7,7 +7,7 @@ This is a flake for the Zen browser.
 ## Features
 
 - Linux support
-- Available for x86_64
+- Available for x86_64 and aarch64
 - Automatic updated Flake via GitHub Actions
 - Both **twilight** and **beta** versions are distributed
 - Integrated browser update checks are disabled

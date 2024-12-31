@@ -126,7 +126,14 @@
           }"
         '';
 
-        meta.mainProgram = "zen";
+        meta = {
+          description = "Experience tranquillity while browsing the web without people tracking you!";
+          homepage = "https://zen-browser.app";
+          downloadPage = "https://zen-browser.app/download/";
+          changelog = "https://github.com/zen-browser/desktop/releases";
+          platforms = pkgs.lib.platforms.linux;
+          mainProgram = "zen";
+        };
       };
 
     supportedSystems = [

@@ -37,7 +37,7 @@ sed -i "s/beta_version = \".*\"/beta_version = \"$upstream\"/" ./flake.nix
 
 # Update the hash sha256
 hash=$(nix-prefetch-url --type sha256 --unpack "$base_url/zen.linux-x86_64.tar.bz2")
-sed -i "s/downloadUrl.sha256 = \".*\"/downloadUrl.sha256 = \"$hash\"/" ./flake.nix
+sed -i "s/beta_hash = \".*\"/beta_hash = \"$hash\"/" ./flake.nix
 
 nix flake update
 nix build .#beta

@@ -84,6 +84,13 @@
           libXfixes
           libXScrnSaver
         ]);
+
+      policiesJson = pkgs.writeText "firefox-policies.json" (builtins.toJSON {
+        # https://mozilla.github.io/policy-templates/#disableappupdates
+        policies = {
+          DisableAppUpdate = true;
+        };
+      });
     in
       pkgs.stdenv.mkDerivation {
         inherit version;
@@ -97,8 +104,9 @@
         nativeBuildInputs = [pkgs.makeWrapper pkgs.copyDesktopItems pkgs.wrapGAppsHook];
 
         installPhase = ''
-          mkdir -p $out/{bin,opt/zen} && cp -r $src/* $out/opt/zen
+          mkdir -p $out/{bin,opt/zen,lib/zen-${version}/distribution} && cp -r $src/* $out/opt/zen
           ln -s $out/opt/zen/zen $out/bin/zen
+          ln -s ${policiesJson} "$out/lib/zen-${version}/distribution/policies.json"
 
           install -D $desktopSrc/zen.desktop $out/share/applications/zen.desktop
 

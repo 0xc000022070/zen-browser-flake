@@ -8,75 +8,88 @@
     nixpkgs,
   }: let
     system = "x86_64-linux";
-    version = "1.0.2-b.5";
-    downloadUrl.url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-x86_64.tar.bz2";
-    downloadUrl.sha256 = "1xp0z86l7z661cwckgr623gwwjsy3h66900xqjq6dvgx5a3njbxi";
+
+    prepareUrl = version: arch: "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-${arch}.tar.bz2";
+
+    beta_version = "1.0.2-b.5";
+
+    # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.5/zen.linux-x86_64.tar.bz2
+    beta = {
+      url = prepareUrl beta_version "x86_64";
+      sha256 = "1xp0z86l7z661cwckgr623gwwjsy3h66900xqjq6dvgx5a3njbxi";
+      version = beta_version;
+    };
+
+    # https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-x86_64.tar.bz2
+    twilight = {
+      url = prepareUrl "twilight" "x86_64";
+      sha256 = "0j5dy58kammrz56j3id149k3kdnc0b2y7h03yq6l1n2fpklxq2kc";
+      version = "twilight";
+    };
 
     pkgs = import nixpkgs {inherit system;};
 
-    runtimeLibs = with pkgs;
-      [
-        libGL
-        libGLU
-        libevent
-        libffi
-        libjpeg
-        libpng
-        libstartup_notification
-        libvpx
-        libwebp
-        stdenv.cc.cc
-        fontconfig
-        libxkbcommon
-        zlib
-        freetype
-        gtk3
-        libxml2
-        dbus
-        xcb-util-cursor
-        alsa-lib
-        libpulseaudio
-        pango
-        atk
-        cairo
-        gdk-pixbuf
-        glib
-        udev
-        libva
-        mesa
-        libnotify
-        cups
-        pciutils
-        ffmpeg
-        libglvnd
-        pipewire
-        speechd
-      ]
-      ++ (with pkgs.xorg; [
-        libxcb
-        libX11
-        libXcursor
-        libXrandr
-        libXi
-        libXext
-        libXcomposite
-        libXdamage
-        libXfixes
-        libXScrnSaver
-      ]);
-
-    mkZen = {}: let
-      downloadData = downloadUrl;
+    mkZen = {
+      url,
+      sha256,
+      version,
+    }: let
+      runtimeLibs = with pkgs;
+        [
+          libGL
+          libGLU
+          libevent
+          libffi
+          libjpeg
+          libpng
+          libstartup_notification
+          libvpx
+          libwebp
+          stdenv.cc.cc
+          fontconfig
+          libxkbcommon
+          zlib
+          freetype
+          gtk3
+          libxml2
+          dbus
+          xcb-util-cursor
+          alsa-lib
+          libpulseaudio
+          pango
+          atk
+          cairo
+          gdk-pixbuf
+          glib
+          udev
+          libva
+          mesa
+          libnotify
+          cups
+          pciutils
+          ffmpeg
+          libglvnd
+          pipewire
+          speechd
+        ]
+        ++ (with pkgs.xorg; [
+          libxcb
+          libX11
+          libXcursor
+          libXrandr
+          libXi
+          libXext
+          libXcomposite
+          libXdamage
+          libXfixes
+          libXScrnSaver
+        ]);
     in
       pkgs.stdenv.mkDerivation {
         inherit version;
         pname = "zen-browser";
 
-        src = builtins.fetchTarball {
-          url = downloadData.url;
-          sha256 = downloadData.sha256;
-        };
-
+        src = builtins.fetchTarball {inherit url sha256;};
         desktopSrc = ./.;
 
         phases = ["installPhase" "fixupPhase"];
@@ -130,6 +143,10 @@
         meta.mainProgram = "zen";
       };
   in {
-    packages."${system}".default = mkZen {};
+    packages."${system}" = {
+      default = mkZen beta;
+      beta = mkZen beta;
+      twilight = mkZen twilight;
+    };
   };
 }

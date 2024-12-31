@@ -45,7 +45,7 @@ try_to_update() {
         version=$(echo "$target_tag_meta" | jq -r '.name')
         download_url="https://github.com/zen-browser/desktop/releases/download/$version/zen.linux-$arch.tar.bz2"
 
-        prefetch_output=$(nix store prefetch-file --hash-type sha256 --json "$download_url")
+        prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
         sha256=$(echo "$prefetch_output" | jq -r '.hash')
 
         jq ".[\"$name\"][\"$arch-linux\"] = {\"name\":\"$name\",\"version\":\"$version\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp

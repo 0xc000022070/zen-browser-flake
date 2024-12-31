@@ -68,6 +68,11 @@
           DisableAppUpdate = true;
         };
       });
+
+      desktopFile =
+        if name == "beta"
+        then "zen.desktop"
+        else "zen-${name}.desktop";
     in
       pkgs.stdenv.mkDerivation {
         inherit (variant) version;
@@ -86,7 +91,7 @@
           ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"
           ln -s $out/bin/zen $out/bin/zen-${name}
 
-          install -D $desktopSrc/zen-${name}.desktop $out/share/applications/zen-${name}.desktop
+          install -D $desktopSrc/zen-${name}.desktop $out/share/applications/${desktopFile}
 
           install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen.png
           install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen.png
@@ -127,6 +132,8 @@
         '';
 
         meta = {
+          inherit desktopFile;
+
           description = "Experience tranquillity while browsing the web without people tracking you!";
           homepage = "https://zen-browser.app";
           downloadPage = "https://zen-browser.app/download/";

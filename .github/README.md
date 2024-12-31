@@ -4,6 +4,16 @@ Originally from [MarceColl/zen-browser-flake](https://github.com/MarceColl/zen-b
 
 This is a flake for the Zen browser.
 
+## Features
+
+- Linux support
+- Available for x86_64
+- Automatic updated Flake via GitHub Actions
+- Both **twilight** and **beta** versions are distributed
+- Integrated browser update checks are disabled
+
+## Installation
+
 Just add it to your NixOS `flake.nix` or home-manager:
 
 ```nix
@@ -13,7 +23,7 @@ inputs = {
 }
 ```
 
-## Integration
+### Integration
 
 To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the following to your `environment.systemPackages` or `home.packages` respectively:
 

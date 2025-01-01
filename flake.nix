@@ -72,7 +72,7 @@
       desktopFile =
         if name == "beta"
         then "zen.desktop"
-        else "zen-${name}.desktop";
+        else "zen_${name}.desktop";
     in
       pkgs.stdenv.mkDerivation {
         inherit (variant) version;

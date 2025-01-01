@@ -44,3 +44,9 @@ $ zen
 ## 1Password
 
 Zen has to be manually added to the list of browsers that 1Password will communicate with. See [this wiki article](https://wiki.nixos.org/wiki/1Password) for more information. To enable 1Password integration, you need to add the line `.zen-wrapped` to the file `/etc/1password/custom_allowed_browsers`.
+
+## LICENSE
+
+This project is licensed under the [MIT License](./LICENSE).
+
+You are free to use, modify, and distribute this software, provided that the original copyright and permission notice are retained. For more details, refer to the full [license text](./LICENSE).

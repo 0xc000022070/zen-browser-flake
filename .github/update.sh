@@ -14,7 +14,7 @@ repo_tags=$(curl 'https://api.github.com/repos/zen-browser/desktop/tags' -s)
 
 twilight_tag=$(echo "$repo_tags" | jq -r '.[]|select(.name|test("twilight"))')
 
-twilight_version_name=$(curl 'https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight' -s | jq -r '.name' | grep -oE '([0-9\.])+-t.[0-9]+')
+twilight_version_name=$(curl 'https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight' -s | jq -r '.name' | grep -oE '([0-9\.])+(t|-t.[0-9]+)')
 if [ "$twilight_version_name" = "" ]; then
     echo "No twilight version could be extracted..."
     exit 1

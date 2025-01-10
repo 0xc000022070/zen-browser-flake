@@ -20,7 +20,7 @@ if [ "$twilight_version_name" = "" ]; then
     exit 1
 fi
 
-beta_tag=$(echo "$repo_tags" | jq -r '(map(select(.name | test("-b.")))) | first')
+beta_tag=$(echo "$repo_tags" | jq -r '(map(select(.name | test("[0-9]+\\.[0-9]+b$")))) | first')
 
 commit_beta_targets=""
 commit_beta_version=""

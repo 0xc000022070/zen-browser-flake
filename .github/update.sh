@@ -81,7 +81,7 @@ try_to_update() {
         if [ "$name" = "twilight" ]; then
             if [ "$commit_twilight_targets" = "" ]; then
                 commit_twilight_targets="$arch"
-                commit_twilight_version="$twilight_version_name"
+                commit_twilight_version="$twilight_version_name#$(echo "$remote_sha1" | cut -c1-7)"
             else
                 commit_twilight_targets="$commit_twilight_targets && $arch"
             fi

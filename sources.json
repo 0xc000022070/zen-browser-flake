@@ -16,15 +16,15 @@
   "twilight": {
     "x86_64-linux": {
       "version": "1.7.2t",
-      "sha1": "c0eeab939b37864099e532ad505ea586dc29f1b5",
+      "sha1": "fa628277179cf23ff085174047b57abce0503c6b",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-x86_64.tar.bz2",
-      "sha256": "sha256-GV9ZqdT9PO+bFQQ853vBuS48Stb46HULS6nN3GEvWrk="
+      "sha256": "sha256-szgaN9HWXjY4/iV/+AvLWjm2Ru97n4W5yZCMnhanvgQ="
     },
     "aarch64-linux": {
       "version": "1.7.2t",
-      "sha1": "c0eeab939b37864099e532ad505ea586dc29f1b5",
+      "sha1": "fa628277179cf23ff085174047b57abce0503c6b",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-aarch64.tar.bz2",
-      "sha256": "sha256-iFOUzHd3r3kC2jNghNzz6+Q04+fkFOfC7PCuNgr80bw="
+      "sha256": "sha256-nHu0cW5RzwXrN03EWHd5nT6IZgq59e0cppM0LRYFT38="
     }
   }
 }

@@ -14,6 +14,11 @@ This is a flake for the Zen browser.
 
 ## Installation
 
+> [!CAUTION]
+> The **Twilight** version is not really that reproducible due the way how the official Zen browser repository is managing their releases, **a new release
+> replaces the previous one and so on**. When using this version you should compromise yourself to update the flake with `nix flake update zen-browser`. Or wait for a
+> contribution that mitigates that behavior in that specific version of the browser.
+
 Just add it to your NixOS `flake.nix` or home-manager:
 
 ```nix

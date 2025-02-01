@@ -26,7 +26,7 @@ jobs:
 
       - name: Setup Nix Magic Cache
         if: steps.check.outputs.should_update == 'true'
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Update versions
         id: update

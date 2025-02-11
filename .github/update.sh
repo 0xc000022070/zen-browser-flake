@@ -27,65 +27,124 @@ commit_beta_version=""
 commit_twilight_targets=""
 commit_twilight_version=""
 
+get_twilight_release_from_zen_repo() {
+    curl -sL \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight
+}
+
+download_artifact_from_zen_repo() {
+    artifact_id="$1"
+    # relative or absolute path, whatever
+    file_path="$2"
+
+    curl -L \
+        -H "Accept: application/octet-stream" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/zen-browser/desktop/releases/assets/$artifact_id" >"$file_path"
+}
+
 try_to_update() {
-    name=$1
+    # Options like "beta" or "twilight"
+    version_name=$1
+    # Options like "x86_64" or "aarch64"
     arch=$2
+    # JSON object with metadata about the specified version($1)
     target_tag_meta=$3
 
-    meta=$(jq ".[\"$name\"][\"$arch-linux\"]" <sources.json)
+    meta=$(jq ".[\"$version_name\"][\"$arch-linux\"]" <sources.json)
 
     local_sha1=$(echo "$meta" | jq -r '.sha1')
     remote_sha1=$(echo "$target_tag_meta" | jq -r '.commit.sha')
 
-    echo "Checking $name version @ $arch... local=$local_sha1 remote=$remote_sha1"
+    echo "Checking $version_name version @ $arch... local=$local_sha1 remote=$remote_sha1"
 
     if [ "$local_sha1" = "$remote_sha1" ]; then
-        echo "Local $name version is up to date"
-    else
-        echo "Local $name version mismatch with remote so we* assume it's outdated"
+        echo "Local $version_name version is up to date"
+        return
+    fi
 
-        if $only_check; then
-            echo "should_update=true" >>"$GITHUB_OUTPUT"
-            exit 0
+    echo "Local $version_name version mismatch with remote so we* assume it's outdated"
+
+    if $only_check; then
+        echo "should_update=true" >>"$GITHUB_OUTPUT"
+        exit 0
+    fi
+
+    version=$(echo "$target_tag_meta" | jq -r '.name')
+    download_url="https://github.com/zen-browser/desktop/releases/download/$version/zen.linux-$arch.tar.xz"
+
+    prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
+    sha256=$(echo "$prefetch_output" | jq -r '.hash')
+
+    semver=$version
+    if [ "$version_name" = "twilight" ]; then
+        semver="$twilight_version_name"
+
+        short_sha1="$(echo "$remote_sha1" | cut -c1-7)"
+
+        release_name="$version-$short_sha1"
+
+        flake_repo_location="0xc000022070/zen-browser-flake"
+
+        if ! gh release list | grep "$release_name" >/dev/null; then
+            echo "Creating $release_name release..."
+
+            # Users with push access to the repository can create a release.
+            gh release --repo="$flake_repo_location" \
+                create "$release_name" --notes "$version#$remote_sha1 (for resilient)"
+        else
+            echo "Release $release_name already exists, skipping creation..."
         fi
 
-        version=$(echo "$target_tag_meta" | jq -r '.name')
-        download_url="https://github.com/zen-browser/desktop/releases/download/$version/zen.linux-$arch.tar.xz"
+        get_twilight_release_from_zen_repo | jq -r '.assets[] | select(.name | contains("zen.linux")) | "\(.id) \(.name)"' |
+            while read -r line; do
+                artifact_id=$(echo "$line" | cut -d' ' -f1)
+                artifact_name=$(echo "$line" | cut -d' ' -f2)
 
-        prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
-        sha256=$(echo "$prefetch_output" | jq -r '.hash')
+                if gh release --repo="$flake_repo_location" view "$release_name" | grep "$artifact_name" >/dev/null; then
+                    echo "Artifact $artifact_name already exists in $release_name, skipping..."
 
-        semver=$version
-        if [ "$name" = "twilight" ]; then
-            semver="$twilight_version_name"
+                    continue
+                fi
+
+                download_artifact_from_zen_repo "$artifact_id" "/tmp/$artifact_name"
+
+                gh release --repo="$flake_repo_location" \
+                    upload "$release_name" "/tmp/$artifact_name"
+
+                resilient_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.linux-$arch.tar.xz"
+
+                jq ".[\"twilight-resilient\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$resilient_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                mv sources.json.tmp sources.json
+            done
+    fi
+
+    jq ".[\"$version_name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    mv sources.json.tmp sources.json
+
+    echo "$version_name was updated to $version"
+
+    if ! $ci; then
+        return
+    fi
+
+    if [ "$version_name" = "beta" ]; then
+        if [ "$commit_beta_targets" = "" ]; then
+            commit_beta_targets="$arch"
+            commit_beta_version="$version"
+        else
+            commit_beta_targets="$commit_beta_targets && $arch"
         fi
+    fi
 
-        jq ".[\"$name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
-        mv sources.json.tmp sources.json
-
-        echo "$name was updated to $version" # missing nix build!
-
-        if ! $ci; then
-            return
-        fi
-
-        if [ "$name" = "beta" ]; then
-            if [ "$commit_beta_targets" = "" ]; then
-                commit_beta_targets="$arch"
-                commit_beta_version="$version"
-            else
-                commit_beta_targets="$commit_beta_targets && $arch"
-            fi
-        fi
-
-        if [ "$name" = "twilight" ]; then
-            if [ "$commit_twilight_targets" = "" ]; then
-                commit_twilight_targets="$arch"
-                commit_twilight_version="$twilight_version_name#$(echo "$remote_sha1" | cut -c1-7)"
-            else
-                commit_twilight_targets="$commit_twilight_targets && $arch"
-            fi
-
+    if [ "$version_name" = "twilight" ]; then
+        if [ "$commit_twilight_targets" = "" ]; then
+            commit_twilight_targets="$arch"
+            commit_twilight_version="$twilight_version_name#$(echo "$remote_sha1" | cut -c1-7)"
+        else
+            commit_twilight_targets="$commit_twilight_targets && $arch"
         fi
 
     fi

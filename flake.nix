@@ -7,9 +7,9 @@
     self,
     nixpkgs,
   }: let
-    mkZen = name: system: let
+    mkZen = name: system: entry: let
       pkgs = import nixpkgs {inherit system;};
-      variant = (builtins.fromJSON (builtins.readFile ./sources.json)).${name}.${system};
+      variant = (builtins.fromJSON (builtins.readFile ./sources.json)).${entry}.${system};
 
       runtimeLibs = with pkgs;
         [
@@ -151,10 +151,10 @@
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
   in {
     packages = forAllSystems (system: {
-      default = mkZen "beta" system;
-      beta = mkZen "beta" system;
-      twilight = mkZen "twilight" system;
-      twilight-resilient = mkZen "twilight-resilient" system;
+      default = mkZen "beta" system "beta";
+      beta = mkZen "beta" system "beta";
+      twilight = mkZen "twilight" system "twilight";
+      twilight-resilient = mkZen "twilight" system "twilight-resilient";
     });
   };
 }

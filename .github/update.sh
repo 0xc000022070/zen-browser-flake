@@ -28,10 +28,13 @@ commit_twilight_targets=""
 commit_twilight_version=""
 
 get_twilight_release_from_zen_repo() {
+    arch=$1
+
     curl -sL \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight
+        https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight |
+        jq -r --arg arch "$arch" '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
 }
 
 download_artifact_from_zen_repo() {
@@ -98,25 +101,27 @@ try_to_update() {
             echo "Release $release_name already exists, skipping creation..."
         fi
 
-        get_twilight_release_from_zen_repo | jq -r '.assets[] | select(.name | contains("zen.linux")) | "\(.id) \(.name)"' |
+        get_twilight_release_from_zen_repo "$arch" |
             while read -r line; do
                 artifact_id=$(echo "$line" | cut -d' ' -f1)
                 artifact_name=$(echo "$line" | cut -d' ' -f2)
 
-                if gh release --repo="$flake_repo_location" view "$release_name" | grep "$artifact_name" >/dev/null; then
-                    echo "Artifact $artifact_name already exists in $release_name, skipping..."
+                self_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.linux-$arch.tar.xz"
 
-                    continue
+                if ! gh release --repo="$flake_repo_location" view "$release_name" | grep "$artifact_name" >/dev/null; then
+                    echo "[downloading] An artifact $artifact_name doesn't exists in $release_name"
+
+                    download_artifact_from_zen_repo "$artifact_id" "/tmp/$artifact_name"
+
+                    gh release --repo="$flake_repo_location" \
+                        upload "$release_name" "/tmp/$artifact_name"
+
+                    echo "[uploaded] The artifact is available @ following link: $self_download_url"
+                else
+                    echo "[skipping] An artifact $artifact_name already exists in $release_name @ following link: $self_download_url"
                 fi
 
-                download_artifact_from_zen_repo "$artifact_id" "/tmp/$artifact_name"
-
-                gh release --repo="$flake_repo_location" \
-                    upload "$release_name" "/tmp/$artifact_name"
-
-                resilient_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.linux-$arch.tar.xz"
-
-                jq ".[\"twilight-resilient\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$resilient_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                jq ".[\"twilight-resilient\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
                 mv sources.json.tmp sources.json
             done
     fi

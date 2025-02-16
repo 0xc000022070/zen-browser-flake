@@ -27,14 +27,6 @@
       "sha256": "sha256-FcXP9kyv4bz7GCoufsj6NjUd0Y+lhC14+YcAShDmsS8="
     }
   },
-  "twilight-resilient": {
-    "x86_64-linux": {
-      "version": "1.7.7t",
-      "sha1": "786a377ada2870194b6502e123e67ccb6a27a7a8",
-      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/twilight-786a377/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-FG4W43Sqd90rZe9Qc/zECRPyjvHlW1Vu9KViMsXCGvQ="
-    }
-  },
   "twilight-official": {
     "x86_64-linux": {
       "version": "1.7.7t",

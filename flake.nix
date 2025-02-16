@@ -154,7 +154,7 @@
       default = mkZen "beta" system "beta";
       beta = mkZen "beta" system "beta";
       twilight = mkZen "twilight" system "twilight";
-      twilight-resilient = mkZen "twilight" system "twilight-resilient";
+      twilight-official = mkZen "twilight" system "twilight-official";
     });
   };
 }

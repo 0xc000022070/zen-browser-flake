@@ -121,12 +121,12 @@ try_to_update() {
                     echo "[skipping] An artifact $artifact_name already exists in $release_name @ following link: $self_download_url"
                 fi
 
-                jq ".[\"twilight-resilient\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                jq ".[\"twilight\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
                 mv sources.json.tmp sources.json
             done
     fi
 
-    jq ".[\"$version_name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    jq ".[\"$version_name-official\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
     mv sources.json.tmp sources.json
 
     echo "$version_name was updated to $version"

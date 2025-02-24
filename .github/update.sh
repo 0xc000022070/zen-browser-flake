@@ -81,8 +81,11 @@ try_to_update() {
     prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
     sha256=$(echo "$prefetch_output" | jq -r '.hash')
 
+    entry_name="$version_name"
     semver=$version
+
     if [ "$version_name" = "twilight" ]; then
+        entry_name="twilight-official"
         semver="$twilight_version_name"
 
         short_sha1="$(echo "$remote_sha1" | cut -c1-7)"
@@ -126,7 +129,7 @@ try_to_update() {
             done
     fi
 
-    jq ".[\"$version_name-official\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    jq ".[\"$entry_name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
     mv sources.json.tmp sources.json
 
     echo "$version_name was updated to $version"

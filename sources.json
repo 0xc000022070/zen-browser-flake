@@ -1,16 +1,16 @@
 {
   "beta": {
     "x86_64-linux": {
-      "version": "1.8.2b",
-      "sha1": "dc1c166ac2d88d48c47bbc01b60e7a70413e71e0",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.8.2b/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-8dyY/Czhnmtw0EoBg0UCGTtlsDqdKW8UM1vcbPHVGlM="
+      "version": "1.9b",
+      "sha1": "ff339c3fb022ae34d0b739842db828b11a180a8c",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.9b/zen.linux-x86_64.tar.xz",
+      "sha256": "sha256-ddROEZ2UZVvsMxntka/ge5JZGmsKqeC3C5Vb/XDfr/g="
     },
     "aarch64-linux": {
-      "version": "1.8.2b",
-      "sha1": "dc1c166ac2d88d48c47bbc01b60e7a70413e71e0",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.8.2b/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-V7q5CeJiN2Tu5RfCHVdbB9XaRnvTAYR3NWmtmAVf7H8="
+      "version": "1.9b",
+      "sha1": "ff339c3fb022ae34d0b739842db828b11a180a8c",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.9b/zen.linux-aarch64.tar.xz",
+      "sha256": "sha256-iWhzRJm1LxY0gvxHH0aI5l0+kfE3PRPYoYNWkUMyujg="
     }
   },
   "twilight": {

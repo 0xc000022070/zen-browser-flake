@@ -17,6 +17,8 @@ jobs:
 
       - name: Check if update is needed
         id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           .github/update.sh --ci --only-check
 

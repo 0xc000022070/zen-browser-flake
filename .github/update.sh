@@ -10,36 +10,29 @@ if echo "$@" | grep -qoE '(--only-check)'; then
     only_check=true
 fi
 
-repo_tags=$(curl 'https://api.github.com/repos/zen-browser/desktop/tags' -s)
+remote_tags=$(curl 'https://api.github.com/repos/zen-browser/desktop/tags' -s)
 
-twilight_tag=$(echo "$repo_tags" | jq -r '.[]|select(.name|test("twilight"))')
+get_beta_tag_short_meta() {
+    echo "$remote_tags" | jq -r '(map(select(.name | test("[0-9]+\\.[0-9]+b$")))) | first'
+}
 
-twilight_version_name=$(curl 'https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight' -s | jq -r '.name' | grep -oE '([0-9\.])+(t|-t.[0-9]+)')
-if [ "$twilight_version_name" = "" ]; then
-    echo "No twilight version could be extracted..."
-    exit 1
-fi
+get_twilight_tag_full_meta() {
+    gh api repos/zen-browser/desktop/releases/tags/twilight
+}
 
-beta_tag=$(echo "$repo_tags" | jq -r '(map(select(.name | test("[0-9]+\\.[0-9]+b$")))) | first')
-
-commit_beta_targets=""
-commit_beta_version=""
-commit_twilight_targets=""
-commit_twilight_version=""
+twilight_tag=$(get_twilight_tag_full_meta)
+beta_tag=$(get_beta_tag_short_meta)
 
 get_twilight_release_from_zen_repo() {
     arch=$1
 
-    curl -sL \
-        -H "Accept: application/vnd.github+json" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/repos/zen-browser/desktop/releases/tags/twilight |
-        jq -r --arg arch "$arch" '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
+    echo "$twilight_tag" | jq -r --arg arch "$arch" \
+        '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
 }
 
 download_artifact_from_zen_repo() {
     artifact_id="$1"
-    # relative or absolute path, whatever
+    # relative or absolute path
     file_path="$2"
 
     curl -L \
@@ -48,18 +41,79 @@ download_artifact_from_zen_repo() {
         "https://api.github.com/repos/zen-browser/desktop/releases/assets/$artifact_id" >"$file_path"
 }
 
+get_twilight_version_name() {
+    echo "$twilight_tag" | jq -r '.name' | grep -oE '([0-9\.])+(t|-t.[0-9]+)'
+}
+
+resolve_full_sha1_from_zen_repo() {
+    short_sha1="$1"
+
+    curl -sL \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/zen-browser/desktop/commits/$short_sha1" |
+        jq -r '.sha'
+}
+
+resolve_version_remote_sha1() {
+    # twilight or beta
+    version="$1"
+
+    if [ "$version" = "twilight" ]; then
+        short_sha1=$(echo "$twilight_tag" | jq -r '.body' | grep -oE '^[-•] [0-9a-f]{7,}' | head -n 1 | awk '{print $2}')
+        resolve_full_sha1_from_zen_repo "$short_sha1"
+        return
+    fi
+
+    if [ "$version" = "beta" ]; then
+        echo "$beta_tag" | jq -r '.commit.sha'
+        return
+    fi
+
+    echo "bad version! (clue: $version)"
+    exit 1
+}
+
+twilight_version_name=$(get_twilight_version_name)
+if [ "$twilight_version_name" = "" ]; then
+    echo "No twilight version name could be extracted... (clue: $twilight_tag))"
+    exit 1
+fi
+
+resolve_semver() {
+    # twilight or beta
+    version="$1"
+
+    if [ "$version" = "twilight" ]; then
+        echo "$twilight_version_name"
+        return
+    fi
+
+    if [ "$version" = "beta" ]; then
+        echo "$beta_tag" | jq -r '.name'
+        return
+    fi
+
+    echo "bad version! (clue: $version)"
+    exit 1
+}
+
+commit_beta_targets=""
+commit_beta_version=""
+commit_twilight_targets=""
+commit_twilight_version=""
+
 try_to_update() {
-    # Options like "beta" or "twilight"
+    # twilight or beta
     version_name=$1
-    # Options like "x86_64" or "aarch64"
+    # "x86_64" or "aarch64"
     arch=$2
-    # JSON object with metadata about the specified version($1)
-    target_tag_meta=$3
 
     meta=$(jq ".[\"$version_name\"][\"$arch-linux\"]" <sources.json)
 
     local_sha1=$(echo "$meta" | jq -r '.sha1')
-    remote_sha1=$(echo "$target_tag_meta" | jq -r '.commit.sha')
+
+    remote_sha1=$(resolve_version_remote_sha1 "$version_name")
 
     echo "Checking $version_name version @ $arch... local=$local_sha1 remote=$remote_sha1"
 
@@ -75,14 +129,19 @@ try_to_update() {
         exit 0
     fi
 
-    version=$(echo "$target_tag_meta" | jq -r '.name')
-    download_url="https://github.com/zen-browser/desktop/releases/download/$version/zen.linux-$arch.tar.xz"
+    semver=$(resolve_semver "$version_name")
+
+    target_release_name="$semver"
+    if [ "$version_name" = "twilight" ]; then
+        target_release_name="twilight"
+    fi
+
+    download_url="https://github.com/zen-browser/desktop/releases/download/$target_release_name/zen.linux-$arch.tar.xz"
 
     prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
     sha256=$(echo "$prefetch_output" | jq -r '.hash')
 
     entry_name="$version_name"
-    semver=$version
 
     if [ "$version_name" = "twilight" ]; then
         entry_name="twilight-official"
@@ -99,7 +158,7 @@ try_to_update() {
 
             # Users with push access to the repository can create a release.
             gh release --repo="$flake_repo_location" \
-                create "$release_name" --notes "$version#$remote_sha1 (for resilient)"
+                create "$release_name" --notes "$semver#$remote_sha1 (for resilient)"
         else
             echo "Release $release_name already exists, skipping creation..."
         fi
@@ -132,7 +191,7 @@ try_to_update() {
     jq ".[\"$entry_name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
     mv sources.json.tmp sources.json
 
-    echo "$version_name was updated to $version"
+    echo "$version_name was updated to $semver"
 
     if ! $ci; then
         return
@@ -141,7 +200,7 @@ try_to_update() {
     if [ "$version_name" = "beta" ]; then
         if [ "$commit_beta_targets" = "" ]; then
             commit_beta_targets="$arch"
-            commit_beta_version="$version"
+            commit_beta_version="$semver"
         else
             commit_beta_targets="$commit_beta_targets && $arch"
         fi
@@ -160,10 +219,10 @@ try_to_update() {
 
 set -e
 
-try_to_update "beta" "x86_64" "$beta_tag"
-try_to_update "beta" "aarch64" "$beta_tag"
-try_to_update "twilight" "x86_64" "$twilight_tag"
-try_to_update "twilight" "aarch64" "$twilight_tag"
+try_to_update "beta" "x86_64"
+try_to_update "beta" "aarch64"
+try_to_update "twilight" "x86_64"
+try_to_update "twilight" "aarch64"
 
 if $only_check && $ci; then
     echo "should_update=false" >>"$GITHUB_OUTPUT"

@@ -149,7 +149,7 @@ try_to_update() {
 
         short_sha1="$(echo "$remote_sha1" | cut -c1-7)"
 
-        release_name="$version-$short_sha1"
+        release_name="$version_name-$short_sha1"
 
         flake_repo_location="0xc000022070/zen-browser-flake"
 

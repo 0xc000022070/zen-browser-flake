@@ -162,9 +162,8 @@ update_version() {
         entry_name="twilight-official"
         semver="$twilight_version_name"
 
-        # short_sha1="$(echo "$remote_sha1" | cut -c1-7)"
-
-        release_name="$version_name-$(date -d "$updated_at" +%s)"
+        updated_at_epoch="$(date -d "$updated_at" +%s)"
+        release_name="$version_name-$updated_at_epoch"
 
         flake_repo_location="0xc000022070/zen-browser-flake"
 
@@ -173,7 +172,7 @@ update_version() {
 
             # Users with push access to the repository can create a release.
             gh release --repo="$flake_repo_location" \
-                create "$release_name" --notes "$semver#$remote_sha1 (for resilient)"
+                create "$release_name" --notes "$semver#$updated_at_epoch (for resilient)"
         else
             echo "Release $release_name already exists, skipping creation..."
         fi
@@ -223,8 +222,11 @@ update_version() {
 
     if [ "$version_name" = "twilight" ]; then
         if [ "$commit_twilight_targets" = "" ]; then
+            updated_at="$remote"
+            updated_at_epoch="$(date -d "$updated_at" +%s)"
+
             commit_twilight_targets="$arch"
-            commit_twilight_version="$twilight_version_name#$(echo "$remote_sha1" | cut -c1-7)"
+            commit_twilight_version="$twilight_version_name#$updated_at_epoch"
         else
             commit_twilight_targets="$commit_twilight_targets && $arch"
         fi

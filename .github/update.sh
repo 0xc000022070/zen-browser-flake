@@ -17,6 +17,7 @@ get_beta_tag_short_meta() {
 }
 
 get_twilight_tag_full_meta() {
+    # Remove control characters
     gh api repos/zen-browser/desktop/releases/tags/twilight
 }
 
@@ -26,7 +27,7 @@ beta_tag=$(get_beta_tag_short_meta)
 get_twilight_release_artifact_meta_from_zen_repo() {
     arch=$1
 
-    echo "$twilight_tag" | jq -r --arg arch "$arch" \
+    echo "$twilight_tag" | tr -d '\000-\031' | jq -r --arg arch "$arch" \
         '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
 }
 
@@ -46,7 +47,7 @@ get_updated_at_of_twilight_artifact_from_zen_repo() {
 }
 
 get_twilight_version_name() {
-    echo "$twilight_tag" | jq -r '.name' | grep -oE '([0-9\.])+(t|-t.[0-9]+)'
+    echo "$twilight_tag" | tr -d '\000-\031' | jq -r '.name' | grep -oE '([0-9\.])+(t|-t.[0-9]+)'
 }
 
 resolve_full_sha1_from_zen_repo() {
@@ -64,7 +65,7 @@ resolve_version_remote_sha1() {
     version="$1"
 
     if [ "$version" = "twilight" ]; then
-        short_sha1=$(echo "$twilight_tag" | jq -r '.body' | grep -oE '^[-•] [0-9a-f]{7,}' | head -n 1 | awk '{print $2}')
+        short_sha1=$(echo "$twilight_tag" | tr -d '\000-\031' | jq -r '.body' | grep -oE '^[-•] [0-9a-f]{7,}' | head -n 1 | awk '{print $2}')
         resolve_full_sha1_from_zen_repo "$short_sha1"
         return
     fi

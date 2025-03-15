@@ -221,8 +221,8 @@ set -e
 
 try_to_update "beta" "x86_64"
 try_to_update "beta" "aarch64"
-try_to_update "twilight" "x86_64"
-try_to_update "twilight" "aarch64"
+# try_to_update "twilight" "x86_64"
+# try_to_update "twilight" "aarch64"
 
 if $only_check && $ci; then
     echo "should_update=false" >>"$GITHUB_OUTPUT"

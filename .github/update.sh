@@ -23,7 +23,7 @@ get_twilight_tag_full_meta() {
 twilight_tag=$(get_twilight_tag_full_meta)
 beta_tag=$(get_beta_tag_short_meta)
 
-get_twilight_release_from_zen_repo() {
+get_twilight_release_artifact_meta_from_zen_repo() {
     arch=$1
 
     echo "$twilight_tag" | jq -r --arg arch "$arch" \
@@ -39,6 +39,10 @@ download_artifact_from_zen_repo() {
         -H "Accept: application/octet-stream" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "https://api.github.com/repos/zen-browser/desktop/releases/assets/$artifact_id" >"$file_path"
+}
+
+get_updated_at_of_twilight_artifact_from_zen_repo() {
+    gh api repos/zen-browser/desktop/releases/tags/twilight | jq -r '.assets | (map(select(.name | test("zen.linux-(x86_64|aarch64).tar.xz")))) | first | .updated_at'
 }
 
 get_twilight_version_name() {
@@ -103,7 +107,7 @@ commit_beta_version=""
 commit_twilight_targets=""
 commit_twilight_version=""
 
-try_to_update() {
+update_version() {
     # twilight or beta
     version_name=$1
     # "x86_64" or "aarch64"
@@ -112,12 +116,21 @@ try_to_update() {
     meta=$(jq ".[\"$version_name\"][\"$arch-linux\"]" <sources.json)
 
     local_sha1=$(echo "$meta" | jq -r '.sha1')
-
     remote_sha1=$(resolve_version_remote_sha1 "$version_name")
 
-    echo "Checking $version_name version @ $arch... local=$local_sha1 remote=$remote_sha1"
+    local=""
+    remote=""
+    if [ "$version_name" = "twilight" ]; then
+        local=$(jq -r '.twilight_metadata.updated_at' sources.json)
+        remote=$(get_updated_at_of_twilight_artifact_from_zen_repo)
+    else
+        local="$local_sha1"
+        remote="$remote_sha1"
+    fi
 
-    if [ "$local_sha1" = "$remote_sha1" ]; then
+    echo "Checking $version_name version @ $arch... local=$local remote=$remote"
+
+    if [ "$local" = "$remote" ]; then
         echo "Local $version_name version is up to date"
         return
     fi
@@ -130,6 +143,7 @@ try_to_update() {
     fi
 
     semver=$(resolve_semver "$version_name")
+    updated_at="$remote"
 
     target_release_name="$semver"
     if [ "$version_name" = "twilight" ]; then
@@ -147,9 +161,9 @@ try_to_update() {
         entry_name="twilight-official"
         semver="$twilight_version_name"
 
-        short_sha1="$(echo "$remote_sha1" | cut -c1-7)"
+        # short_sha1="$(echo "$remote_sha1" | cut -c1-7)"
 
-        release_name="$version_name-$short_sha1"
+        release_name="$version_name-$(date -d "$updated_at" +%s)"
 
         flake_repo_location="0xc000022070/zen-browser-flake"
 
@@ -163,7 +177,7 @@ try_to_update() {
             echo "Release $release_name already exists, skipping creation..."
         fi
 
-        get_twilight_release_from_zen_repo "$arch" |
+        get_twilight_release_artifact_meta_from_zen_repo "$arch" |
             while read -r line; do
                 artifact_id=$(echo "$line" | cut -d' ' -f1)
                 artifact_name=$(echo "$line" | cut -d' ' -f2)
@@ -217,33 +231,45 @@ try_to_update() {
     fi
 }
 
-set -e
+main() {
+    set -e
 
-try_to_update "beta" "x86_64"
-try_to_update "beta" "aarch64"
-# try_to_update "twilight" "x86_64"
-# try_to_update "twilight" "aarch64"
+    update_version "beta" "x86_64"
+    update_version "beta" "aarch64"
+    update_version "twilight" "x86_64"
+    update_version "twilight" "aarch64"
 
-if $only_check && $ci; then
-    echo "should_update=false" >>"$GITHUB_OUTPUT"
-fi
-
-# Check if there are changes
-if ! git diff --exit-code >/dev/null; then
-    init_message="Update Zen Browser"
-    message="$init_message"
-
-    if [ "$commit_beta_targets" != "" ]; then
-        message="$message beta @ $commit_beta_targets to $commit_beta_version"
+    if $only_check && $ci; then
+        echo "should_update=false" >>"$GITHUB_OUTPUT"
     fi
 
-    if [ "$commit_twilight_targets" != "" ]; then
-        if [ "$message" != "$init_message" ]; then
-            message="$message and"
+    # Check if there are changes
+    if ! git diff --exit-code >/dev/null; then
+        # Update twilight metadata
+        if [ "$commit_twilight_targets" != "" ]; then
+            updated_at=$(get_updated_at_of_twilight_artifact_from_zen_repo)
+            jq ".[\"twilight_metadata\"][\"updated_at\"] = \"$updated_at"\" sources.json >sources.json.tmp
+            mv sources.json.tmp sources.json
         fi
 
-        message="$message twilight @ $commit_twilight_targets to $commit_twilight_version"
-    fi
+        # Prepare commit message
+        init_message="Update Zen Browser"
+        message="$init_message"
 
-    echo "commit_message=$message" >>"$GITHUB_OUTPUT"
-fi
+        if [ "$commit_beta_targets" != "" ]; then
+            message="$message beta @ $commit_beta_targets to $commit_beta_version"
+        fi
+
+        if [ "$commit_twilight_targets" != "" ]; then
+            if [ "$message" != "$init_message" ]; then
+                message="$message and"
+            fi
+
+            message="$message twilight @ $commit_twilight_targets to $commit_twilight_version"
+        fi
+
+        echo "commit_message=$message" >>"$GITHUB_OUTPUT"
+    fi
+}
+
+main

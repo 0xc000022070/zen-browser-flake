@@ -40,7 +40,6 @@
           glib
           udev
           libva
-          libgbm
           vulkan-loader
           mesa
           libnotify

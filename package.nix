@@ -80,13 +80,6 @@ stdenv.mkDerivation {
   # Firefox uses "relrhack" to manually process relocations from a fixed offset
   patchelfFlags = [ "--no-clobber-old-sections" ];
 
-  preFixup = ''
-    gappsWrapperArgs+=(
-      --set MOZ_ALLOW_DOWNGRADE 1
-      --set MOZ_APP_LAUNCHER zen
-    )
-  '';
-
   installPhase = ''
     mkdir -p "$prefix/lib/zen-bin-${variant.version}"
     cp -r "$src"/* "$prefix/lib/zen-bin-${variant.version}"

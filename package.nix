@@ -19,7 +19,18 @@
   adwaita-icon-theme,
   writeText,
   patchelfUnstable, # have to use patchelfUnstable to support --no-clobber-old-sections
-  applicationName ? "Zen Browser",
+  applicationName ?
+    "Zen Browser"
+    + (
+      if name == "beta" then
+        " (Beta)"
+      else if name == "twilight" then
+        " (Twilight)"
+      else if name == "twilight-official" then
+        " (Twilight)"
+      else
+        ""
+    ),
 }:
 
 let
@@ -86,8 +97,6 @@ stdenv.mkDerivation {
     mkdir -p "$out/lib/zen-${variant.version}/distribution"
     ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"
 
-    install -D $desktopSrc/zen-${name}.desktop $out/share/applications/${desktopFile}
-
     install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen-${name}.png
     install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen-${name}.png
     install -D $src/browser/chrome/icons/default/default48.png $out/share/icons/hicolor/48x48/apps/zen-${name}.png
@@ -111,7 +120,7 @@ stdenv.mkDerivation {
     changelog = "https://github.com/zen-browser/desktop/releases";
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     platforms = builtins.attrNames mozillaPlatforms;
-    hydraPlatforms = [];
+    hydraPlatforms = [ ];
     mainProgram = binaryName;
   };
 }

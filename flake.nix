@@ -33,7 +33,7 @@
         in
         pkgs.wrapFirefox entry {
           icon = "zen-${name}";
-          wmClass = "zen";
+          wmClass = "zen-${name}";
           hasMozSystemDirPatch = false;
         };
 

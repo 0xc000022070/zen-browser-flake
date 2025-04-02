@@ -77,10 +77,14 @@ stdenv.mkDerivation {
   '';
 
   installPhase = ''
-    mkdir -p $out/{bin,opt/zen,lib/zen-${variant.version}/distribution} && cp -r $src/* $out/opt/zen
-    ln -s $out/opt/zen/zen $out/bin/zen
+    mkdir -p "$prefix/lib/zen-bin-${variant.version}"
+    cp -r "$src"/* "$prefix/lib/zen-bin-${variant.version}"
+
+    mkdir -p "$out/bin"
+    ln -s "$prefix/lib/zen-bin-${variant.version}/zen" "$out/bin/${binaryName}"
+
+    mkdir -p "$out/lib/zen-${variant.version}/distribution"
     ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"
-    ln -s $out/bin/zen $out/bin/zen-${name}
 
     install -D $desktopSrc/zen-${name}.desktop $out/share/applications/${desktopFile}
 
@@ -108,6 +112,6 @@ stdenv.mkDerivation {
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     platforms = builtins.attrNames mozillaPlatforms;
     hydraPlatforms = [];
-    mainProgram = "zen";
+    mainProgram = binaryName;
   };
 }

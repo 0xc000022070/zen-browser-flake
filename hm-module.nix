@@ -42,8 +42,8 @@ in
     programs.zen-browser = {
       package = self.packages.${pkgs.stdenv.system}.${name};
       policies = {
-        DisableAppUpdate = true;
-        DisableTelemetry = true;
+        DisableAppUpdate = lib.mkDefault true;
+        DisableTelemetry = lib.mkDefault true;
       };
     };
   };

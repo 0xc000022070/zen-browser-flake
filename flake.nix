@@ -53,6 +53,13 @@
       default = beta;
     });
 
+    formatter = forAllSystems (
+      system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+        pkgs.alejandra
+    );
+
     homeModules = rec {
       beta = import ./hm-module.nix {
         inherit self home-manager;

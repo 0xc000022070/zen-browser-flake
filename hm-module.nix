@@ -2,14 +2,12 @@
   home-manager,
   self,
   name,
-}:
-{
+}: {
   pkgs,
   config,
   lib,
   ...
-}:
-let
+}: let
   applicationName = "Zen Browser";
   modulePath = [
     "programs"
@@ -17,8 +15,7 @@ let
   ];
 
   mkFirefoxModule = import "${home-manager.outPath}/modules/programs/firefox/mkFirefoxModule.nix";
-in
-{
+in {
   imports = [
     (mkFirefoxModule {
       inherit modulePath;

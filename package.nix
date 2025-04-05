@@ -77,6 +77,12 @@ in
     # Firefox uses "relrhack" to manually process relocations from a fixed offset
     patchelfFlags = ["--no-clobber-old-sections"];
 
+    preFixup = ''
+      gappsWrapperArgs+=(
+        --add-flags '--name "''${MOZ_APP_LAUNCHER:-${binaryName}}"'
+      )
+    '';
+
     installPhase = ''
       mkdir -p "$prefix/lib/zen-bin-${variant.version}"
       cp -r "$src"/* "$prefix/lib/zen-bin-${variant.version}"

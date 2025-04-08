@@ -1,5 +1,6 @@
 {
   pkgs ? import <nixpkgs> { },
+  system ? pkgs.stdenv.hostPlatform.system,
 }:
 
 let

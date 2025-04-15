@@ -52,7 +52,7 @@ in
     inherit (variant) version;
 
     src = builtins.fetchTarball {inherit (variant) url sha256;};
-    desktopSrc = ./.;
+    desktopSrc = ./assets/desktop;
 
     nativeBuildInputs = [
       wrapGAppsHook3
@@ -91,6 +91,8 @@ in
       ln -s "$prefix/lib/zen-bin-${variant.version}/zen" "$out/bin/${binaryName}"
       # ! twilight and beta could collide if both are installed
       ln -s "$out/bin/${binaryName}" "$out/bin/zen"
+
+      install -D $desktopSrc/${desktopFile} $out/share/applications/${desktopFile}
 
       mkdir -p "$out/lib/zen-${variant.version}/distribution"
       ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"

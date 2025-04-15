@@ -9,7 +9,7 @@ let
     let
       variant = (builtins.fromJSON (builtins.readFile ./sources.json)).${entry}.${system};
 
-      desktopFile = if name == "beta" then "zen.desktop" else "zen_${name}.desktop";
+      desktopFile = "zen-${name}.desktop";
     in
     pkgs.callPackage ./package.nix {
       inherit name desktopFile variant;

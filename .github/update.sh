@@ -256,7 +256,7 @@ main() {
         fi
 
         # Prepare commit message
-        init_message="Update Zen Browser"
+        init_message="chore(update): "
         message="$init_message"
 
         if [ "$commit_beta_targets" != "" ]; then

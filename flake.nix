@@ -12,7 +12,6 @@
     nixpkgs,
     home-manager,
   }: let
-
     supportedSystems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -20,9 +19,10 @@
 
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
   in {
-    packages = forAllSystems (system: import ./default.nix {
-      pkgs = nixpkgs.legacyPackages.${system};
-    });
+    packages = forAllSystems (system:
+      import ./default.nix {
+        pkgs = nixpkgs.legacyPackages.${system};
+      });
 
     formatter = forAllSystems (
       system: let

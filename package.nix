@@ -2,6 +2,7 @@
   name,
   variant,
   desktopFile,
+  disableAppUpdate ? true,
   lib,
   stdenv,
   config,
@@ -38,10 +39,10 @@
   };
 
   policies =
-    {
-      DisableAppUpdate = true;
-    }
-    // config.firefox.policies or {};
+    config.firefox.policies
+    // {
+      DisableAppUpdate = disableAppUpdate;
+    };
 
   policiesJson = writeText "firefox-policies.json" (builtins.toJSON {inherit policies;});
 

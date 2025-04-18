@@ -39,7 +39,7 @@
   };
 
   policies =
-    config.policies
+    config.firefox.policies
     // {
       DisableAppUpdate = disableAppUpdate;
     };

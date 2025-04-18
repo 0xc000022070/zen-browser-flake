@@ -38,6 +38,7 @@ in {
   config = lib.mkIf config.programs.zen-browser.enable {
     programs.zen-browser = {
       package = self.packages.${pkgs.stdenv.system}.${name};
+      # This does not work, the package can't build using these policies
       policies = lib.mkDefault {
         DisableAppUpdate = true;
         DisableTelemetry = true;

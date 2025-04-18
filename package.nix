@@ -39,7 +39,7 @@
   };
 
   policies =
-    config.programs.zen-browser.policies
+    (config.firefox.policies or {})
     // {
       DisableAppUpdate = disableAppUpdate;
     };

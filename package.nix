@@ -2,7 +2,7 @@
   name,
   variant,
   desktopFile,
-  disableAppUpdate ? true,
+  policies ? {},
   lib,
   stdenv,
   config,
@@ -38,13 +38,11 @@
     aarch64-linux = "linux-aarch64";
   };
 
-  policies =
+  firefoxPolicies =
     (config.firefox.policies or {})
-    // {
-      DisableAppUpdate = disableAppUpdate;
-    };
+    // policies;
 
-  policiesJson = writeText "firefox-policies.json" (builtins.toJSON {inherit policies;});
+  policiesJson = writeText "firefox-policies.json" (builtins.toJSON {policies = firefoxPolicies;});
 
   pname = "zen-${name}-bin-unwrapped";
 in

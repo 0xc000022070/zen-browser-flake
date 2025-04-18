@@ -20,9 +20,9 @@ rec {
   twilight-unwrapped = mkZen pkgs "twilight" system "twilight";
   twilight-official-unwrapped = mkZen pkgs "twilight" system "twilight-official";
 
-  beta = pkgs.wrapFirefox beta-unwrapped;
-  twilight = pkgs.wrapFirefox twilight-unwrapped;
-  twilight-official = pkgs.wrapFirefox twilight-official-unwrapped;
+  beta = pkgs.wrapFirefox beta-unwrapped { };
+  twilight = pkgs.wrapFirefox twilight-unwrapped { };
+  twilight-official = pkgs.wrapFirefox twilight-official-unwrapped { };
 
   default = beta;
 }

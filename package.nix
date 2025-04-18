@@ -33,6 +33,8 @@
 }: let
   binaryName = "zen-${name}";
 
+  libName = "zen-bin-${variant.version}";
+
   mozillaPlatforms = {
     x86_64-linux = "linux-x86_64";
     aarch64-linux = "linux-aarch64";
@@ -83,18 +85,18 @@ in
     '';
 
     installPhase = ''
-      mkdir -p "$prefix/lib/zen-bin-${variant.version}"
-      cp -r "$src"/* "$prefix/lib/zen-bin-${variant.version}"
+      mkdir -p "$prefix/lib/${libName}"
+      cp -r "$src"/* "$prefix/lib/${libName}"
 
       mkdir -p "$out/bin"
-      ln -s "$prefix/lib/zen-bin-${variant.version}/zen" "$out/bin/${binaryName}"
+      ln -s "$prefix/lib/${libName}/zen" "$out/bin/${binaryName}"
       # ! twilight and beta could collide if both are installed
       ln -s "$out/bin/${binaryName}" "$out/bin/zen"
 
       install -D $desktopSrc/${desktopFile} $out/share/applications/${desktopFile}
 
-      mkdir -p "$out/lib/zen-${variant.version}/distribution"
-      ln -s ${policiesJson} "$out/lib/zen-${variant.version}/distribution/policies.json"
+      mkdir -p "$out/lib/${libName}/distribution"
+      ln -s ${policiesJson} "$out/lib/${libName}/distribution/policies.json"
 
       install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen-${name}.png
       install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen-${name}.png
@@ -104,8 +106,7 @@ in
     '';
 
     passthru = {
-      inherit applicationName binaryName;
-      libName = "zen-bin-${variant.version}";
+      inherit applicationName binaryName libName;
       ffmpegSupport = true;
       gssSupport = true;
       gtk3 = gtk3;

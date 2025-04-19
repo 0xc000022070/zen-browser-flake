@@ -37,6 +37,8 @@ inputs = {
 <details>
 <summary><h4>Home Manager options</h4></summary>
 
+The options provided by this module come from the [mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207) utility, so feel free to experiment with other program options.
+
 ```nix
 {
   # home.nix

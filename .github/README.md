@@ -122,6 +122,12 @@ environment.etc = {
 };
 ```
 
+### Troubleshooting
+
+#### 1Password constantly requires password
+
+You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See <https://github.com/0xc000022070/zen-browser-flake/issues/48>.
+
 ## Native Messaging
 
 To [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging), you can use the following configuration pattern.

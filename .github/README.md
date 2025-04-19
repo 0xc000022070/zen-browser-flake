@@ -63,6 +63,8 @@ Then build your Home Manager configuration
 $ home-manager switch
 ```
 
+Check my rice [here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/browser.nix)! :)
+
 </details>
 
 <details>

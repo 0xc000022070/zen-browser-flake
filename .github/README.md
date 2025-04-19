@@ -97,9 +97,8 @@ Afterwards you can just build your configuration
 ```shell
 $ sudo nixos-rebuild switch # or home-manager switch
 ```
+
 </details>
-
-
 
 ### Start the browser
 
@@ -123,6 +122,35 @@ environment.etc = {
 };
 ```
 
+## Native Messaging
+
+To [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging), you can use the following configuration pattern.
+
+### With Home Manager
+
+```nix
+{
+  programs.zen-browser = {
+    enable = true;
+    nativeMessagingHosts = [pkgs.firefoxpwa];
+    # Add any other native connectors here
+  };
+}
+```
+
+### With package override
+
+```nix
+{
+  home.packages = [
+    (
+      inputs.zen-browser.packages."${system}".default.override {
+        nativeMessagingHosts = [pkgs.firefoxpwa];
+      }
+    )
+  ];
+}
+```
 
 ## Contributing
 

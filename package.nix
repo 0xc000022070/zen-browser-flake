@@ -14,6 +14,7 @@
   gtk3,
   libXtst,
   libva,
+  libGL,
   pciutils,
   pipewire,
   adwaita-icon-theme,
@@ -71,8 +72,10 @@ in
       curl
       libva.out
       pciutils
+      libGL
     ];
     appendRunpaths = [
+      "${libGL}/lib"
       "${pipewire}/lib"
     ];
     # Firefox uses "relrhack" to manually process relocations from a fixed offset

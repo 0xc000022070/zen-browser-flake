@@ -1,28 +1,18 @@
 # Zen Browser
 
-Originally from [MarceColl/zen-browser-flake](https://github.com/MarceColl/zen-browser-flake) deleted and re-made repo for discoverability as "GitHub does not like to show forks in the search".
-
-This is a flake for the Zen browser.
+This is a nix flake for the Zen browser.
 
 ## Features
 
 - Linux support
-- Available for x86_64 and aarch64
-- Both **twilight** and **beta** versions are available
-- Automatic updated Flake via GitHub Actions
-- Integrated browser update checks are disabled
+- Available for _x86_64_ and _aarch64_
+- Support for _twilight_ and _beta_
+- Policies can be modified via Home Manager and unwrapped package override.
+- Fast & Automatic updates via GitHub Actions
+- Browser update checks are disabled by default
 - The default twilight version is reliable and reproducible
 
 ## Installation
-
-> [!CAUTION]
-> The **twilight** package is not the official from [zen-browser/desktop](https://github.com/zen-browser/desktop). As you can
-> check in their [releases page](https://github.com/zen-browser/desktop/releases), there is only one Twilight version of the browser,
-> that's because there's only one tag available for that browser version, it means that every release replace the other, deleting the
-> artifacts that we referenced once and normally this happens everyday so the package we aim to create won't achieve the goal to be really
-> reproducible, for that reason we created a workaround to create releases and copy the artifacts from their repository in order to keep
-> alive indefinitely. If you don't trust about this method we're using or that the artifacts won't be infected will malware by the
-> repository owner or something else(I don't know, anything!), you can use the **twilight-official** package or simply keep yourself with **beta**.
 
 Just add it to your NixOS `flake.nix` or home-manager:
 
@@ -31,42 +21,99 @@ inputs = {
   zen-browser = {
     url = "github:0xc000022070/zen-browser-flake";
     # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
-    # to have it up to date or simply don't specify the nixpkgs input  
+    # to have it up-to-date or simply don't specify the nixpkgs input  
     inputs.nixpkgs.follows = "nixpkgs";
   };
-  ...
+  # ...
 }
 ```
 
 ### Integration
 
-To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the following to your `environment.systemPackages` or `home.packages` respectively:
+> [!IMPORTANT]
+> Use the **twilight** package to guarantee reproducibility, the artifacts of that package are re-uploaded
+> to this repository. However, if you don't agree with that and want to use the official artifacts, use **twilight-official**.
+
+<details>
+<summary><h4>Home Manager options</h4></summary>
 
 ```nix
-# Only 'x86_64-linux' and 'aarch64-linux' are supported
-inputs.zen-browser.packages."${system}".default # beta
-inputs.zen-browser.packages."${system}".beta
-inputs.zen-browser.packages."${system}".twilight # artifacts are downloaded from this repository to guarantee reproducibility
-inputs.zen-browser.packages."${system}".twilight-official # artifacts are downloaded from the official Zen repository
+{
+  # home.nix
+  imports = [
+    inputs.zen-browser.homeModules.beta
+    # or inputs.zen-browser.homeModules.twilight
+    # or inputs.zen-browser.homeModules.twilight-official
+  ];
+
+  programs.zen-browser = {
+    enable = true;
+    policies = {
+      DisableAppUpdate = true;
+      DisableTelemetry = true;
+      # find more options here: https://mozilla.github.io/policy-templates/
+    };
+  };
+}
 ```
 
-Afterwards you can just build your configuration and start the `Zen Browser`
+Then build your Home Manager configuration
+
+```shell
+$ home-manager switch
+```
+
+</details>
+
+<details>
+<summary><h4>With environment.systemPackages or home.packages</h4></summary>
+
+To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the following to your `environment.systemPackages` or `home.packages`:
+
+```nix
+# system: only 'x86_64-linux' and 'aarch64-linux' are supported
+
+inputs.zen-browser.packages."${system}".default # beta
+inputs.zen-browser.packages."${system}".beta # or "beta-unwrapped"
+inputs.zen-browser.packages."${system}".twilight # or "twilight-unwrapped"
+inputs.zen-browser.packages."${system}".twilight-official # or "twilight-official-unwrapped"
+
+# you can even override the package policies
+inputs.zen-browser.packages."${system}".default.override {
+  policies = {
+      DisableAppUpdate = true;
+      DisableTelemetry = true;
+      # find more options here: https://mozilla.github.io/policy-templates/
+  };
+}
+```
+
+Afterwards you can just build your configuration
 
 ```shell
 $ sudo nixos-rebuild switch # or home-manager switch
+```
+</details>
+
+
+
+### Start the browser
+
+```shell
+# it's a symlink, if you install two versions they will collide and you should either specify "zen-twilight" or "zen-beta"
 $ zen
 ```
 
 ## 1Password
 
-Zen has to be manually added to the list of browsers that 1Password will communicate with. See [this wiki article](https://wiki.nixos.org/wiki/1Password) for more information. To enable 1Password integration, you need to add the line `zen` to the file `/etc/1password/custom_allowed_browsers`.
+Zen has to be manually added to the list of browsers that 1Password will communicate with. See [this wiki article](https://wiki.nixos.org/wiki/1Password) for more information. To enable 1Password integration, you need to add the browser identifier to the file `/etc/1password/custom_allowed_browsers`.
 
 ```nix
 environment.etc = {
   "1password/custom_allowed_browsers" = {
     text = ''
-      zen
-    '';
+      .zen-wrapped
+    ''; # or just "zen" if you use unwrapped package
     mode = "0755";
   };
 };

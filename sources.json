@@ -1,16 +1,16 @@
 {
   "beta": {
     "x86_64-linux": {
-      "version": "1.11.4b",
-      "sha1": "ad0485d6518e69727c47c43ddc4288ff8a4db36a",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.11.4b/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-uF49CtsDUu7Y+mY94WF2i/zrtH4nmY57vlOSBUcHJ3o="
+      "version": "1.11.5b",
+      "sha1": "fb1575d875c21b3f0f0478df4498800d4509b2fb",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.11.5b/zen.linux-x86_64.tar.xz",
+      "sha256": "sha256-Kk208Z1Uz0PPTKU8aYht6aGYeG1QGk8M0qnTEQ0nb9w="
     },
     "aarch64-linux": {
-      "version": "1.11.4b",
-      "sha1": "ad0485d6518e69727c47c43ddc4288ff8a4db36a",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.11.4b/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-ts85lSg29wbsvVQpRZi9k3ff9Y+LDThyByKI/3MbwpE="
+      "version": "1.11.5b",
+      "sha1": "fb1575d875c21b3f0f0478df4498800d4509b2fb",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.11.5b/zen.linux-aarch64.tar.xz",
+      "sha256": "sha256-mE9ccJh4ic+VmlxYFlqPwzmfFlI8QVIZ6rkKN0dK8Bk="
     }
   },
   "twilight": {

@@ -163,7 +163,8 @@ update_version() {
         semver="$twilight_version_name"
 
         updated_at_epoch="$(date -d "$updated_at" +%s)"
-        release_name="$version_name-$updated_at_epoch"
+
+        release_name="$semver-$updated_at_epoch"
 
         flake_repo_location="0xc000022070/zen-browser-flake"
 
@@ -172,7 +173,7 @@ update_version() {
 
             # Users with push access to the repository can create a release.
             gh release --repo="$flake_repo_location" \
-                create "$release_name" --notes "$semver#$updated_at_epoch (for resilient)"
+                create "$release_name" --notes "To be ready when they replace the artifacts from https://github.com/zen-browser/desktop/releases/tag/twilight! :)"
         else
             echo "Release $release_name already exists, skipping creation..."
         fi

@@ -80,6 +80,8 @@ To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the fol
 inputs.zen-browser.packages."${system}".default # beta
 inputs.zen-browser.packages."${system}".beta # or "beta-unwrapped"
 inputs.zen-browser.packages."${system}".twilight # or "twilight-unwrapped"
+# IMPORTANT: this package relies on the twilight release artifacts from the
+# official zen repo and no new release is created, the artifacts are replaced
 inputs.zen-browser.packages."${system}".twilight-official # or "twilight-official-unwrapped"
 
 # you can even override the package policies

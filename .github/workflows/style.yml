@@ -1,5 +1,11 @@
 name: Check *.nix files format
-on: [push, pull_request]
+on:
+  pull_request:
+    paths:
+      - "**.nix "
+  push:
+    paths:
+      - "**.nix"
 
 jobs:
   check-formatting:

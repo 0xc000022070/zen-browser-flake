@@ -7,7 +7,7 @@ This is a nix flake for the Zen browser.
 - Linux support
 - Available for _x86_64_ and _aarch64_
 - Support for _twilight_ and _beta_
-- Policies can be modified via Home Manager and unwrapped package override.
+- Policies can be modified via Home Manager and unwrapped package override
 - Fast & Automatic updates via GitHub Actions
 - Browser update checks are disabled by default
 - The default twilight version is reliable and reproducible

@@ -17,14 +17,14 @@
     "x86_64-linux": {
       "version": "1.12t",
       "sha1": "null",
-      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.12t-1746051254/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-iQ+lo60O+fUPrt5Xep+aFL4qLy7cv0QngSNVyJoZ4fE="
+      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.12t-1746053138/zen.linux-x86_64.tar.xz",
+      "sha256": "sha256-AyxjWsVB82MImFUkQmRRXzBM3jetifwI/u+b7+/r1GU="
     },
     "aarch64-linux": {
       "version": "1.12t",
       "sha1": "null",
-      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.12t-1746051254/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-tGjR26ihlfT+zi3V4YWUYz8+IV+hZYtgZX6wu6IWCoA="
+      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.12t-1746053138/zen.linux-aarch64.tar.xz",
+      "sha256": "sha256-/UutclQrduRpJ/5GaoSnSX4D8Oe3wYIC9YKjnPdB6ko="
     }
   },
   "twilight-official": {
@@ -32,16 +32,16 @@
       "version": "1.12t",
       "sha1": "null",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-iQ+lo60O+fUPrt5Xep+aFL4qLy7cv0QngSNVyJoZ4fE="
+      "sha256": "sha256-AyxjWsVB82MImFUkQmRRXzBM3jetifwI/u+b7+/r1GU="
     },
     "aarch64-linux": {
       "version": "1.12t",
       "sha1": "null",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-tGjR26ihlfT+zi3V4YWUYz8+IV+hZYtgZX6wu6IWCoA="
+      "sha256": "sha256-/UutclQrduRpJ/5GaoSnSX4D8Oe3wYIC9YKjnPdB6ko="
     }
   },
   "twilight_metadata": {
-    "updated_at": "2025-04-30T22:14:14Z"
+    "updated_at": "2025-04-30T22:45:38Z"
   }
 }

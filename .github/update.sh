@@ -164,7 +164,7 @@ update_version() {
 
         updated_at_epoch="$(date -d "$updated_at" +%s)"
 
-        release_name="$semver-$updated_at_epoch"
+        release_name="$semver#$updated_at_epoch"
 
         flake_repo_location="0xc000022070/zen-browser-flake"
 

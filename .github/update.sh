@@ -165,15 +165,17 @@ update_version() {
         updated_at_epoch="$(date -d "$updated_at" +%s)"
 
         release_name="$semver-$updated_at_epoch"
+        release_title="$semver#$updated_at_epoch"
 
         flake_repo_location="0xc000022070/zen-browser-flake"
 
-        if ! gh release list | grep "$release_name" >/dev/null; then
+        if ! gh release list | grep "$release_title" >/dev/null; then
             echo "Creating $release_name release..."
 
             # Users with push access to the repository can create a release.
             gh release --repo="$flake_repo_location" \
-                create "$release_name" --notes "To be ready when they replace the artifacts from https://github.com/zen-browser/desktop/releases/tag/twilight! :)"
+                create "$release_name" --title="$release_title" \
+                --notes "To be ready when they replace the artifacts from https://github.com/zen-browser/desktop/releases/tag/twilight! :)"
         else
             echo "Release $release_name already exists, skipping creation..."
         fi

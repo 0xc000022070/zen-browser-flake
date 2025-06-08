@@ -61,7 +61,7 @@ download_artifact_from_zen_repo() {
     # relative or absolute path
     file_path="$2"
 
-    with_retry curl -L \
+    curl -L \
         -H "Accept: application/octet-stream" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "https://api.github.com/repos/zen-browser/desktop/releases/assets/$artifact_id" >"$file_path"
@@ -217,7 +217,7 @@ update_version() {
 
                     download_artifact_from_zen_repo "$artifact_id" "/tmp/$artifact_name"
 
-                    with_retry gh release --repo="$flake_repo_location" \
+                    gh release --repo="$flake_repo_location" \
                         upload "$release_name" "/tmp/$artifact_name"
 
                     echo "[uploaded] The artifact is available @ following link: $self_download_url"

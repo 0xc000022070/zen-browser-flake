@@ -12,13 +12,38 @@ fi
 
 remote_tags=$(curl 'https://api.github.com/repos/zen-browser/desktop/tags' -s)
 
+with_retry() {
+    retries=5
+    count=0
+    output=""
+    status=0
+
+    while [ $count -lt $retries ]; do
+        output=$("$@" 2>&1)
+        status=$?
+
+        if echo "$output" | grep -q 'Not Found'; then
+            count=$((count + 1))
+            echo "attempt $count/$retries: 404 Not Found encountered, retrying..." >&2
+            sleep 1
+        else
+            echo "[TRACE] [cmd=$*] output: $output" 1>&2
+            echo "$output" | tr -d '\000-\031'
+            return $status
+        fi
+    done
+
+    echo "max retries reached. last output: $output (cmd=$*)" >&2
+    exit 1
+}
+
 get_beta_tag_short_meta() {
     echo "$remote_tags" | jq -r '(map(select(.name | test("[0-9]+\\.[0-9]+b$")))) | first'
 }
 
 get_twilight_tag_full_meta() {
     # Remove control characters
-    gh api repos/zen-browser/desktop/releases/tags/twilight
+    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight
 }
 
 twilight_tag=$(get_twilight_tag_full_meta)
@@ -36,14 +61,14 @@ download_artifact_from_zen_repo() {
     # relative or absolute path
     file_path="$2"
 
-    curl -L \
+    with_retry curl -L \
         -H "Accept: application/octet-stream" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "https://api.github.com/repos/zen-browser/desktop/releases/assets/$artifact_id" >"$file_path"
 }
 
 get_updated_at_of_twilight_artifact_from_zen_repo() {
-    gh api repos/zen-browser/desktop/releases/tags/twilight | jq -r '.assets | (map(select(.name | test("zen.linux-(x86_64|aarch64).tar.xz")))) | first | .updated_at'
+    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight | jq -r '.assets | (map(select(.name | test("zen.linux-(x86_64|aarch64).tar.xz")))) | first | .updated_at'
 }
 
 get_twilight_version_name() {
@@ -53,7 +78,7 @@ get_twilight_version_name() {
 resolve_full_sha1_from_zen_repo() {
     short_sha1="$1"
 
-    curl -sL \
+    with_retry curl -sL \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "https://api.github.com/repos/zen-browser/desktop/commits/$short_sha1" |
@@ -192,7 +217,7 @@ update_version() {
 
                     download_artifact_from_zen_repo "$artifact_id" "/tmp/$artifact_name"
 
-                    gh release --repo="$flake_repo_location" \
+                    with_retry gh release --repo="$flake_repo_location" \
                         upload "$release_name" "/tmp/$artifact_name"
 
                     echo "[uploaded] The artifact is available @ following link: $self_download_url"

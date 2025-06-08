@@ -75,13 +75,13 @@ resolve_version_remote_sha1() {
         return
     fi
 
-    echo "bad version! (clue: $version)"
+    echo "bad version! (clue: $version)" 1>&2
     exit 1
 }
 
 twilight_version_name=$(get_twilight_version_name)
 if [ "$twilight_version_name" = "" ]; then
-    echo "No twilight version name could be extracted... (clue: $twilight_tag))"
+    echo "No twilight version name could be extracted... (clue: $twilight_tag))" 1>&2
     exit 1
 fi
 
@@ -99,7 +99,7 @@ resolve_semver() {
         return
     fi
 
-    echo "bad version! (clue: $version)"
+    echo "bad version! (clue: $version)" 1>&2
     exit 1
 }
 

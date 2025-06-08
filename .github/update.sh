@@ -10,15 +10,47 @@ if echo "$@" | grep -qoE '(--only-check)'; then
     only_check=true
 fi
 
-remote_tags=$(curl 'https://api.github.com/repos/zen-browser/desktop/tags' -s)
+max_retries=5
+retry_count=0
+remote_tags=""
+
+while [ $retry_count -lt $max_retries ]; do
+    remote_tags=$(curl -s 'https://api.github.com/repos/zen-browser/desktop/tags')
+    if [ -n "$remote_tags" ] && echo "$remote_tags" | jq . >/dev/null 2>&1; then
+        break
+    fi
+    retry_count=$((retry_count + 1))
+    echo "[WARN] error getting remote_tags, retrying ($retry_count/$max_retries)..."
+    sleep 1
+    remote_tags=""
+done
+
+if [ -z "$remote_tags" ]; then
+    echo "[ERROR] could not get remote_tags after $max_retries attempts. Abort!"
+    exit 1
+fi
 
 get_beta_tag_short_meta() {
     echo "$remote_tags" | jq -r '(map(select(.name | test("[0-9]+\\.[0-9]+b$")))) | first'
 }
 
 get_twilight_tag_full_meta() {
-    # Remove control characters
-    gh api repos/zen-browser/desktop/releases/tags/twilight
+    retry_count=0
+
+    while [ $retry_count -lt $max_retries ]; do
+        result=$(gh api repos/zen-browser/desktop/releases/tags/twilight 2>/dev/null)
+        if [ -n "$result" ] && echo "$result" | jq . >/dev/null 2>&1; then
+            echo "$result"
+            return 0
+        fi
+
+        retry_count=$((retry_count + 1))
+        echo "[WARN] failed to get twilight_tag, retrying ($retry_count/$max_retries)..."
+        sleep 2
+    done
+
+    echo "[ERROR] could not get twilight_tag after $max_retries attempts. Abort!"
+    exit 1
 }
 
 twilight_tag=$(get_twilight_tag_full_meta)
@@ -52,12 +84,23 @@ get_twilight_version_name() {
 
 resolve_full_sha1_from_zen_repo() {
     short_sha1="$1"
-
-    curl -sL \
-        -H "Accept: application/vnd.github+json" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        "https://api.github.com/repos/zen-browser/desktop/commits/$short_sha1" |
-        jq -r '.sha'
+    retry_count=0
+    while [ $retry_count -lt $max_retries ]; do
+        result=$(curl -sL \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/zen-browser/desktop/commits/$short_sha1")
+        sha=$(echo "$result" | jq -r '.sha' 2>/dev/null)
+        if [ -n "$sha" ] && [ "$sha" != "null" ]; then
+            echo "$sha"
+            return 0
+        fi
+        retry_count=$((retry_count + 1))
+        echo "[WARN] Fallo al obtener sha1 de commit. Reintentando ($retry_count/$max_retries)..."
+        sleep 2
+    done
+    echo "[ERROR] No se pudo obtener sha1 de commit después de $max_retries intentos. Abortando."
+    exit 12
 }
 
 resolve_version_remote_sha1() {

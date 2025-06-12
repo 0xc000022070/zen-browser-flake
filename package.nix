@@ -11,6 +11,7 @@
   alsa-lib,
   curl,
   dbus-glib,
+  ffmpeg_6-full,
   gtk3,
   libXtst,
   libva,
@@ -73,6 +74,7 @@ in
       libva.out
       pciutils
       libGL
+      ffmpeg_6-full
     ];
     appendRunpaths = [
       "${libGL}/lib"

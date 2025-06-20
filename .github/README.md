@@ -2,9 +2,6 @@
 
 This is a nix flake for the Zen browser.
 
-> [!IMPORTANT]
-> The official Zen Browser organization is temporarily down, meanwhile the beta version is using an alternative source
-
 ## Features
 
 - Linux support

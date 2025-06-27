@@ -18,6 +18,7 @@
   pciutils,
   pipewire,
   adwaita-icon-theme,
+  libva-vdpau-driver,
   writeText,
   patchelfUnstable, # have to use patchelfUnstable to support --no-clobber-old-sections
   applicationName ?
@@ -73,6 +74,7 @@ in
       libva.out
       pciutils
       libGL
+      libva-vdpau-driver
     ];
     appendRunpaths = [
       "${libGL}/lib"

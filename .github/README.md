@@ -21,7 +21,7 @@ inputs = {
   zen-browser = {
     url = "github:0xc000022070/zen-browser-flake";
     # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
-    # to have it up-to-date or simply don't specify the nixpkgs input  
+    # to have it up-to-date or simply don't specify the nixpkgs input
     inputs.nixpkgs.follows = "nixpkgs";
   };
   # ...
@@ -35,9 +35,7 @@ inputs = {
 > to this repository. However, if you don't agree with that and want to use the official artifacts, use **twilight-official**.
 
 <details>
-<summary><h4>Home Manager options</h4></summary>
-
-The options provided by this module come from the [mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207) utility, so feel free to experiment with other program options.
+<summary><h4>Home Manager</h4></summary>
 
 ```nix
 {
@@ -48,14 +46,7 @@ The options provided by this module come from the [mkFirefoxModule](https://gith
     # or inputs.zen-browser.homeModules.twilight-official
   ];
 
-  programs.zen-browser = {
-    enable = true;
-    policies = {
-      DisableAppUpdate = true;
-      DisableTelemetry = true;
-      # find more options here: https://mozilla.github.io/policy-templates/
-    };
-  };
+  programs.zen-browser.enable = true;
 }
 ```
 
@@ -65,7 +56,7 @@ Then build your Home Manager configuration
 $ home-manager switch
 ```
 
-Check my rice [here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/browser.nix)! :)
+Check the [Home Manager Reference](#home-manager-reference) and my rice [here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/browser.nix)! :)
 
 </details>
 
@@ -109,6 +100,105 @@ $ sudo nixos-rebuild switch # or home-manager switch
 $ zen
 ```
 
+## Home Manager reference
+
+This is only an attempt to document some of the options provided by the [mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207) module, so feel free to
+experiment with other program options and help with further documentation.
+
+`programs.zen-browser.*`
+
+- `enable` (_boolean_): Enable the home manager config.
+
+- `nativeMessagingHosts` (listOf package): To [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging).
+
+  **Example:**
+
+  ```nix
+  {
+    # Add any other native connectors here
+    programs.zen-browser.nativeMessagingHosts = [pkgs.firefoxpwa];
+  }
+  ```
+
+- `policies` (attrsOf anything): You can also modify the **extensions** and **preferences** from here.
+
+  **Some common policies:**
+
+  ```nix
+  {
+    programs.zen-browser.policies = {
+      AutofillAddressEnabled = true;
+      AutofillCreditCardEnabled = false;
+      DisableAppUpdate = true;
+      DisableFeedbackCommands = true;
+      DisableFirefoxStudies = true;
+      DisablePocket = true;
+      DisableTelemetry = true;
+      DontCheckDefaultBrowser = true;
+      NoDefaultBookmarks = true;
+      OfferToSaveLogins = false;
+      EnableTrackingProtection = {
+        Value = true;
+        Locked = true;
+        Cryptomining = true;
+        Fingerprinting = true;
+      };
+    };
+  }
+  ```
+
+  For more policies [read this](https://mozilla.github.io/policy-templates/).
+
+  **Preferences:**
+
+  ```nix
+  {
+    programs.zen-browser.policies = {
+      Preferences = {
+        "browser.tabs.warnOnClose" = {
+          "Value" = false;
+          "Status" = "locked";
+        };
+        # and so on...
+      };
+    };
+  }
+  ```
+
+  **Zen-specific preferences:**
+
+  Check [this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
+
+  **Extensions:**
+
+  ```nix
+  {
+    programs.zen-browser.policies = {
+        ExtensionSettings = {
+          "wappalyzer@crunchlabz.com" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/file/4482384/wappalyzer-6.10.82.xpi";
+            installation_mode = "force_installed";
+          };
+          "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/file/4156831/github_file_icons-1.5.1.xpi";
+            installation_mode = "force_installed";
+          };
+        };
+    };
+  }
+  ```
+
+  To setup your own extensions you should:
+   1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/)
+   2. Go to the page of the extension that you want to declare
+   3. Go to "_See all versions_"
+   4. Copy the link to the latest "Download file"
+   5. Download the file with wget
+   6. Run `unzip -*.xpi -d my-extension && cd my-extension`
+   7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use the result
+   for the entry key.
+   8. Don't forget to add the `install_url` and set `installation_mode` to `force_installed`.
+
 ## 1Password
 
 Zen has to be manually added to the list of browsers that 1Password will communicate with. See [this wiki article](https://wiki.nixos.org/wiki/1Password) for more information. To enable 1Password integration, you need to add the browser identifier to the file `/etc/1password/custom_allowed_browsers`.
@@ -124,27 +214,13 @@ environment.etc = {
 };
 ```
 
-### Troubleshooting
-
-#### 1Password constantly requires password
-
-You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See <https://github.com/0xc000022070/zen-browser-flake/issues/48>.
-
 ## Native Messaging
 
 To [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging), you can use the following configuration pattern.
 
 ### With Home Manager
 
-```nix
-{
-  programs.zen-browser = {
-    enable = true;
-    nativeMessagingHosts = [pkgs.firefoxpwa];
-    # Add any other native connectors here
-  };
-}
-```
+Check the [Home Manager Reference](#home-manager-reference).
 
 ### With package override
 
@@ -160,6 +236,12 @@ To [enable communication between the browser and native applications](https://de
 }
 ```
 
+## Troubleshooting
+
+#### 1Password constantly requires password
+
+You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See <https://github.com/0xc000022070/zen-browser-flake/issues/48>.
+
 ## Contributing
 
 Before contributing, please make sure that your code is formatted correctly by running
@@ -171,5 +253,3 @@ $ nix fmt
 ## LICENSE
 
 This project is licensed under the [MIT License](./LICENSE).
-
-You are free to use, modify, and distribute this software, provided that the original copyright and permission notice are retained. For more details, refer to the full [license text](./LICENSE).

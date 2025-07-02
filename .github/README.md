@@ -198,6 +198,8 @@ experiment with other program options and help with further documentation.
    7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use the result
    for the entry key.
    8. Don't forget to add the `install_url` and set `installation_mode` to `force_installed`.
+ 
+  Please [check this](https://github.com/luisnquin/nixos-config/commit/01cd8c355226e673b3f6a0f48cd81fe55d5d69a1) until we properly update the documentation!
 
 ## 1Password
 

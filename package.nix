@@ -123,6 +123,7 @@ in
       changelog = "https://github.com/zen-browser/desktop/releases";
       sourceProvenance = with lib.sourceTypes; [binaryNativeCode];
       platforms = builtins.attrNames mozillaPlatforms;
+      broken = stdenv.hostPlatform.isDarwin;
       hydraPlatforms = [];
       mainProgram = binaryName;
     };

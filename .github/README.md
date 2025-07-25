@@ -174,32 +174,39 @@ experiment with other program options and help with further documentation.
   ```nix
   {
     programs.zen-browser.policies = {
-        ExtensionSettings = {
-          "wappalyzer@crunchlabz.com" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/file/4482384/wappalyzer-6.10.82.xpi";
-            installation_mode = "force_installed";
-          };
-          "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/file/4156831/github_file_icons-1.5.1.xpi";
-            installation_mode = "force_installed";
-          };
+      ExtensionSettings = {
+        "wappalyzer@crunchlabz.com" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/wappalyzer/latest.xpi";
+          installation_mode = "force_installed";
         };
-    };
+        "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/github-file-icons/latest.xpi";
+          installation_mode = "force_installed";
+        };
+      };
+    }
   }
   ```
 
   To setup your own extensions you should:
-   1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/)
-   2. Go to the page of the extension that you want to declare
-   3. Go to "_See all versions_"
-   4. Copy the link to the latest "Download file"
-   5. Download the file with wget
-   6. Run `unzip -*.xpi -d my-extension && cd my-extension`
+
+   1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
+   2. Go to the page of the extension that you want to declare.
+   3. Go to "_See all versions_".
+   4. Copy the link from any button to "Download file".
+   5. Exec **wget** with the output of this command:
+
+     ```bash
+     echo "<paste-the-link-here>" \
+      | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
+      | tr '_' '-' \
+      | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}'
+     ```
+
+   6. Run `unzip -*.xpi -d my-extension && cd my-extension`.
    7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use the result
-   for the entry key.
+   for the _entry key_.
    8. Don't forget to add the `install_url` and set `installation_mode` to `force_installed`.
- 
-  Please [check this](https://github.com/luisnquin/nixos-config/commit/01cd8c355226e673b3f6a0f48cd81fe55d5d69a1) until we properly update the documentation!
 
 ## 1Password
 

@@ -51,9 +51,15 @@ beta_tag=$(get_beta_tag_short_meta)
 
 get_twilight_release_artifact_meta_from_zen_repo() {
     arch=$1
+    os=$2
 
-    echo "$twilight_tag" | tr -d '\000-\031' | jq -r --arg arch "$arch" \
-        '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
+    if [ "$os" = "darwin" ]; then
+        echo "$twilight_tag" | tr -d '\000-\031' | jq -r \
+            '.assets[] | select(.name | contains("zen.macos-universal.dmg")) | "\(.id) \(.name)"'
+    else
+        echo "$twilight_tag" | tr -d '\000-\031' | jq -r --arg arch "$arch" \
+            '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
+    fi
 }
 
 download_artifact_from_zen_repo() {
@@ -138,8 +144,10 @@ update_version() {
     version_name=$1
     # "x86_64" or "aarch64"
     arch=$2
+    # "linux" or "darwin"
+    os=$3
 
-    meta=$(jq ".[\"$version_name\"][\"$arch-linux\"]" <sources.json)
+    meta=$(jq ".[\"$version_name\"][\"$arch-$os\"]" <sources.json)
 
     local_sha1=$(echo "$meta" | jq -r '.sha1')
     remote_sha1=$(resolve_version_remote_sha1 "$version_name")
@@ -176,9 +184,17 @@ update_version() {
         target_release_name="twilight"
     fi
 
-    download_url="https://github.com/zen-browser/desktop/releases/download/$target_release_name/zen.linux-$arch.tar.xz"
+    if [ "$os" = "darwin" ]; then
+        download_url="https://github.com/zen-browser/desktop/releases/download/$target_release_name/zen.macos-universal.dmg"
+    else
+        download_url="https://github.com/zen-browser/desktop/releases/download/$target_release_name/zen.linux-$arch.tar.xz"
+    fi
 
-    prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
+    if [ "$os" = "darwin" ]; then
+        prefetch_output=$(nix store prefetch-file --hash-type sha256 --json "$download_url")
+    else
+        prefetch_output=$(nix store prefetch-file --unpack --hash-type sha256 --json "$download_url")
+    fi
     sha256=$(echo "$prefetch_output" | jq -r '.hash')
 
     entry_name="$version_name"
@@ -205,12 +221,16 @@ update_version() {
             echo "Release $release_name already exists, skipping creation..."
         fi
 
-        get_twilight_release_artifact_meta_from_zen_repo "$arch" |
+        get_twilight_release_artifact_meta_from_zen_repo "$arch" "$os" |
             while read -r line; do
                 artifact_id=$(echo "$line" | cut -d' ' -f1)
                 artifact_name=$(echo "$line" | cut -d' ' -f2)
 
-                self_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.linux-$arch.tar.xz"
+                if [ "$os" = "darwin" ]; then
+                    self_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.macos-universal.dmg"
+                else
+                    self_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.linux-$arch.tar.xz"
+                fi
 
                 if ! gh release --repo="$flake_repo_location" view "$release_name" | grep "$artifact_name" >/dev/null; then
                     echo "[downloading] An artifact $artifact_name doesn't exists in $release_name"
@@ -225,12 +245,12 @@ update_version() {
                     echo "[skipping] An artifact $artifact_name already exists in $release_name @ following link: $self_download_url"
                 fi
 
-                jq ".[\"twilight\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                jq ".[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
                 mv sources.json.tmp sources.json
             done
     fi
 
-    jq ".[\"$entry_name\"][\"$arch-linux\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    jq ".[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
     mv sources.json.tmp sources.json
 
     echo "$version_name was updated to $semver"
@@ -265,10 +285,12 @@ update_version() {
 main() {
     set -e
 
-    update_version "beta" "x86_64"
-    update_version "beta" "aarch64"
-    update_version "twilight" "x86_64"
-    update_version "twilight" "aarch64"
+    update_version "beta" "x86_64" "linux"
+    update_version "beta" "aarch64" "linux"
+    update_version "beta" "aarch64" "darwin"
+    update_version "twilight" "x86_64" "linux"
+    update_version "twilight" "aarch64" "linux"
+    update_version "twilight" "aarch64" "darwin"
 
     if $only_check && $ci; then
         echo "should_update=false" >>"$GITHUB_OUTPUT"

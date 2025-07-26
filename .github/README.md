@@ -4,7 +4,7 @@ This is a nix flake for the Zen browser.
 
 ## Features
 
-- Linux support
+- Linux and MacOS support
 - Available for _x86_64_ and _aarch64_
 - Support for _twilight_ and _beta_
 - Policies can be modified via Home Manager and unwrapped package override
@@ -56,7 +56,7 @@ Then build your Home Manager configuration
 $ home-manager switch
 ```
 
-Check the [Home Manager Reference](#home-manager-reference) and my rice [here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/browser.nix)! :)
+Check the [Home Manager Reference](#home-manager-reference) and my rice [here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/programs/browser/zen.nix)! :)
 
 </details>
 

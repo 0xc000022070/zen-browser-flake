@@ -57,9 +57,9 @@
     ln -s zen "$out/Applications/${applicationName}.app/Contents/MacOS/${binaryName}"
 
     cat > "$out/bin/${binaryName}" << EOF
-#!/bin/bash
-exec /usr/bin/open -na "$out/Applications/${applicationName}.app" --args "\$@"
-EOF
+    #!/bin/bash
+    exec /usr/bin/open -na "$out/Applications/${applicationName}.app" --args "\$@"
+    EOF
 
     chmod +x "$out/bin/${binaryName}"
     ln -s "$out/bin/${binaryName}" "$out/bin/zen"
@@ -85,27 +85,29 @@ EOF
     install -D $src/browser/chrome/icons/default/default64.png $out/share/icons/hicolor/64x64/apps/zen-${name}.png
     install -D $src/browser/chrome/icons/default/default128.png $out/share/icons/hicolor/128x128/apps/zen-${name}.png
   '';
-
 in
   stdenv.mkDerivation {
     inherit pname;
     inherit (variant) version;
 
-    src = if stdenv.hostPlatform.isDarwin
-      then builtins.fetchurl { inherit (variant) url sha256; }
-      else builtins.fetchTarball { inherit (variant) url sha256; };
+    src =
+      if stdenv.hostPlatform.isDarwin
+      then builtins.fetchurl {inherit (variant) url sha256;}
+      else builtins.fetchTarball {inherit (variant) url sha256;};
 
     sourceRoot = lib.optionalString stdenv.hostPlatform.isDarwin ".";
 
     desktopSrc = ./assets/desktop;
 
-    nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [
-      wrapGAppsHook3
-      autoPatchelfHook
-      patchelfUnstable
-    ] ++ lib.optionals stdenv.hostPlatform.isDarwin [
-      undmg
-    ];
+    nativeBuildInputs =
+      lib.optionals stdenv.hostPlatform.isLinux [
+        wrapGAppsHook3
+        autoPatchelfHook
+        patchelfUnstable
+      ]
+      ++ lib.optionals stdenv.hostPlatform.isDarwin [
+        undmg
+      ];
 
     buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
       gtk3
@@ -136,7 +138,8 @@ in
       )
     '';
 
-    installPhase = if stdenv.hostPlatform.isDarwin
+    installPhase =
+      if stdenv.hostPlatform.isDarwin
       then installDarwin
       else installLinux;
 

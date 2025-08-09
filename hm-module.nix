@@ -2,14 +2,12 @@
   home-manager,
   self,
   name,
-}:
-{
+}: {
   config,
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   applicationName = "Zen Browser";
   modulePath = [
     "programs"
@@ -17,8 +15,7 @@ let
   ];
 
   mkFirefoxModule = import "${home-manager.outPath}/modules/programs/firefox/mkFirefoxModule.nix";
-in
-{
+in {
   imports = [
     (mkFirefoxModule {
       inherit modulePath;
@@ -45,10 +42,10 @@ in
           # Seems like zen uses relative (to the original binary) path to the policies.json file
           # and ignores the overrides by pkgs.wrapFirefox
           policies = config.programs.zen-browser.policies;
-        }) { }).override
-          {
-            nativeMessagingHosts = config.programs.zen-browser.nativeMessagingHosts;
-          };
+        }) {}).override
+        {
+          nativeMessagingHosts = config.programs.zen-browser.nativeMessagingHosts;
+        };
 
       # This does not work, the package can't build using these policies
       policies = lib.mkDefault {

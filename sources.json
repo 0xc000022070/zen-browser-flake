@@ -23,20 +23,20 @@
     "x86_64-linux": {
       "version": "1.15t",
       "sha1": "null",
-      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.15t-1754712321/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-3U/DRNRi5SzKuGPWkV7KiWDD//LawL4Mxsmp3HrIK+o="
+      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.15t-1754786032/zen.linux-x86_64.tar.xz",
+      "sha256": "sha256-8JNKAiTDrP+DCHF71clhB9Me0c9VABLck20rrAvyt1U="
     },
     "aarch64-linux": {
       "version": "1.15t",
       "sha1": "null",
-      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.15t-1754712321/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-gmGVcPj/TG1vACAj9erL8A/pzjkB7i2Om+9Cot3JCWE="
+      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.15t-1754786032/zen.linux-aarch64.tar.xz",
+      "sha256": "sha256-H7VJuSH6vq0xpRboL9XJZoQcubbe43c05PH6JDDZfyQ="
     },
     "aarch64-darwin": {
       "version": "1.15t",
       "sha1": "null",
-      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.15t-1754712321/zen.macos-universal.dmg",
-      "sha256": "sha256-OBM6nb8YCyJNlnUSD1DxxoHUaRa66RIunhDyYcoIVsQ="
+      "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.15t-1754786032/zen.macos-universal.dmg",
+      "sha256": "sha256-4aLhaHdmkB00dh0OY0Vqy5YpAIl3xreYwDmaOOkUWl0="
     }
   },
   "twilight-official": {
@@ -44,22 +44,22 @@
       "version": "1.15t",
       "sha1": "null",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-3U/DRNRi5SzKuGPWkV7KiWDD//LawL4Mxsmp3HrIK+o="
+      "sha256": "sha256-8JNKAiTDrP+DCHF71clhB9Me0c9VABLck20rrAvyt1U="
     },
     "aarch64-linux": {
       "version": "1.15t",
       "sha1": "null",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-gmGVcPj/TG1vACAj9erL8A/pzjkB7i2Om+9Cot3JCWE="
+      "sha256": "sha256-H7VJuSH6vq0xpRboL9XJZoQcubbe43c05PH6JDDZfyQ="
     },
     "aarch64-darwin": {
       "version": "1.15t",
       "sha1": "null",
       "url": "https://github.com/zen-browser/desktop/releases/download/twilight/zen.macos-universal.dmg",
-      "sha256": "sha256-OBM6nb8YCyJNlnUSD1DxxoHUaRa66RIunhDyYcoIVsQ="
+      "sha256": "sha256-4aLhaHdmkB00dh0OY0Vqy5YpAIl3xreYwDmaOOkUWl0="
     }
   },
   "twilight_metadata": {
-    "updated_at": "2025-08-09T04:05:21Z"
+    "updated_at": "2025-08-10T00:33:52Z"
   }
 }

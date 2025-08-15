@@ -50,6 +50,7 @@ jobs:
           file_pattern: "*"
     outputs:
       success: ${{ steps.update.outputs.should_update }}
+      should_rebase_beta: ${{ steps.update.outputs.should_rebase_beta }}
 
   test-build:
     if: needs.update-zen-browser.outputs.success == 'true'
@@ -74,3 +75,27 @@ jobs:
           for package in $(nix flake show --json 2>/dev/null | jq -r '.packages.["x86_64-linux"] | keys | .[]'); do
               nix build --system 'x86_64-linux' ".#$package"
           done
+
+  rebase-beta:
+    if: needs.update-zen-browser.outputs.should_rebase_beta == 'true'
+    name: Rebase beta branch from main
+    runs-on: ubuntu-latest
+    needs: update-zen-browser
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Rebase beta branch from main
+        run: |
+          git checkout beta
+          git rebase main
+          git push origin beta --force-with-lease

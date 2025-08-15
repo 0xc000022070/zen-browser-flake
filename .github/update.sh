@@ -138,6 +138,7 @@ commit_beta_targets=""
 commit_beta_version=""
 commit_twilight_targets=""
 commit_twilight_version=""
+beta_updated=false
 
 update_version() {
     # twilight or beta
@@ -260,6 +261,7 @@ update_version() {
     fi
 
     if [ "$version_name" = "beta" ]; then
+        beta_updated=true
         if [ "$commit_beta_targets" = "" ]; then
             commit_beta_targets="$arch"
             commit_beta_version="$semver"
@@ -322,6 +324,7 @@ main() {
         fi
 
         echo "commit_message=$message" >>"$GITHUB_OUTPUT"
+        echo "should_rebase_beta=$beta_updated" >>"$GITHUB_OUTPUT"
     fi
 }
 

@@ -38,7 +38,7 @@ in {
   config = lib.mkIf config.programs.zen-browser.enable {
     programs.zen-browser = {
       package =
-        (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.system}."${name}-unwrapped".override {
+        (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
           # Seems like zen uses relative (to the original binary) path to the policies.json file
           # and ignores the overrides by pkgs.wrapFirefox
           policies = config.programs.zen-browser.policies;

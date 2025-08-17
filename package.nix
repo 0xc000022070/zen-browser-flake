@@ -20,6 +20,8 @@
   adwaita-icon-theme,
   undmg,
   writeText,
+  fetchurl,
+  fetchzip,
   patchelfUnstable, # have to use patchelfUnstable to support --no-clobber-old-sections
   applicationName ?
     "Zen Browser"
@@ -92,8 +94,8 @@ in
 
     src =
       if stdenv.hostPlatform.isDarwin
-      then builtins.fetchurl {inherit (variant) url sha256;}
-      else builtins.fetchTarball {inherit (variant) url sha256;};
+      then fetchurl {inherit (variant) url sha256;}
+      else fetchzip {inherit (variant) url sha256;};
 
     sourceRoot = lib.optionalString stdenv.hostPlatform.isDarwin ".";
 

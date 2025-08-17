@@ -61,6 +61,11 @@ in {
       type = with types;
         attrsOf (submodule ({...}: {
           options = {
+            spacesForce = mkOption {
+              type = bool;
+              description = "Whether delete existing spaces not declared in the configuration.";
+              default = false;
+            };
             spaces = mkOption {
               type = attrsOf (submodule ({name, ...}: {
                 options = {
@@ -187,6 +192,7 @@ in {
       inherit
         (lib)
         attrByPath
+        concatMapAttrsStringSep
         concatMapStringsSep
         concatStringsSep
         elemAt
@@ -196,6 +202,7 @@ in {
         isStringLike
         lists
         mapAttrsToList
+        optionalString
         pipe
         ;
 
@@ -218,7 +225,7 @@ in {
 
           theme_type TEXT,
           theme_colors TEXT,
-          theme_opacity REAL,
+          theme_opacity REALj
           theme_rotation INTEGER,
           theme_texture REAL
         )
@@ -283,6 +290,17 @@ in {
             (concatMapStringsSep "," (row: "(${row})"))
           ]}
         '';
+
+      filterSpacesTable = spaces:
+        pkgs.writeText "filter.sql" ''
+          DELETE FROM zen_workspaces ${
+            if spaces != {}
+            then "WHERE "
+            else ""
+          }${
+            concatMapAttrsStringSep " AND " (n: v: "NOT uuid = '{${v.id}}'") spaces
+          }
+        '';
     in
       mkIf hasSpaces {
         Install.WantedBy = ["default.target"];
@@ -298,6 +316,8 @@ in {
                 mkdir -p "${configPath}/${n}"
                 ${sqlite3} "${configPath}/${n}/places.sqlite" ".read ${initSpacesTable}"
                 ${sqlite3} "${configPath}/${n}/places.sqlite" ".read ${updateSpacesTable v.spaces}"
+                ${optionalString v.spacesForce
+                  ''${sqlite3} "${configPath}/${n}/places.sqlite" ".read ${filterSpacesTable v.spaces}"''}
               '')))
               (list: map (pkg: getExe pkg) list)
             ];

@@ -4,11 +4,9 @@
 }: let
   mkZen = pkgs: name: system: entry: let
     variant = (builtins.fromJSON (builtins.readFile ./sources.json)).${entry}.${system};
-
-    desktopFile = "zen-${name}.desktop";
   in
     pkgs.callPackage ./package.nix {
-      inherit name desktopFile variant;
+      inherit name variant;
     };
 in rec {
   beta-unwrapped = mkZen pkgs "beta" system "beta";

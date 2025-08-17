@@ -47,10 +47,9 @@ in {
           nativeMessagingHosts = config.programs.zen-browser.nativeMessagingHosts;
         };
 
-      # This does not work, the package can't build using these policies
-      policies = lib.mkDefault {
-        DisableAppUpdate = true;
-        DisableTelemetry = true;
+      policies = {
+        DisableAppUpdate = lib.mkDefault true;
+        DisableTelemetry = lib.mkDefault true;
       };
     };
   };

@@ -18,21 +18,16 @@
       "aarch64-darwin"
     ];
 
-    forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+    forAllSystems = f:
+      nixpkgs.lib.genAttrs supportedSystems (
+        system: f nixpkgs.legacyPackages.${system}
+      );
   in {
-    packages = forAllSystems (system:
-      import ./default.nix {
-        pkgs = nixpkgs.legacyPackages.${system};
-      });
+    packages = forAllSystems (pkgs: import ./default.nix {inherit pkgs;});
 
-    formatter = forAllSystems (
-      system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-        pkgs.alejandra
-    );
+    formatter = forAllSystems (pkgs: pkgs.alejandra);
 
-    homeModules = rec {
+    homeModules = {
       beta = import ./hm-module.nix {
         inherit self home-manager;
         name = "beta";
@@ -45,7 +40,7 @@
         inherit self home-manager;
         name = "twilight-official";
       };
-      default = beta;
+      default = self.homeModules.beta;
     };
   };
 }

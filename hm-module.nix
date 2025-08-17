@@ -20,8 +20,8 @@ in {
     (mkFirefoxModule {
       inherit modulePath;
       name = applicationName;
-      wrappedPackageName = "zen-${name}-unwrapped";
-      unwrappedPackageName = "zen-${name}";
+      wrappedPackageName = "zen-${name}";
+      unwrappedPackageName = "zen-${name}-unwrapped";
       visible = true;
       platforms = {
         linux = {

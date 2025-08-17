@@ -101,8 +101,8 @@ in
 
     src =
       if stdenv.hostPlatform.isDarwin
-      then fetchurl {inherit (variant) url sha256;}
-      else fetchzip {inherit (variant) url sha256;};
+      then fetchurl {inherit (variant) url; hash = sha256;}
+      else fetchzip {inherit (variant) url; hash = sha256;};
 
     sourceRoot = lib.optionalString stdenv.hostPlatform.isDarwin ".";
 

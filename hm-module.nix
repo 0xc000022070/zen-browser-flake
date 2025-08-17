@@ -92,6 +92,69 @@ in {
                     description = "Container ID to be used in space";
                     default = null;
                   };
+                  theme.type = mkOption {
+                    type = nullOr str;
+                    default = "gradient";
+                  };
+                  theme.colors = mkOption {
+                    type = nullOr (listOf (submodule ({...}: {
+                      options = {
+                        red = mkOption {
+                          type = int;
+                          default = 0;
+                        };
+                        green = mkOption {
+                          type = int;
+                          default = 0;
+                        };
+                        blue = mkOption {
+                          type = int;
+                          default = 0;
+                        };
+                        custom = mkOption {
+                          type = bool;
+                          default = false;
+                        };
+                        algorithm = mkOption {
+                          type = enum ["complementary" "floating" "analogous"];
+                          default = "floating";
+                        };
+                        primary = mkOption {
+                          type = bool;
+                          default = true;
+                        };
+                        lightness = mkOption {
+                          type = int;
+                          default = 0;
+                        };
+                        position.x = mkOption {
+                          type = int;
+                          default = 0;
+                        };
+                        position.y = mkOption {
+                          type = int;
+                          default = 0;
+                        };
+                        type = mkOption {
+                          type = enum ["undefined" "explicit-lightness"];
+                          default = "undefined";
+                        };
+                      };
+                    })));
+                    default = [];
+                  };
+                  theme.opacity = mkOption {
+                    type = nullOr float;
+                    default = 0.5;
+                  };
+                  theme.rotation = mkOption {
+                    type = nullOr int;
+                    default = null;
+                  };
+                  theme.texture = mkOption {
+                    type = nullOr float;
+                    default = 0.0;
+                  };
                 };
               }));
               default = {};
@@ -130,12 +193,9 @@ in {
         filterAttrs
         getExe
         getExe'
-        isAttrs
-        isList
         isStringLike
         lists
         mapAttrsToList
-        toJSON
         pipe
         ;
 
@@ -154,7 +214,13 @@ in {
           container_id INTEGER,
           position INTEGER NOT NULL DEFAULT 0,
           created_at INTEGER NOT NULL,
-          updated_at INTEGER NOT NULL
+          updated_at INTEGER NOT NULL,
+
+          theme_type TEXT,
+          theme_colors TEXT,
+          theme_opacity REAL,
+          theme_rotation INTEGER,
+          theme_texture REAL
         )
       '';
 
@@ -168,6 +234,12 @@ in {
             container_id,
             "position",
 
+            theme_type,
+            theme_colors,
+            theme_opacity,
+            theme_rotation,
+            theme_texture,
+
             created_at,
             updated_at
           ) VALUES ${pipe spaces [
@@ -177,17 +249,28 @@ in {
               (attrByPath ["icon"] null space)
               (attrByPath ["container"] null space)
               (attrByPath ["position"] 0 space)
+              (attrByPath ["theme" "type"] "gradient" space)
+              (map (color: {
+                inherit (color) algorithm lightness position type;
+                c = [color.red color.green color.blue];
+                isCustom = color.custom;
+                isPrimary = color.primary;
+              }) (attrByPath ["theme" "colors"] [] space))
+              (attrByPath ["theme" "opacity"] 0.5 space)
+              (attrByPath ["theme" "rotation"] null space)
+              (attrByPath ["theme" "texture"] 0.0 space)
             ]))
             (map (row:
               map (
                 v:
-                  if isStringLike v
-                  then "'${v}'"
-                  else if (isList v) || (isAttrs v)
-                  then "'${toJSON v}'"
-                  else if isNull v
-                  then "NULL"
-                  else builtins.toString v
+                  with builtins;
+                    if isStringLike v
+                    then "'${v}'"
+                    else if (isList v) || (isAttrs v)
+                    then "'${toJSON v}'"
+                    else if isNull v
+                    then "NULL"
+                    else toString v
               )
               row))
             (map (row:

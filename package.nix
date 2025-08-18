@@ -54,8 +54,6 @@
 
   pname = "zen-${name}-bin-unwrapped";
 
-  desktopName = "Zen Browser${lib.optionalString (name == "twilight") " Twilight"}";
-
   installDarwin = ''
     runHook preInstall
 
@@ -119,7 +117,7 @@ in
     desktopItems = [
       (makeDesktopItem {
         name = binaryName;
-        inherit desktopName;
+        desktopName = "Zen Browser${lib.optionalString (name == "twilight") " Twilight"}";
         exec = "${binaryName} %u";
         icon = binaryName;
         type = "Application";
@@ -218,6 +216,6 @@ in
       platforms = builtins.attrNames mozillaPlatforms;
       hydraPlatforms = [];
       mainProgram = binaryName;
-      inherit desktopName;
+      desktopFileName = "${binaryName}.desktop";
     };
   }

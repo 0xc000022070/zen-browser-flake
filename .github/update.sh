@@ -217,7 +217,7 @@ update_version() {
             # Users with push access to the repository can create a release.
             gh release --repo="$flake_repo_location" \
                 create "$release_name" --title="$release_title" \
-                --notes "To be ready when they replace the artifacts from https://github.com/zen-browser/desktop/releases/tag/twilight! :)"
+                --notes "Artifacts from https://github.com/zen-browser/desktop/releases/tag/twilight [;"
         else
             echo "Release $release_name already exists, skipping creation..."
         fi

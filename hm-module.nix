@@ -41,8 +41,8 @@ in {
     (mkFirefoxModule {
       inherit modulePath;
       name = applicationName;
-      wrappedPackageName = "zen-${name}-unwrapped";
-      unwrappedPackageName = "zen-${name}";
+      wrappedPackageName = "zen-${name}";
+      unwrappedPackageName = "zen-${name}-unwrapped";
       visible = true;
       platforms = {
         linux = {
@@ -172,7 +172,7 @@ in {
   config = mkIf cfg.enable {
     programs.zen-browser = {
       package =
-        (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.system}."${name}-unwrapped".override {
+        (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
           # Seems like zen uses relative (to the original binary) path to the policies.json file
           # and ignores the overrides by pkgs.wrapFirefox
           policies = cfg.policies;
@@ -181,10 +181,9 @@ in {
           nativeMessagingHosts = cfg.nativeMessagingHosts;
         };
 
-      # This does not work, the package can't build using these policies
-      policies = lib.mkDefault {
-        DisableAppUpdate = true;
-        DisableTelemetry = true;
+      policies = {
+        DisableAppUpdate = lib.mkDefault true;
+        DisableTelemetry = lib.mkDefault true;
       };
     };
 

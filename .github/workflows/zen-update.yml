@@ -13,7 +13,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check if update is needed
         id: check
@@ -25,7 +25,7 @@ jobs:
       - name: Install Nix
         if: steps.check.outputs.should_update == 'true'
         # TODO: they're @ v31 so next time let's try DeterminateSystems/nix-installer-action@main
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v31
         with:
           nix_path: nixpkgs=channel:nixpkgs-unstable
 
@@ -60,10 +60,10 @@ jobs:
     needs: update-zen-browser
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v31
         with:
           nix_path: nixpkgs=channel:nixpkgs-unstable
 
@@ -85,7 +85,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 

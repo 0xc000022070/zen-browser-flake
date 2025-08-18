@@ -1,11 +1,5 @@
 name: Check *.nix files format
-on:
-  pull_request:
-    paths:
-      - "**.nix "
-  push:
-    paths:
-      - "**.nix"
+on: [pull_request, push]
 
 jobs:
   check-formatting:
@@ -13,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Code checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Alejandra CLI
         uses: luisnquin/setup-alejandra@v1.0.0

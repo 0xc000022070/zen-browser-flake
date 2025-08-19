@@ -210,24 +210,41 @@ in {
         (lists.any (v: v))
       ];
 
-      # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
-      initSpacesTable = pkgs.writeText "init.sql" ''
-        CREATE TABLE IF NOT EXISTS zen_workspaces (
-          id INTEGER PRIMARY KEY,
-          uuid TEXT UNIQUE NOT NULL,
-          name TEXT NOT NULL,
-          icon TEXT,
-          container_id INTEGER,
-          position INTEGER NOT NULL DEFAULT 0,
-          created_at INTEGER NOT NULL,
-          updated_at INTEGER NOT NULL,
+      sqlite3 = getExe' pkgs.sqlite "sqlite3";
 
-          theme_type TEXT,
-          theme_colors TEXT,
-          theme_opacity REALj
-          theme_rotation INTEGER,
-          theme_texture REAL
-        )
+      # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
+      initSpacesTable = pkgs.writeShellScriptBin "init-spaces-table" ''
+        placesFile=$1
+
+        ${sqlite3} $placesFile "${concatStringsSep " " [
+          "CREATE TABLE IF NOT EXISTS zen_workspaces ("
+            "id INTEGER PRIMARY KEY,"
+            "uuid TEXT UNIQUE NOT NULL,"
+            "name TEXT NOT NULL,"
+            "icon TEXT,"
+            "container_id INTEGER,"
+            "position INTEGER NOT NULL DEFAULT 0,"
+            "created_at INTEGER NOT NULL,"
+            "updated_at INTEGER NOT NULL"
+          ");"
+        ]}" || exit 1
+
+        columns=($(${sqlite3} "$placesFile" "SELECT name FROM pragma_table_info('zen_workspaces');"))
+        if [[ ! "''${columns[@]}" =~ "theme_type" ]]; then
+          ${sqlite3} "$placesFile" "ALTER TABLE zen_workspaces ADD COLUMN theme_type TEXT;" || exit 1
+        fi
+        if [[ ! "''${columns[@]}" =~ "theme_colors" ]]; then
+          ${sqlite3} "$placesFile" "ALTER TABLE zen_workspaces ADD COLUMN theme_colors TEXT;" || exit 1
+        fi
+        if [[ ! "''${columns[@]}" =~ "theme_opacity" ]]; then
+          ${sqlite3} "$placesFile" "ALTER TABLE zen_workspaces ADD COLUMN theme_opacity REAL;" || exit 1
+        fi
+        if [[ ! "''${columns[@]}" =~ "theme_rotation" ]]; then
+          ${sqlite3} "$placesFile" "ALTER TABLE zen_workspaces ADD COLUMN theme_rotation INTEGER;" || exit 1
+        fi
+        if [[ ! "''${columns[@]}" =~ "theme_texture" ]]; then
+          ${sqlite3} "$placesFile" "ALTER TABLE zen_workspaces ADD COLUMN theme_texture REAL;" || exit 1
+        fi
       '';
 
       # Source: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L141-L149
@@ -306,17 +323,19 @@ in {
         Unit.After = ["home-manager-${config.home.username}.service"];
         Service = {
           Type = "oneshot";
-          ExecStart = let
-            sqlite3 = getExe' pkgs.sqlite "sqlite3";
-          in
+          ExecStart =
             pipe cfg.profiles [
               (filterAttrs (_: v: v.spaces != {}))
-              (mapAttrsToList (n: v: (pkgs.writeShellScriptBin "zen-browser-spaces-${n}" ''
+              (mapAttrsToList (n: v: let
+                placesFile = "${configPath}/${n}/places.sqlite";
+              in (pkgs.writeShellScriptBin "zen-browser-spaces-${n}" ''
                 mkdir -p "${configPath}/${n}"
-                ${sqlite3} "${configPath}/${n}/places.sqlite" ".read ${initSpacesTable}"
-                ${sqlite3} "${configPath}/${n}/places.sqlite" ".read ${updateSpacesTable v.spaces}"
+                ${getExe initSpacesTable} "${placesFile}"
+
+                ${sqlite3} "${placesFile}" ".read ${updateSpacesTable v.spaces}"
+
                 ${optionalString v.spacesForce
-                  ''${sqlite3} "${configPath}/${n}/places.sqlite" ".read ${filterSpacesTable v.spaces}"''}
+                  ''${sqlite3} "${placesFile}" ".read ${filterSpacesTable v.spaces}"''}
               '')))
               (list: map (pkg: getExe pkg) list)
             ];

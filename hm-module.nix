@@ -249,8 +249,9 @@ in {
                 in (pkgs.writeShellScriptBin "zen-browser-spaces-${n}" ''
                   mkdir -p "${configPath}/${n}"
 
-                  # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
-                  ${sqlite3} $placesFile "${
+                  function updateSpaces() {
+                    # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
+                    ${sqlite3} $placesFile "${
                     concatStringsSep " " [
                       "CREATE TABLE IF NOT EXISTS zen_workspaces ("
                       "id INTEGER PRIMARY KEY,"
@@ -265,25 +266,25 @@ in {
                     ]
                   }" || exit 1
 
-                  columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_workspaces');"))
-                  if [[ ! "''${columns[@]}" =~ "theme_type" ]]; then
-                    ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_type TEXT;" || exit 1
-                  fi
-                  if [[ ! "''${columns[@]}" =~ "theme_colors" ]]; then
-                    ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_colors TEXT;" || exit 1
-                  fi
-                  if [[ ! "''${columns[@]}" =~ "theme_opacity" ]]; then
-                    ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_opacity REAL;" || exit 1
-                  fi
-                  if [[ ! "''${columns[@]}" =~ "theme_rotation" ]]; then
-                    ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_rotation INTEGER;" || exit 1
-                  fi
-                  if [[ ! "''${columns[@]}" =~ "theme_texture" ]]; then
-                    ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_texture REAL;" || exit 1
-                  fi
+                    columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_workspaces');"))
+                    if [[ ! "''${columns[@]}" =~ "theme_type" ]]; then
+                      ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_type TEXT;" || exit 1
+                    fi
+                    if [[ ! "''${columns[@]}" =~ "theme_colors" ]]; then
+                      ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_colors TEXT;" || exit 1
+                    fi
+                    if [[ ! "''${columns[@]}" =~ "theme_opacity" ]]; then
+                      ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_opacity REAL;" || exit 1
+                    fi
+                    if [[ ! "''${columns[@]}" =~ "theme_rotation" ]]; then
+                      ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_rotation INTEGER;" || exit 1
+                    fi
+                    if [[ ! "''${columns[@]}" =~ "theme_texture" ]]; then
+                      ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_texture REAL;" || exit 1
+                    fi
 
-                  # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L141-L149
-                  ${sqlite3} "${placesFile}" "${
+                    # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L141-L149
+                    ${sqlite3} "${placesFile}" "${
                     concatStringsSep " " [
                       "INSERT OR REPLACE INTO zen_workspaces ("
                       "uuid,"
@@ -361,13 +362,28 @@ in {
                     ]
                   }" || exit 1
 
-                  ${optionalString v.spacesForce ''${sqlite3} "${placesFile}" "DELETE FROM zen_workspaces ${
+                    ${optionalString v.spacesForce ''${sqlite3} "${placesFile}" "DELETE FROM zen_workspaces ${
                       if v.spaces != {}
                       then "WHERE "
                       else ""
                     }${
                       concatMapAttrsStringSep " AND " (n: v: "NOT uuid = '{${v.id}}'") v.spaces
                     }" || exit 1''}
+                  }
+
+                  error="$(updateSpaces 2>&1 1>/dev/null)"
+                  if [[ $? -ne 0 ]]; then
+                    if [[ "$error" == *"database is locked"* ]]; then
+                      echo "$error"
+                      echo 'zen-browser-spaces-activation: Failed to update spaces due to a Zen browser instance being opened while this service was running for profile "${n}",'
+                      echo 'zen-browser-spaces-activation: please close Zen browser and restart this service to update the spaces.'
+                    else
+                      echo "$error"
+                    fi
+                    exit 1
+                  else
+                    exit 0
+                  fi
                 '')
               ))
               (list: map (pkg: getExe pkg) list)

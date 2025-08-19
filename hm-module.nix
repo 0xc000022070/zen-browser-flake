@@ -29,11 +29,13 @@
   linuxConfigPath = ".zen";
   darwinConfigPath = "Library/Application Support/Zen";
 
-  configPath = "${config.home.homeDirectory}/${(
-    if pkgs.stdenv.isDarwin
-    then darwinConfigPath
-    else linuxConfigPath
-  )}";
+  configPath = "${config.home.homeDirectory}/${
+    (
+      if pkgs.stdenv.isDarwin
+      then darwinConfigPath
+      else linuxConfigPath
+    )
+  }";
 
   mkFirefoxModule = import "${home-manager.outPath}/modules/programs/firefox/mkFirefoxModule.nix";
 in {
@@ -59,113 +61,134 @@ in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
       type = with types;
-        attrsOf (submodule ({...}: {
-          options = {
-            spacesForce = mkOption {
-              type = bool;
-              description = "Whether delete existing spaces not declared in the configuration.";
-              default = false;
-            };
-            spaces = mkOption {
-              type = attrsOf (submodule ({name, ...}: {
-                options = {
-                  name = mkOption {
-                    type = str;
-                    description = "Name of the space.";
-                    default = name;
-                  };
-                  id = mkOption {
-                    type = str;
-                    description = "REQUIRED. Unique Version 4 UUID for space.";
-                  };
-                  position = mkOption {
-                    type = ints.unsigned;
-                    description = "Position of space in the left bar.";
-                    default = 1000;
-                  };
-                  icon = mkOption {
-                    type = nullOr (either str path);
-                    description = "Emoji or icon URI to be used as space icon.";
-                    apply = v:
-                      if isPath v
-                      then "file://${v}"
-                      else v;
-                    default = null;
-                  };
-                  container = mkOption {
-                    type = nullOr ints.unsigned;
-                    description = "Container ID to be used in space";
-                    default = null;
-                  };
-                  theme.type = mkOption {
-                    type = nullOr str;
-                    default = "gradient";
-                  };
-                  theme.colors = mkOption {
-                    type = nullOr (listOf (submodule ({...}: {
-                      options = {
-                        red = mkOption {
-                          type = int;
-                          default = 0;
-                        };
-                        green = mkOption {
-                          type = int;
-                          default = 0;
-                        };
-                        blue = mkOption {
-                          type = int;
-                          default = 0;
-                        };
-                        custom = mkOption {
-                          type = bool;
-                          default = false;
-                        };
-                        algorithm = mkOption {
-                          type = enum ["complementary" "floating" "analogous"];
-                          default = "floating";
-                        };
-                        primary = mkOption {
-                          type = bool;
-                          default = true;
-                        };
-                        lightness = mkOption {
-                          type = int;
-                          default = 0;
-                        };
-                        position.x = mkOption {
-                          type = int;
-                          default = 0;
-                        };
-                        position.y = mkOption {
-                          type = int;
-                          default = 0;
-                        };
-                        type = mkOption {
-                          type = enum ["undefined" "explicit-lightness"];
-                          default = "undefined";
-                        };
-                      };
-                    })));
-                    default = [];
-                  };
-                  theme.opacity = mkOption {
-                    type = nullOr float;
-                    default = 0.5;
-                  };
-                  theme.rotation = mkOption {
-                    type = nullOr int;
-                    default = null;
-                  };
-                  theme.texture = mkOption {
-                    type = nullOr float;
-                    default = 0.0;
-                  };
+        attrsOf (
+          submodule (
+            {...}: {
+              options = {
+                spacesForce = mkOption {
+                  type = bool;
+                  description = "Whether delete existing spaces not declared in the configuration.";
+                  default = false;
                 };
-              }));
-              default = {};
-            };
-          };
-        }));
+                spaces = mkOption {
+                  type = attrsOf (
+                    submodule (
+                      {name, ...}: {
+                        options = {
+                          name = mkOption {
+                            type = str;
+                            description = "Name of the space.";
+                            default = name;
+                          };
+                          id = mkOption {
+                            type = str;
+                            description = "REQUIRED. Unique Version 4 UUID for space.";
+                          };
+                          position = mkOption {
+                            type = ints.unsigned;
+                            description = "Position of space in the left bar.";
+                            default = 1000;
+                          };
+                          icon = mkOption {
+                            type = nullOr (either str path);
+                            description = "Emoji or icon URI to be used as space icon.";
+                            apply = v:
+                              if isPath v
+                              then "file://${v}"
+                              else v;
+                            default = null;
+                          };
+                          container = mkOption {
+                            type = nullOr ints.unsigned;
+                            description = "Container ID to be used in space";
+                            default = null;
+                          };
+                          theme.type = mkOption {
+                            type = nullOr str;
+                            default = "gradient";
+                          };
+                          theme.colors = mkOption {
+                            type = nullOr (
+                              listOf (
+                                submodule (
+                                  {...}: {
+                                    options = {
+                                      red = mkOption {
+                                        type = int;
+                                        default = 0;
+                                      };
+                                      green = mkOption {
+                                        type = int;
+                                        default = 0;
+                                      };
+                                      blue = mkOption {
+                                        type = int;
+                                        default = 0;
+                                      };
+                                      custom = mkOption {
+                                        type = bool;
+                                        default = false;
+                                      };
+                                      algorithm = mkOption {
+                                        type = enum [
+                                          "complementary"
+                                          "floating"
+                                          "analogous"
+                                        ];
+                                        default = "floating";
+                                      };
+                                      primary = mkOption {
+                                        type = bool;
+                                        default = true;
+                                      };
+                                      lightness = mkOption {
+                                        type = int;
+                                        default = 0;
+                                      };
+                                      position.x = mkOption {
+                                        type = int;
+                                        default = 0;
+                                      };
+                                      position.y = mkOption {
+                                        type = int;
+                                        default = 0;
+                                      };
+                                      type = mkOption {
+                                        type = enum [
+                                          "undefined"
+                                          "explicit-lightness"
+                                        ];
+                                        default = "undefined";
+                                      };
+                                    };
+                                  }
+                                )
+                              )
+                            );
+                            default = [];
+                          };
+                          theme.opacity = mkOption {
+                            type = nullOr float;
+                            default = 0.5;
+                          };
+                          theme.rotation = mkOption {
+                            type = nullOr int;
+                            default = null;
+                          };
+                          theme.texture = mkOption {
+                            type = nullOr float;
+                            default = 0.0;
+                          };
+                        };
+                      }
+                    )
+                  );
+                  default = {};
+                };
+              };
+            }
+          )
+        );
     };
   };
 

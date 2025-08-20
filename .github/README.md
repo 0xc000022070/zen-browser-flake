@@ -251,9 +251,16 @@ Check the [Home Manager Reference](#home-manager-reference).
 
 ## Troubleshooting
 
+#### Zen not seeing my GPU
+
+Make sure that you update your flake.lock as to sync up nixpkgs version. Or make zen follow your system nixpkgs by using
+`inputs.nixpkgs.follows = "nixpkgs"` (assuming your nixpkgs input is named nixpkgs).
+
+Check [No WebGL context](https://github.com/0xc000022070/zen-browser-flake/issues/86) for details.
+
 #### 1Password constantly requires password
 
-You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See <https://github.com/0xc000022070/zen-browser-flake/issues/48>.
+You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See <https://github.com/0xc000022070/zen-browser-flake/issues/48>. 
 
 ## Contributing
 

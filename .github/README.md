@@ -156,12 +156,14 @@ experiment with other program options and help with further documentation.
 
   ```nix
   {
-    programs.zen-browser.policies = {
-      Preferences = {
-        "browser.tabs.warnOnClose" = {
-          "Value" = false;
-          "Status" = "locked";
-        };
+    programs.zen-browser.policies = let
+      mkLockedAttrs = builtins.mapAttrs (_: value: {
+        Value = value;
+        Status = "locked";
+      });
+    in {
+      Preferences = mkLockedAttrs {
+        "browser.tabs.warnOnClose" = false;
         # and so on...
       };
     };
@@ -176,18 +178,17 @@ experiment with other program options and help with further documentation.
 
   ```nix
   {
-    programs.zen-browser.policies = {
-      ExtensionSettings = {
-        "wappalyzer@crunchlabz.com" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/wappalyzer/latest.xpi";
-          installation_mode = "force_installed";
-        };
-        "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/github-file-icons/latest.xpi";
-          installation_mode = "force_installed";
-        };
+    programs.zen-browser.policies = let
+      mkExtensionSettings = builtins.mapAttrs (_: pluginId: {
+        install_url = "https://addons.mozilla.org/firefox/downloads/latest/${pluginId}/latest.xpi";
+        installation_mode = "force_installed";
+      });
+    in {
+      ExtensionSettings = mkExtensionSettings {
+        "wappalyzer@crunchlabz.com" = "wappalyzer";
+        "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = "github-file-icons";
       };
-    }
+    };
   }
   ```
 

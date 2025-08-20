@@ -69,21 +69,21 @@ Check the [Home Manager Reference](#home-manager-reference) and my rice [here](h
 To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the following to your `environment.systemPackages` or `home.packages`:
 
 ```nix
-# system: only 'x86_64-linux' and 'aarch64-linux' are supported
+# options are: 'x86_64-linux', 'aarch64-linux' and 'aarch64-darwin'
 
 inputs.zen-browser.packages."${system}".default # beta
-inputs.zen-browser.packages."${system}".beta # or "beta-unwrapped"
-inputs.zen-browser.packages."${system}".twilight # or "twilight-unwrapped"
+inputs.zen-browser.packages."${system}".beta
+inputs.zen-browser.packages."${system}".twilight
 # IMPORTANT: this package relies on the twilight release artifacts from the
-# official zen repo and no new release is created, the artifacts are replaced
-inputs.zen-browser.packages."${system}".twilight-official # or "twilight-official-unwrapped"
+# official zen repo and those artifacts are always replaced, causing hash mismatch
+inputs.zen-browser.packages."${system}".twilight-official
 
 # you can even override the package policies
 inputs.zen-browser.packages."${system}".default.override {
   policies = {
       DisableAppUpdate = true;
       DisableTelemetry = true;
-      # find more options here: https://mozilla.github.io/policy-templates/
+      # more and more
   };
 }
 ```

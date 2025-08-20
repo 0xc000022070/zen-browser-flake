@@ -28,6 +28,9 @@ inputs = {
 }
 ```
 
+> [!NOTE]
+> **Beta Branch**: To keep the flake input only sync with beta updates, use `inputs.zen-browser.url = "github:0xc000022070/zen-browser-flake/beta"`.
+
 ### Integration
 
 > [!IMPORTANT]

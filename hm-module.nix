@@ -114,15 +114,15 @@ in {
                                   {...}: {
                                     options = {
                                       red = mkOption {
-                                        type = int;
+                                        type = ints.between 0 255;
                                         default = 0;
                                       };
                                       green = mkOption {
-                                        type = int;
+                                        type = ints.between 0 255;
                                         default = 0;
                                       };
                                       blue = mkOption {
-                                        type = int;
+                                        type = ints.between 0 255;
                                         default = 0;
                                       };
                                       custom = mkOption {

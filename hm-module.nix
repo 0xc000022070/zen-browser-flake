@@ -67,7 +67,7 @@ in {
               options = {
                 spacesForce = mkOption {
                   type = bool;
-                  description = "Whether delete existing spaces not declared in the configuration.";
+                  description = "Whether to delete existing spaces not declared in the configuration.";
                   default = false;
                 };
                 spaces = mkOption {

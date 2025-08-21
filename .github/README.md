@@ -7,7 +7,7 @@ This is a nix flake for the Zen browser.
 - Linux and MacOS support
 - Available for _x86_64_ and _aarch64_
 - Support for _twilight_ and _beta_
-- Policies can be modified via Home Manager and unwrapped package override
+- [Policies can be modified via Home Manager and unwrapped package override](#policies)
 - Fast & Automatic updates via GitHub Actions
 - Browser update checks are disabled by default
 - The default twilight version is reliable and reproducible
@@ -123,94 +123,96 @@ experiment with other program options and help with further documentation.
   }
   ```
 
+### Policies
+
 - `policies` (attrsOf anything): You can also modify the **extensions** and **preferences** from here.
 
-  **Some common policies:**
+#### Some common policies
 
-  ```nix
-  {
-    programs.zen-browser.policies = {
-      AutofillAddressEnabled = true;
-      AutofillCreditCardEnabled = false;
-      DisableAppUpdate = true;
-      DisableFeedbackCommands = true;
-      DisableFirefoxStudies = true;
-      DisablePocket = true;
-      DisableTelemetry = true;
-      DontCheckDefaultBrowser = true;
-      NoDefaultBookmarks = true;
-      OfferToSaveLogins = false;
-      EnableTrackingProtection = {
-        Value = true;
-        Locked = true;
-        Cryptomining = true;
-        Fingerprinting = true;
-      };
+```nix
+{
+  programs.zen-browser.policies = {
+    AutofillAddressEnabled = true;
+    AutofillCreditCardEnabled = false;
+    DisableAppUpdate = true;
+    DisableFeedbackCommands = true;
+    DisableFirefoxStudies = true;
+    DisablePocket = true;
+    DisableTelemetry = true;
+    DontCheckDefaultBrowser = true;
+    NoDefaultBookmarks = true;
+    OfferToSaveLogins = false;
+    EnableTrackingProtection = {
+      Value = true;
+      Locked = true;
+      Cryptomining = true;
+      Fingerprinting = true;
     };
-  }
-  ```
+  };
+}
+```
 
-  For more policies [read this](https://mozilla.github.io/policy-templates/).
+For more policies [read this](https://mozilla.github.io/policy-templates/).
 
-  **Preferences:**
+#### Preferences
 
-  ```nix
-  {
-    programs.zen-browser.policies = let
-      mkLockedAttrs = builtins.mapAttrs (_: value: {
-        Value = value;
-        Status = "locked";
-      });
-    in {
-      Preferences = mkLockedAttrs {
-        "browser.tabs.warnOnClose" = false;
-        # and so on...
-      };
+```nix
+{
+  programs.zen-browser.policies = let
+    mkLockedAttrs = builtins.mapAttrs (_: value: {
+      Value = value;
+      Status = "locked";
+    });
+  in {
+    Preferences = mkLockedAttrs {
+      "browser.tabs.warnOnClose" = false;
+      # and so on...
     };
-  }
-  ```
+  };
+}
+```
 
-  **Zen-specific preferences:**
+##### Zen-specific preferences
 
-  Check [this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
+Check [this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
 
-  **Extensions:**
+#### Extensions
 
-  ```nix
-  {
-    programs.zen-browser.policies = let
-      mkExtensionSettings = builtins.mapAttrs (_: pluginId: {
-        install_url = "https://addons.mozilla.org/firefox/downloads/latest/${pluginId}/latest.xpi";
-        installation_mode = "force_installed";
-      });
-    in {
-      ExtensionSettings = mkExtensionSettings {
-        "wappalyzer@crunchlabz.com" = "wappalyzer";
-        "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = "github-file-icons";
-      };
+```nix
+{
+  programs.zen-browser.policies = let
+    mkExtensionSettings = builtins.mapAttrs (_: pluginId: {
+      install_url = "https://addons.mozilla.org/firefox/downloads/latest/${pluginId}/latest.xpi";
+      installation_mode = "force_installed";
+    });
+  in {
+    ExtensionSettings = mkExtensionSettings {
+      "wappalyzer@crunchlabz.com" = "wappalyzer";
+      "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = "github-file-icons";
     };
-  }
-  ```
+  };
+}
+```
 
-  To setup your own extensions you should:
+To setup your own extensions you should:
 
-   1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
-   2. Go to the page of the extension that you want to declare.
-   3. Go to "_See all versions_".
-   4. Copy the link from any button to "Download file".
-   5. Exec **wget** with the output of this command:
+ 1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
+ 2. Go to the page of the extension that you want to declare.
+ 3. Go to "_See all versions_".
+ 4. Copy the link from any button to "Download file".
+ 5. Exec **wget** with the output of this command:
 
-     ```bash
-     echo "<paste-the-link-here>" \
-      | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
-      | tr '_' '-' \
-      | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}'
-     ```
+   ```bash
+   echo "<paste-the-link-here>" \
+    | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
+    | tr '_' '-' \
+    | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}'
+   ```
 
-   6. Run `unzip -*.xpi -d my-extension && cd my-extension`.
-   7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use the result
-   for the _entry key_.
-   8. Don't forget to add the `install_url` and set `installation_mode` to `force_installed`.
+ 6. Run `unzip -*.xpi -d my-extension && cd my-extension`.
+ 7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use the result
+ for the _entry key_.
+ 8. Don't forget to add the `install_url` and set `installation_mode` to `force_installed`.
 
 ## 1Password
 

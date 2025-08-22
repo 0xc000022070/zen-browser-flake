@@ -10,7 +10,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Setup Alejandra CLI
-        uses: luisnquin/setup-alejandra@v1.0.0
+        uses: 0xc000022070/setup-alejandra@v4.0.0
 
       - name: Check formatting
         run: alejandra --check **/*.nix

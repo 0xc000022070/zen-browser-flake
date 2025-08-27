@@ -96,6 +96,7 @@ jobs:
 
       - name: Rebase beta branch from main
         run: |
+          git pull origin main
           git checkout beta
           git rebase main
           git push origin beta --force-with-lease

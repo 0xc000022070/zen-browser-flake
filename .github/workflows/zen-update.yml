@@ -44,7 +44,7 @@ jobs:
       - name: Commit changes
         id: commit
         if: steps.check.outputs.should_update == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "${{ steps.update.outputs.commit_message }}"
           file_pattern: "*"

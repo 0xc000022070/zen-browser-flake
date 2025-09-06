@@ -192,6 +192,7 @@ in
     preFixup = ''
       gappsWrapperArgs+=(
         --add-flags "--name=''${MOZ_APP_LAUNCHER:-${binaryName}}"
+        --add-flags "--class=''${MOZ_APP_LAUNCHER:-${binaryName}}"
       )
     '';
 

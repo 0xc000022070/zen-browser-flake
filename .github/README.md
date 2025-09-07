@@ -375,6 +375,12 @@ To set Zen Browser as the default application for various file types and URL sch
 
 ## Troubleshooting
 
+#### The requested URL returned error: 404
+
+This usually happens when the Zen team deletes a beta release from the official repository. They do this to keep only stable artifacts available. See [#105](https://github.com/0xc000022070/zen-browser-flake/issues/105#issuecomment-3243452133) and [#112](https://github.com/0xc000022070/zen-browser-flake/issues/112#issuecomment-3262519193) for further context.
+
+You can either revert your nix input update or wait until CI refreshes [sources.json](../sources.json).
+
 #### Zen not seeing my GPU
 
 Make sure that you update your flake.lock as to sync up nixpkgs version. Or make zen follow your system nixpkgs by using
@@ -384,7 +390,7 @@ Check [No WebGL context](https://github.com/0xc000022070/zen-browser-flake/issue
 
 #### 1Password constantly requires password
 
-You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See <https://github.com/0xc000022070/zen-browser-flake/issues/48>.
+You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See [#48](https://github.com/0xc000022070/zen-browser-flake/issues/48).
 
 ## Contributing
 

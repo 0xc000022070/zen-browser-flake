@@ -2,15 +2,14 @@
   home-manager,
   self,
   name,
-}:
-{
+}: {
   config,
   pkgs,
   lib,
   ...
-}:
-let
-  inherit (lib)
+}: let
+  inherit
+    (lib)
     getAttrFromPath
     isPath
     mkIf
@@ -30,11 +29,14 @@ let
   linuxConfigPath = ".zen";
   darwinConfigPath = "Library/Application Support/Zen";
 
-  configPath = "${(if pkgs.stdenv.isDarwin then darwinConfigPath else linuxConfigPath)}";
+  configPath = "${(
+    if pkgs.stdenv.isDarwin
+    then darwinConfigPath
+    else linuxConfigPath
+  )}";
 
   mkFirefoxModule = import "${home-manager.outPath}/modules/programs/firefox/mkFirefoxModule.nix";
-in
-{
+in {
   imports = [
     (mkFirefoxModule {
       inherit modulePath;
@@ -56,13 +58,23 @@ in
   ];
 
   options = setAttrByPath modulePath {
+    extraPrefsFiles = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = "List of extra preference files to be included.";
+    };
+
+    extraPrefs = mkOption {
+      type = types.str;
+      default = "";
+      description = "Extra preferences to be included.";
+    };
+
     profiles = mkOption {
-      type =
-        with types;
+      type = with types;
         attrsOf (
           submodule (
-            { ... }:
-            {
+            {...}: {
               options = {
                 spacesForce = mkOption {
                   type = bool;
@@ -72,8 +84,7 @@ in
                 spaces = mkOption {
                   type = attrsOf (
                     submodule (
-                      { name, ... }:
-                      {
+                      {name, ...}: {
                         options = {
                           name = mkOption {
                             type = str;
@@ -92,7 +103,10 @@ in
                           icon = mkOption {
                             type = nullOr (either str path);
                             description = "Emoji or icon URI to be used as space icon.";
-                            apply = v: if isPath v then "file://${v}" else v;
+                            apply = v:
+                              if isPath v
+                              then "file://${v}"
+                              else v;
                             default = null;
                           };
                           container = mkOption {
@@ -108,8 +122,7 @@ in
                             type = nullOr (
                               listOf (
                                 submodule (
-                                  { ... }:
-                                  {
+                                  {...}: {
                                     options = {
                                       red = mkOption {
                                         type = ints.between 0 255;
@@ -163,7 +176,7 @@ in
                                 )
                               )
                             );
-                            default = [ ];
+                            default = [];
                           };
                           theme.opacity = mkOption {
                             type = nullOr float;
@@ -181,7 +194,7 @@ in
                       }
                     )
                   );
-                  default = { };
+                  default = {};
                 };
               };
             }
@@ -197,10 +210,12 @@ in
           # Seems like zen uses relative (to the original binary) path to the policies.json file
           # and ignores the overrides by pkgs.wrapFirefox
           policies = cfg.policies;
-        }) { }).override
-          {
-            nativeMessagingHosts = cfg.nativeMessagingHosts;
-          };
+        }) {}).override
+        {
+          extraPrefs = cfg.extraPrefs;
+          extraPrefsFiles = cfg.extraPrefsFiles;
+          nativeMessagingHosts = cfg.nativeMessagingHosts;
+        };
 
       policies = {
         DisableAppUpdate = lib.mkDefault true;
@@ -208,140 +223,166 @@ in
       };
     };
 
-    home.file =
-      let
-        inherit (builtins)
-          isNull
-          toJSON
-          toString
-          ;
-        inherit (lib)
-          concatStringsSep
-          concatMapStringsSep
-          concatMapAttrsStringSep
-          filterAttrs
-          getExe
-          getExe'
-          mapAttrs'
-          mapAttrsToList
-          nameValuePair
-          optionalString
-          pipe
-          ;
+    home.file = let
+      inherit
+        (builtins)
+        isNull
+        toJSON
+        toString
+        ;
+      inherit
+        (lib)
+        concatStringsSep
+        concatMapStringsSep
+        concatMapAttrsStringSep
+        filterAttrs
+        getExe
+        getExe'
+        mapAttrs'
+        mapAttrsToList
+        nameValuePair
+        optionalString
+        pipe
+        ;
+    in (mapAttrs' (
+      profileName: profile: let
+        sqlite3 = getExe' pkgs.sqlite "sqlite3";
+        scriptFile = "${configPath}/${profileName}/places_update.sh";
+        placesFile = "${config.home.homeDirectory}/${configPath}/${profileName}/places.sqlite";
+
+        insertSpaces = ''
+          # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
+          ${sqlite3} "${placesFile}" "${
+            concatStringsSep " " [
+              "CREATE TABLE IF NOT EXISTS zen_workspaces ("
+              "id INTEGER PRIMARY KEY,"
+              "uuid TEXT UNIQUE NOT NULL,"
+              "name TEXT NOT NULL,"
+              "icon TEXT,"
+              "container_id INTEGER,"
+              "position INTEGER NOT NULL DEFAULT 0,"
+              "created_at INTEGER NOT NULL,"
+              "updated_at INTEGER NOT NULL"
+              ");"
+            ]
+          }" || exit 1
+
+          columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_workspaces');"))
+          if [[ ! "''${columns[@]}" =~ "theme_type" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_type TEXT;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "theme_colors" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_colors TEXT;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "theme_opacity" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_opacity REAL;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "theme_rotation" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_rotation INTEGER;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "theme_texture" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_texture REAL;" || exit 1
+          fi
+
+          # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L141-L149
+          ${sqlite3} "${placesFile}" "${
+            (concatStringsSep " " [
+              "INSERT OR REPLACE INTO zen_workspaces ("
+              "uuid,"
+              "name,"
+              "icon,"
+              "container_id,"
+              "position,"
+
+              "theme_type,"
+              "theme_colors,"
+              "theme_opacity,"
+              "theme_rotation,"
+              "theme_texture,"
+
+              "created_at,"
+              "updated_at"
+              ") VALUES "
+            ])
+            + (pipe profile.spaces [
+              (mapAttrsToList (
+                _: s: [
+                  "'{${s.id}}'"
+                  "'${s.name}'"
+                  (
+                    if isNull s.icon
+                    then "NULL"
+                    else "'${s.icon}'"
+                  )
+                  (
+                    if isNull s.container
+                    then "NULL"
+                    else toString s.container
+                  )
+                  (toString s.position)
+                  (
+                    if isNull s.theme.type
+                    then "NULL"
+                    else "'${s.theme.type}'"
+                  )
+                  (
+                    if isNull s.theme.colors
+                    then "NULL"
+                    else "'${
+                      toJSON (
+                        map (c: {
+                          inherit
+                            (c)
+                            algorithm
+                            lightness
+                            position
+                            type
+                            ;
+                          c = [
+                            c.red
+                            c.green
+                            c.blue
+                          ];
+                          isCustom = c.custom;
+                          isPrimary = c.primary;
+                        })
+                        s.theme.colors
+                      )
+                    }'"
+                  )
+                  (
+                    if isNull s.theme.opacity
+                    then "NULL"
+                    else toString s.theme.opacity
+                  )
+                  (
+                    if isNull s.theme.rotation
+                    then "NULL"
+                    else toString s.theme.rotation
+                  )
+                  (
+                    if isNull s.theme.texture
+                    then "NULL"
+                    else toString s.theme.texture
+                  )
+                  "COALESCE((SELECT created_at FROM zen_workspaces WHERE uuid = '{${s.id}}'), strftime('%s', 'now'))"
+                  "strftime('%s', 'now')"
+                ]
+              ))
+              (map (row: concatStringsSep "," row))
+              (concatMapStringsSep "," (row: "(${row})"))
+            ])
+          }" || exit 1
+        '';
+
+        deleteSpaces = ''
+          ${sqlite3} "${placesFile}" "DELETE FROM zen_workspaces ${
+            if profile.spaces != {}
+            then "WHERE "
+            else ""
+          }${concatMapAttrsStringSep " AND " (_: s: "NOT uuid = '{${s.id}}'") profile.spaces}" || exit 1
+        '';
       in
-      (mapAttrs' (
-        profileName: profile:
-        let
-          sqlite3 = getExe' pkgs.sqlite "sqlite3";
-          scriptFile = "${configPath}/${profileName}/places_update.sh";
-          placesFile = "${config.home.homeDirectory}/${configPath}/${profileName}/places.sqlite";
-
-          insertSpaces = ''
-            # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
-            ${sqlite3} "${placesFile}" "${
-              concatStringsSep " " [
-                "CREATE TABLE IF NOT EXISTS zen_workspaces ("
-                "id INTEGER PRIMARY KEY,"
-                "uuid TEXT UNIQUE NOT NULL,"
-                "name TEXT NOT NULL,"
-                "icon TEXT,"
-                "container_id INTEGER,"
-                "position INTEGER NOT NULL DEFAULT 0,"
-                "created_at INTEGER NOT NULL,"
-                "updated_at INTEGER NOT NULL"
-                ");"
-              ]
-            }" || exit 1
-
-            columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_workspaces');"))
-            if [[ ! "''${columns[@]}" =~ "theme_type" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_type TEXT;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "theme_colors" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_colors TEXT;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "theme_opacity" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_opacity REAL;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "theme_rotation" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_rotation INTEGER;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "theme_texture" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_texture REAL;" || exit 1
-            fi
-
-            # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L141-L149
-            ${sqlite3} "${placesFile}" "${
-              (concatStringsSep " " [
-                "INSERT OR REPLACE INTO zen_workspaces ("
-                "uuid,"
-                "name,"
-                "icon,"
-                "container_id,"
-                "position,"
-
-                "theme_type,"
-                "theme_colors,"
-                "theme_opacity,"
-                "theme_rotation,"
-                "theme_texture,"
-
-                "created_at,"
-                "updated_at"
-                ") VALUES "
-              ])
-              + (pipe profile.spaces [
-                (mapAttrsToList (
-                  _: s: [
-                    "'{${s.id}}'"
-                    "'${s.name}'"
-                    (if isNull s.icon then "NULL" else "'${s.icon}'")
-                    (if isNull s.container then "NULL" else toString s.container)
-                    (toString s.position)
-                    (if isNull s.theme.type then "NULL" else "'${s.theme.type}'")
-                    (
-                      if isNull s.theme.colors then
-                        "NULL"
-                      else
-                        "'${
-                          toJSON (
-                            map (c: {
-                              inherit (c)
-                                algorithm
-                                lightness
-                                position
-                                type
-                                ;
-                              c = [
-                                c.red
-                                c.green
-                                c.blue
-                              ];
-                              isCustom = c.custom;
-                              isPrimary = c.primary;
-                            }) s.theme.colors
-                          )
-                        }'"
-                    )
-                    (if isNull s.theme.opacity then "NULL" else toString s.theme.opacity)
-                    (if isNull s.theme.rotation then "NULL" else toString s.theme.rotation)
-                    (if isNull s.theme.texture then "NULL" else toString s.theme.texture)
-                    "COALESCE((SELECT created_at FROM zen_workspaces WHERE uuid = '{${s.id}}'), strftime('%s', 'now'))"
-                    "strftime('%s', 'now')"
-                  ]
-                ))
-                (map (row: concatStringsSep "," row))
-                (concatMapStringsSep "," (row: "(${row})"))
-              ])
-            }" || exit 1
-          '';
-
-          deleteSpaces = ''
-            ${sqlite3} "${placesFile}" "DELETE FROM zen_workspaces ${
-              if profile.spaces != { } then "WHERE " else ""
-            }${concatMapAttrsStringSep " AND " (_: s: "NOT uuid = '{${s.id}}'") profile.spaces}" || exit 1
-          '';
-        in
         nameValuePair scriptFile {
           source = getExe (
             pkgs.writeShellScriptBin "places_update_${profileName}" ''
@@ -349,7 +390,7 @@ in
               # will be overridden and executed on every rebuild of the home environment.
 
               function update_spaces() {
-                ${optionalString (profile.spaces != { }) insertSpaces}
+                ${optionalString (profile.spaces != {}) insertSpaces}
                 ${optionalString (profile.spacesForce) deleteSpaces}
               }
 
@@ -383,6 +424,6 @@ in
           executable = true;
           force = true;
         }
-      ) (filterAttrs (_: profile: profile.spaces != { } || profile.spacesForce) cfg.profiles));
+    ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce) cfg.profiles));
   };
 }

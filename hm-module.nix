@@ -205,7 +205,7 @@ in {
 
   config = mkIf cfg.enable {
     programs.zen-browser = {
-      package =
+      package = lib.mkDefault (
         (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
           # Seems like zen uses relative (to the original binary) path to the policies.json file
           # and ignores the overrides by pkgs.wrapFirefox
@@ -215,7 +215,8 @@ in {
           extraPrefs = cfg.extraPrefs;
           extraPrefsFiles = cfg.extraPrefsFiles;
           nativeMessagingHosts = cfg.nativeMessagingHosts;
-        };
+        }
+      );
 
       policies = {
         DisableAppUpdate = lib.mkDefault true;

@@ -55,6 +55,11 @@
 
   pname = "zen-${name}-bin-unwrapped";
 
+  desktopIconName =
+    if name == "beta"
+    then "zen-browser"
+    else binaryName;
+
   installDarwin = ''
     runHook preInstall
 
@@ -87,11 +92,11 @@
     mkdir -p "$out/lib/${libName}/distribution"
     ln -s ${policiesJson} "$out/lib/${libName}/distribution/policies.json"
 
-    install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/zen-${name}.png
-    install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/zen-${name}.png
-    install -D $src/browser/chrome/icons/default/default48.png $out/share/icons/hicolor/48x48/apps/zen-${name}.png
-    install -D $src/browser/chrome/icons/default/default64.png $out/share/icons/hicolor/64x64/apps/zen-${name}.png
-    install -D $src/browser/chrome/icons/default/default128.png $out/share/icons/hicolor/128x128/apps/zen-${name}.png
+    install -D $src/browser/chrome/icons/default/default16.png $out/share/icons/hicolor/16x16/apps/${desktopIconName}.png
+    install -D $src/browser/chrome/icons/default/default32.png $out/share/icons/hicolor/32x32/apps/${desktopIconName}.png
+    install -D $src/browser/chrome/icons/default/default48.png $out/share/icons/hicolor/48x48/apps/${desktopIconName}.png
+    install -D $src/browser/chrome/icons/default/default64.png $out/share/icons/hicolor/64x64/apps/${desktopIconName}.png
+    install -D $src/browser/chrome/icons/default/default128.png $out/share/icons/hicolor/128x128/apps/${desktopIconName}.png
 
     runHook postInstall
   '';
@@ -120,7 +125,7 @@ in
         name = binaryName;
         desktopName = "Zen Browser${lib.optionalString (name == "twilight") " Twilight"}";
         exec = "${binaryName} %u";
-        icon = binaryName;
+        icon = desktopIconName;
         type = "Application";
         mimeTypes = [
           "text/html"
@@ -193,7 +198,7 @@ in
 
     preFixup = ''
       gappsWrapperArgs+=(
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ ffmpeg ]}"
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ffmpeg]}"
         --add-flags "--name=''${MOZ_APP_LAUNCHER:-${binaryName}}"
         --add-flags "--class=''${MOZ_APP_LAUNCHER:-${binaryName}}"
       )

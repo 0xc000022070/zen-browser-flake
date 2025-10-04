@@ -207,10 +207,15 @@ in {
     programs.zen-browser = {
       package = lib.mkDefault (
         (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
-          # Seems like zen uses relative (to the original binary) path to the policies.json file
-          # and ignores the overrides by pkgs.wrapFirefox
-          policies = cfg.policies;
-        }) {}).override
+            # Seems like zen uses relative (to the original binary) path to the policies.json file
+            # and ignores the overrides by pkgs.wrapFirefox
+            policies = cfg.policies;
+          }) {
+            icon =
+              if name == "beta"
+              then "zen-browser"
+              else "zen-${name}";
+          }).override
         {
           extraPrefs = cfg.extraPrefs;
           extraPrefsFiles = cfg.extraPrefsFiles;

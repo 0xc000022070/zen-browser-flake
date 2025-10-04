@@ -13,7 +13,9 @@ in rec {
   twilight-unwrapped = mkZen "twilight" "twilight";
   twilight-official-unwrapped = mkZen "twilight" "twilight-official";
 
-  beta = pkgs.wrapFirefox beta-unwrapped {};
+  beta = pkgs.wrapFirefox beta-unwrapped {
+    icon = "zen-browser";
+  };
   twilight = pkgs.wrapFirefox twilight-unwrapped {};
   twilight-official = pkgs.wrapFirefox twilight-official-unwrapped {};
 

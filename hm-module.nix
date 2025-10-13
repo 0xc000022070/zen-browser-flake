@@ -228,12 +228,12 @@ in {
                           workspace = mkOption {
                             type = nullOr str;
                             default = null;
-                            description = "Optional workspace UUID text field";
+                            description = "Workspace ID to be used in pin";
                           };
                           position = mkOption {
                             type = ints.unsigned;
                             default = 1000;
-                            description = "Required position integer, defaults to 0";
+                            description = "Position of the pin.";
                           };
                           isEssential = mkOption {
                             type = bool;
@@ -256,12 +256,8 @@ in {
                             description = "Required boolean flag for folder collapse state, defaults to false";
                           };
                           folderIcon = mkOption {
-                            type = nullOr (either str path);
+                            type = nullOr str;
                             description = "Emoji or icon URI to be used as pin folder icon.";
-                            apply = v:
-                              if isPath v
-                              then "file://${v}"
-                              else v;
                             default = null;
                           };
                           folderParentId = mkOption {
@@ -469,6 +465,119 @@ in {
             else ""
           }${concatMapAttrsStringSep " AND " (_: s: "NOT uuid = '{${s.id}}'") profile.spaces}" || exit 1
         '';
+
+        insertPins = ''
+          #Reference https://github.com/zen-browser/desktop/blob/28bf0458e43e2bb741cd67834d2b50ce2b5587c6/src/zen/tabs/ZenPinnedTabsStorage.mjs#L12-L26
+          # Create the pins table if it doesn't exist
+          ${sqlite3} "${placesFile}" "${
+            concatStringsSep " " [
+              "CREATE TABLE IF NOT EXISTS zen_pins ("
+                  "id INTEGER PRIMARY KEY,"
+                  "uuid TEXT UNIQUE NOT NULL,"
+                  "title TEXT NOT NULL,"
+                  "url TEXT,"
+                  "container_id INTEGER,"
+                  "workspace_uuid TEXT,"
+                  "position INTEGER NOT NULL DEFAULT 0,"
+                  "is_essential BOOLEAN NOT NULL DEFAULT 0,"
+                  "is_group BOOLEAN NOT NULL DEFAULT 0,"
+                  "created_at INTEGER NOT NULL,"
+                  "updated_at INTEGER NOT NULL"
+              ");"
+            ]
+          }" || exit 1
+
+          columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_pins');"))
+
+          if [[ ! "''${columns[@]}" =~ "edited_title" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN edited_title BOOLEAN NOT NULL DEFAULT 0;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "is_folder_collapsed" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN is_folder_collapsed BOOLEAN NOT NULL DEFAULT 0;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "folder_icon" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN folder_icon TEXT DEFAULT NULL;" || exit 1
+          fi
+          if [[ ! "''${columns[@]}" =~ "folder_parent_uuid" ]]; then
+            ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN folder_parent_uuid TEXT DEFAULT NULL;" || exit 1
+          fi
+
+          # Reference https://github.com/zen-browser/desktop/blob/28bf0458e43e2bb741cd67834d2b50ce2b5587c6/src/zen/tabs/ZenPinnedTabsStorage.mjs#L103-L112
+          # Insert or replace the pin
+          ${sqlite3} "${placesFile}" <<-'SQL' || exit 1
+          ${
+            (concatStringsSep " " [
+              "INSERT OR REPLACE INTO zen_pins ("
+              "uuid,"
+              "title,"
+              "url,"
+              "container_id,"
+              "workspace_uuid,"
+              "position,"
+              "is_essential,"
+              "is_group,"
+              "folder_parent_uuid,"
+              "edited_title,"
+              "created_at,"
+              "updated_at,"
+              "is_folder_collapsed,"
+              "folder_icon"
+              ") VALUES "
+            ])
+            +
+            (pipe profile.pins [
+              (mapAttrsToList (
+                _: p: [
+                  "'{${p.id}}'"
+                  "'${p.title}'"
+                  (
+                    if isNull p.url
+                    then "NULL"
+                    else "'${p.url}'"
+                  )
+                  (
+                    if isNull p.container
+                    then "NULL"
+                    else toString p.container
+                  )
+                  (
+                    if isNull p.workspace
+                    then "NULL"
+                    else "'{${p.workspace}}'"
+                  )
+                  (toString p.position)
+                  (if p.isEssential then "1" else "0")
+                  (if p.isGroup then "1" else "0")
+                  (
+                    if isNull p.folderParentId
+                    then "NULL"
+                    else "'{${p.folderParentId}}'"
+                  )
+                  (if p.editedTitle then "1" else "0")
+                  "COALESCE((SELECT created_at FROM zen_pins WHERE uuid = '{${p.id}}'), strftime('%s', 'now'))"
+                  "strftime('%s', 'now')"
+                  (if p.isFolderCollapsed then "1" else "0")
+                  (
+                    if isNull p.folderIcon
+                    then "NULL"
+                    else "'${p.folderIcon}'"
+                  )
+                ]
+              ))
+              (map (row: concatStringsSep "," row))
+              (concatMapStringsSep "," (row: "(${row})"))
+            ])
+          }
+          SQL
+        '';
+
+        deletePins = ''
+          ${sqlite3} "${placesFile}" "DELETE FROM zen_pins ${
+            if profile.pins != {}
+            then "WHERE "
+            else ""
+          }${concatMapAttrsStringSep " AND " (_: p: "NOT uuid = '{${p.id}}'") profile.pins}" || exit 1
+        '';
       in
         nameValuePair scriptFile {
           source = getExe (
@@ -476,12 +585,14 @@ in {
               # This file is generated by Zen browser Home Manager module, please to not change it since it
               # will be overridden and executed on every rebuild of the home environment.
 
-              function update_spaces() {
+              function update_places() {
                 ${optionalString (profile.spaces != {}) insertSpaces}
                 ${optionalString (profile.spacesForce) deleteSpaces}
+                ${optionalString (profile.pins != {}) insertPins}
+                ${optionalString (profile.pinsForce) deletePins}
               }
 
-              error="$(update_spaces 2>&1 1>/dev/null)"
+              error="$(update_places 2>&1 1>/dev/null)"
               if [[ "$?" -ne 0 ]]; then
                 if [[ "$error" == *"database is locked"* ]]; then
                   echo "$error"
@@ -511,6 +622,6 @@ in {
           executable = true;
           force = true;
         }
-    ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce) cfg.profiles));
+    ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != { } || profile.pinsForce) cfg.profiles));
   };
 }

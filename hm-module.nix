@@ -196,6 +196,85 @@ in {
                   );
                   default = {};
                 };
+                pinsForce = mkOption {
+                  type = bool;
+                  description = "Whether to delete existing pins not declared in the configuration.";
+                  default = false;
+                };
+                pins = mkOption {
+                  type = attrsOf (
+                    submodule (
+                      { name, ... }: {
+                        options = {
+                          title = mkOption {
+                            type = str;
+                            description = "title of the pin.";
+                            default = name;
+                          };
+                          id = mkOption {
+                            type = str;
+                            description = "REQUIRED. Unique Version 4 UUID for pin.";
+                          };
+                          url = mkOption {
+                            type = nullOr str;
+                            default = null;
+                            description = "Optional URL text field";
+                          };
+                          container = mkOption {
+                            type = nullOr ints.unsigned;
+                            default = null;
+                            description = "Container ID to be used in pin";
+                          };
+                          workspace = mkOption {
+                            type = nullOr str;
+                            default = null;
+                            description = "Optional workspace UUID text field";
+                          };
+                          position = mkOption {
+                            type = ints.unsigned;
+                            default = 1000;
+                            description = "Required position integer, defaults to 0";
+                          };
+                          isEssential = mkOption {
+                            type = bool;
+                            default = false;
+                            description = "Required boolean flag for essential items, defaults to false";
+                          };
+                          isGroup = mkOption {
+                            type = bool;
+                            default = false;
+                            description = "Required boolean flag for group items, defaults to false";
+                          };
+                          editedTitle = mkOption {
+                            type = bool;
+                            default = false;
+                            description = "Required boolean flag for edited title, defaults to false";
+                          };
+                          isFolderCollapsed = mkOption {
+                            type = bool;
+                            default = false;
+                            description = "Required boolean flag for folder collapse state, defaults to false";
+                          };
+                          folderIcon = mkOption {
+                            type = nullOr (either str path);
+                            description = "Emoji or icon URI to be used as pin folder icon.";
+                            apply = v:
+                              if isPath v
+                              then "file://${v}"
+                              else v;
+                            default = null;
+                          };
+                          folderParentId = mkOption {
+                            type = nullOr str;
+                            default = null;
+                            description = "Optional folder parent UUID text field";
+                          };
+                        };
+                      }
+                    )
+                  );
+                  default = { };
+                };
               };
             }
           )

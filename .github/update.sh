@@ -265,7 +265,7 @@ update_version() {
         if [ "$commit_beta_targets" = "" ]; then
             commit_beta_targets="$arch"
             commit_beta_version="$semver"
-        else
+        elif ! echo "$commit_beta_targets" | grep -q "$arch"; then
             commit_beta_targets="$commit_beta_targets && $arch"
         fi
     fi
@@ -277,10 +277,9 @@ update_version() {
 
             commit_twilight_targets="$arch"
             commit_twilight_version="$twilight_version_name#$updated_at_epoch"
-        else
+        elif ! echo "$commit_twilight_targets" | grep -q "$arch"; then
             commit_twilight_targets="$commit_twilight_targets && $arch"
         fi
-
     fi
 }
 

@@ -1,22 +1,22 @@
 {
   "beta": {
     "x86_64-linux": {
-      "version": "1.16.4b",
-      "sha1": "0d3be8142157fd295fd114b6fbab76038a438b32",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.16.4b/zen.linux-x86_64.tar.xz",
-      "sha256": "sha256-DMtdCAsdvRwuOksJUAt9DffrV0gJ9j1krqjOEEBRS9Q="
+      "version": "1.17b",
+      "sha1": "1e7eaff92efb58d0c0705eb96746d7e99c2bc53d",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.17b/zen.linux-x86_64.tar.xz",
+      "sha256": "sha256-bHR/KgANOA7d/wV2NEsOjDSFKf9akQ5yb1NL368mZiE="
     },
     "aarch64-linux": {
-      "version": "1.16.4b",
-      "sha1": "0d3be8142157fd295fd114b6fbab76038a438b32",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.16.4b/zen.linux-aarch64.tar.xz",
-      "sha256": "sha256-fquLJeA3i+EmGwWNuATUsVpZT/oDhwgcy45SY7yGuqo="
+      "version": "1.17b",
+      "sha1": "1e7eaff92efb58d0c0705eb96746d7e99c2bc53d",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.17b/zen.linux-aarch64.tar.xz",
+      "sha256": "sha256-pORZ05pA21sXVV0gUDl9l+rQZ7sSzxUPrzb4FvajgUM="
     },
     "aarch64-darwin": {
-      "version": "1.16.4b",
-      "sha1": "0d3be8142157fd295fd114b6fbab76038a438b32",
-      "url": "https://github.com/zen-browser/desktop/releases/download/1.16.4b/zen.macos-universal.dmg",
-      "sha256": "sha256-jGOyE26JntBMQBu7w+pwHpKMFCd+lx6SyjapX0KCQUc="
+      "version": "1.17b",
+      "sha1": "1e7eaff92efb58d0c0705eb96746d7e99c2bc53d",
+      "url": "https://github.com/zen-browser/desktop/releases/download/1.17b/zen.macos-universal.dmg",
+      "sha256": "sha256-tglODvKvjQ0Bnj1ZzEKT4WmvILrhCxdyMfApgqUIoi0="
     }
   },
   "twilight": {

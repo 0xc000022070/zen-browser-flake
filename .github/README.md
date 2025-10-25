@@ -262,7 +262,7 @@ You can search for package names by going to
 >
 > If you are not using the
 > [fireox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
-> configuration will still build with the extension, but it will not install\
+> configuration will still build with the extension, but it will not install.\
 > Doing so through the repo will throw a build error warning you about the
 > package being unfree
 

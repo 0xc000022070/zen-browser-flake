@@ -256,12 +256,13 @@ You can search for package names by going to
 
 > [!IMPORTANT]
 > Depending on how your flake is configured, you might not be able to install
-> extensions marked "unfree" like [improved-tube](https://improvedtube.com/) For
-> those extensions, the only way to install them is through the firefox store
+> extensions marked "unfree" like [improved-tube](https://improvedtube.com/).
+> For those extensions, the only way to install them is through the firefox
+> store
 >
 > If you are not using the
 > [fireox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
-> configuration will still build with the extension, but it will not install
+> configuration will still build with the extension, but it will not install\
 > Doing so through the repo will throw a build error warning you about the
 > package being unfree
 

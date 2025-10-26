@@ -195,7 +195,11 @@ Check [this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59
 }
 ```
 
-To setup your own extensions you should:
+You can find the `pluginId`s to use in the above snippet by
+1. installing the extensions you want to use as you would normally
+2. use about:debugging#/runtime/this-firefox to find their `Extension ID` 
+
+Or follow the following steps to find their IDs manually:
 
  1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
  2. Go to the page of the extension that you want to declare.

@@ -30,13 +30,15 @@ inputs = {
 ```
 
 > [!NOTE]
-> **Beta Branch**: To keep the flake input only sync with beta updates, use `inputs.zen-browser.url = "github:0xc000022070/zen-browser-flake/beta"`.
+> **Beta Branch**: To keep the flake input only sync with beta updates, use
+> `inputs.zen-browser.url = "github:0xc000022070/zen-browser-flake/beta"`.
 
 ### Integration
 
 > [!IMPORTANT]
-> Use the **twilight** package to guarantee reproducibility, the artifacts of that package are re-uploaded
-> to this repository. However, if you don't agree with that and want to use the official artifacts, use **twilight-official**.
+> Use the **twilight** package to guarantee reproducibility, the artifacts of
+> that package are re-uploaded to this repository. However, if you don't agree
+> with that and want to use the official artifacts, use **twilight-official**.
 
 <details>
 <summary><h4>Home Manager</h4></summary>
@@ -60,14 +62,17 @@ Then build your Home Manager configuration
 $ home-manager switch
 ```
 
-Check the [Home Manager Reference](#home-manager-reference) and my rice [here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/programs/browser/zen.nix)! :)
+Check the [Home Manager Reference](#home-manager-reference) and my rice
+[here](https://github.com/luisnquin/nixos-config/blob/main/home/modules/programs/browser/zen.nix)!
+:)
 
 </details>
 
 <details>
 <summary><h4>With environment.systemPackages or home.packages</h4></summary>
 
-To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the following to your `environment.systemPackages` or `home.packages`:
+To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the
+following to your `environment.systemPackages` or `home.packages`:
 
 ```nix
 # options are: 'x86_64-linux', 'aarch64-linux' and 'aarch64-darwin'
@@ -106,14 +111,17 @@ $ zen
 
 ## Home Manager reference
 
-This is only an attempt to document some of the options provided by the [mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207) module, so feel free to
-experiment with other program options and help with further documentation.
+This is only an attempt to document some of the options provided by the
+[mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207)
+module, so feel free to experiment with other program options and help with
+further documentation.
 
 `programs.zen-browser.*`
 
 - `enable` (_boolean_): Enable the home manager config.
 
-- `nativeMessagingHosts` (listOf package): To [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging).
+- `nativeMessagingHosts` (listOf package): To
+  [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging).
 
   **Example:**
 
@@ -126,7 +134,8 @@ experiment with other program options and help with further documentation.
 
 ### Policies
 
-- `policies` (attrsOf anything): You can also modify the **extensions** and **preferences** from here.
+- `policies` (attrsOf anything): You can also modify the **extensions** and
+  **preferences** from here.
 
 #### Some common policies
 
@@ -175,7 +184,8 @@ For more policies [read this](https://mozilla.github.io/policy-templates/).
 
 ##### Zen-specific preferences
 
-Check [this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
+Check
+[this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
 
 #### Extensions
 
@@ -201,55 +211,112 @@ You can find the `pluginId`s to use in the above snippet by
 
 Or follow the following steps to find their IDs manually:
 
- 1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
- 2. Go to the page of the extension that you want to declare.
- 3. Go to "_See all versions_".
- 4. Copy the link from any button to "Download file".
- 5. Exec **wget** with the output of this command:
+1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
+2. Go to the page of the extension that you want to declare.
+3. Go to "_See all versions_".
+4. Copy the link from any button to "Download file".
+5. Exec **wget** with the output of this command:
 
-   ```bash
-   echo "<paste-the-link-here>" \
-    | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
-    | tr '_' '-' \
-    | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}'
-   ```
+```bash
+echo "<paste-the-link-here>" \
+ | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
+ | tr '_' '-' \
+ | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}'
+```
 
- 6. Run `unzip -*.xpi -d my-extension && cd my-extension`.
- 7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use the result
- for the _entry key_.
- 8. Don't forget to add the `install_url` and set `installation_mode` to `force_installed`.
+6. Run `unzip -*.xpi -d my-extension && cd my-extension`.
+7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use
+   the result for the _entry key_.
+8. Don't forget to add the `install_url` and set `installation_mode` to
+   `force_installed`.
+
+You can also use
+[rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/) like this:
+
+```nix
+inputs = {
+  firefox-addons = {
+    url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+}
+```
+
+```nix
+{
+  programs.zen-browser.extensions = [
+        packages = with inputs.firefox-addons.packages.${pkgs.system}; [
+          ublock-origin
+          dearrow
+          proton-pass
+          ...
+        ];
+    ];
+}
+```
+
+You can search for package names by going to
+[the NUR website](https://nur.nix-community.org/repos/rycee/)
+
+> [!IMPORTANT]
+> Depending on how your flake is configured, you might not be able to install
+> extensions marked "unfree" like [improved-tube](https://improvedtube.com/).
+> For those extensions, the only way to install them is through the firefox
+> store
+>
+> If you are not using the
+> [fireox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
+> configuration will still build with the configuration, but the extension will
+> not install.\
+> Doing so through the repo will throw a build error warning you about the
+> package being unfree
 
 ### Spaces
 
 > [!WARNING]
-> Spaces declaration may change your rebuild experience with Home Manager. Due to limitations
-> on how Zen handles spaces, the updating of them is done via a activation script on your
-> `home-manager-<user>.service`. This may cause the service to fail, to prevent this,
-> it is recommended to close your Zen browser instance before rebuilding.
+> Spaces declaration may change your rebuild experience with Home Manager. Due
+> to limitations on how Zen handles spaces, the updating of them is done via a
+> activation script on your `home-manager-<user>.service`. This may cause the
+> service to fail, to prevent this, it is recommended to close your Zen browser
+> instance before rebuilding.
 
 - `profiles.*.spaces` (attrsOf submodule): Declare profile's \[work\]spaces.
   - `name` (string) Name of space, defaults to submodule/attribute name.
-  - `id` (string) **Required.** UUID v4 of space. **Changing this after a rebuild will re-create the space as
-    a new one,** losing opened tabs, groups, etc. If `spacesForce` is true, the space with the previous UUID will be deleted.
+  - `id` (string) **Required.** UUID v4 of space. **Changing this after a
+    rebuild will re-create the space as a new one,** losing opened tabs, groups,
+    etc. If `spacesForce` is true, the space with the previous UUID will be
+    deleted.
   - `position` (unsigned integer) Position/order of space in the left bar.
-  - `icon` (null or (string or path)) Emoji, URI or file path for icon to be used as space icon.
-  - `container` (null or unsigned integer) Container ID to be used as default in space.
+  - `icon` (null or (string or path)) Emoji, URI or file path for icon to be
+    used as space icon.
+  - `container` (null or unsigned integer) Container ID to be used as default in
+    space.
   - `theme.type` (nullOr string) Type of theme, defaults to "gradient".
   - `theme.color` (listOf submodule) List of JSON colors to be used as theme:
-    - `red` (integer between 0 and 255) Red value of color (first value of "c" array in JSON object).
-    - `green` (integer between 0 and 255) Green value of color (second value of "c" array in JSON object).
-    - `blue` (integer between 0 and 255) Blue value of color (third value of "c" array in JSON object).
+    - `red` (integer between 0 and 255) Red value of color (first value of "c"
+      array in JSON object).
+    - `green` (integer between 0 and 255) Green value of color (second value of
+      "c" array in JSON object).
+    - `blue` (integer between 0 and 255) Blue value of color (third value of "c"
+      array in JSON object).
     - `custom` (boolean) Is custom color ("isCustom" in JSON object).
-    - `algorithm` (enum of "complementary", "floating" or "analogous") color algorithm (defaults to "floating").
+    - `algorithm` (enum of "complementary", "floating" or "analogous") color
+      algorithm (defaults to "floating").
     - `lightness` (integer) Lightness of color.
-    - `position.x` (integer) X Position of color in gradient picker on Zen browser.
-    - `position.y` (integer) Y Position of color in gradient picker on Zen browser.
-    - `type` (enum of "undefined" or "explicit-lightness") Type of color (default to "undefined").
+    - `position.x` (integer) X Position of color in gradient picker on Zen
+      browser.
+    - `position.y` (integer) Y Position of color in gradient picker on Zen
+      browser.
+    - `type` (enum of "undefined" or "explicit-lightness") Type of color
+      (default to "undefined").
   - `theme.opacity` (null or float) Opacity of theme (defaults to 0.5).
-  - `theme.rotation` (null or integer) Rotation of theme gradient (defaults to null).
-  - `theme.texture` (null or float) Amount of texture of theme (defaults to 0.0).
-- `profiles.*.spacesForce` (boolean) Whether to delete existing spaces not declared in the configuration.
-  Recommended to make spaces fully declarative (defaults to false).
+  - `theme.rotation` (null or integer) Rotation of theme gradient (defaults to
+    null).
+  - `theme.texture` (null or float) Amount of texture of theme (defaults to
+    0.0).
+- `profiles.*.spacesForce` (boolean) Whether to delete existing spaces not
+  declared in the configuration. Recommended to make spaces fully declarative
+  (defaults to false).
 
 ```nix
 {
@@ -302,7 +369,10 @@ Or follow the following steps to find their IDs manually:
 
 ## 1Password
 
-Zen has to be manually added to the list of browsers that 1Password will communicate with. See [this wiki article](https://wiki.nixos.org/wiki/1Password) for more information. To enable 1Password integration, you need to add the browser identifier to the file `/etc/1password/custom_allowed_browsers`.
+Zen has to be manually added to the list of browsers that 1Password will
+communicate with. See [this wiki article](https://wiki.nixos.org/wiki/1Password)
+for more information. To enable 1Password integration, you need to add the
+browser identifier to the file `/etc/1password/custom_allowed_browsers`.
 
 ```nix
 environment.etc = {
@@ -317,7 +387,9 @@ environment.etc = {
 
 ## Native Messaging
 
-To [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging), you can use the following configuration pattern.
+To
+[enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging),
+you can use the following configuration pattern.
 
 ### With Home Manager
 
@@ -341,7 +413,8 @@ Check the [Home Manager Reference](#home-manager-reference).
 
 ### XDG MIME Associations
 
-To set Zen Browser as the default application for various file types and URL schemes, you can add the following configuration to your Home Manager setup:
+To set Zen Browser as the default application for various file types and URL
+schemes, you can add the following configuration to your Home Manager setup:
 
 ```nix
 {
@@ -381,24 +454,35 @@ To set Zen Browser as the default application for various file types and URL sch
 
 #### The requested URL returned error: 404
 
-This usually happens when the Zen team deletes a beta release from the official repository. They do this to keep only stable artifacts available. See [#105](https://github.com/0xc000022070/zen-browser-flake/issues/105#issuecomment-3243452133) and [#112](https://github.com/0xc000022070/zen-browser-flake/issues/112#issuecomment-3262519193) for further context.
+This usually happens when the Zen team deletes a beta release from the official
+repository. They do this to keep only stable artifacts available. See
+[#105](https://github.com/0xc000022070/zen-browser-flake/issues/105#issuecomment-3243452133)
+and
+[#112](https://github.com/0xc000022070/zen-browser-flake/issues/112#issuecomment-3262519193)
+for further context.
 
-You can either revert your nix input update or wait until CI refreshes [sources.json](../sources.json).
+You can either revert your nix input update or wait until CI refreshes
+[sources.json](../sources.json).
 
 #### Zen not seeing my GPU
 
-Make sure that you update your flake.lock as to sync up nixpkgs version. Or make zen follow your system nixpkgs by using
-`inputs.nixpkgs.follows = "nixpkgs"` (assuming your nixpkgs input is named nixpkgs).
+Make sure that you update your flake.lock as to sync up nixpkgs version. Or make
+zen follow your system nixpkgs by using `inputs.nixpkgs.follows = "nixpkgs"`
+(assuming your nixpkgs input is named nixpkgs).
 
-Check [No WebGL context](https://github.com/0xc000022070/zen-browser-flake/issues/86) for details.
+Check
+[No WebGL context](https://github.com/0xc000022070/zen-browser-flake/issues/86)
+for details.
 
 #### 1Password constantly requires password
 
-You may want to set `policies.DisableAppUpdate = false;` in your policies.json file. See [#48](https://github.com/0xc000022070/zen-browser-flake/issues/48).
+You may want to set `policies.DisableAppUpdate = false;` in your policies.json
+file. See [#48](https://github.com/0xc000022070/zen-browser-flake/issues/48).
 
 ## Contributing
 
-Before contributing, please make sure that your code is formatted correctly by running
+Before contributing, please make sure that your code is formatted correctly by
+running
 
 ```shell
 $ nix fmt

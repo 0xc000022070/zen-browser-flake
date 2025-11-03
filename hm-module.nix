@@ -204,7 +204,7 @@ in {
                 pins = mkOption {
                   type = attrsOf (
                     submodule (
-                      { name, ... }: {
+                      {name, ...}: {
                         options = {
                           title = mkOption {
                             type = str;
@@ -269,7 +269,7 @@ in {
                       }
                     )
                   );
-                  default = { };
+                  default = {};
                 };
               };
             }
@@ -472,17 +472,17 @@ in {
           ${sqlite3} "${placesFile}" "${
             concatStringsSep " " [
               "CREATE TABLE IF NOT EXISTS zen_pins ("
-                  "id INTEGER PRIMARY KEY,"
-                  "uuid TEXT UNIQUE NOT NULL,"
-                  "title TEXT NOT NULL,"
-                  "url TEXT,"
-                  "container_id INTEGER,"
-                  "workspace_uuid TEXT,"
-                  "position INTEGER NOT NULL DEFAULT 0,"
-                  "is_essential BOOLEAN NOT NULL DEFAULT 0,"
-                  "is_group BOOLEAN NOT NULL DEFAULT 0,"
-                  "created_at INTEGER NOT NULL,"
-                  "updated_at INTEGER NOT NULL"
+              "id INTEGER PRIMARY KEY,"
+              "uuid TEXT UNIQUE NOT NULL,"
+              "title TEXT NOT NULL,"
+              "url TEXT,"
+              "container_id INTEGER,"
+              "workspace_uuid TEXT,"
+              "position INTEGER NOT NULL DEFAULT 0,"
+              "is_essential BOOLEAN NOT NULL DEFAULT 0,"
+              "is_group BOOLEAN NOT NULL DEFAULT 0,"
+              "created_at INTEGER NOT NULL,"
+              "updated_at INTEGER NOT NULL"
               ");"
             ]
           }" || exit 1
@@ -524,8 +524,7 @@ in {
               "folder_icon"
               ") VALUES "
             ])
-            +
-            (pipe profile.pins [
+            + (pipe profile.pins [
               (mapAttrsToList (
                 _: p: [
                   "'{${p.id}}'"
@@ -546,17 +545,33 @@ in {
                     else "'{${p.workspace}}'"
                   )
                   (toString p.position)
-                  (if p.isEssential then "1" else "0")
-                  (if p.isGroup then "1" else "0")
+                  (
+                    if p.isEssential
+                    then "1"
+                    else "0"
+                  )
+                  (
+                    if p.isGroup
+                    then "1"
+                    else "0"
+                  )
                   (
                     if isNull p.folderParentId
                     then "NULL"
                     else "'{${p.folderParentId}}'"
                   )
-                  (if p.editedTitle then "1" else "0")
+                  (
+                    if p.editedTitle
+                    then "1"
+                    else "0"
+                  )
                   "COALESCE((SELECT created_at FROM zen_pins WHERE uuid = '{${p.id}}'), strftime('%s', 'now'))"
                   "strftime('%s', 'now')"
-                  (if p.isFolderCollapsed then "1" else "0")
+                  (
+                    if p.isFolderCollapsed
+                    then "1"
+                    else "0"
+                  )
                   (
                     if isNull p.folderIcon
                     then "NULL"
@@ -622,6 +637,6 @@ in {
           executable = true;
           force = true;
         }
-    ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != { } || profile.pinsForce) cfg.profiles));
+    ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce) cfg.profiles));
   };
 }

@@ -627,7 +627,7 @@ in {
             ''
           );
           onChange = ''
-            ${config.home.homeDirectory}/${scriptFile}
+            "${config.home.homeDirectory}/${scriptFile}"
             if [[ "$?" -ne 0 ]]; then
               RED="\033[0;31m"
               NC="\033[0m"

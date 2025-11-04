@@ -244,8 +244,8 @@ inputs = {
 
 ```nix
 {
-  programs.zen-browser.extensions = [
-        packages = with inputs.firefox-addons.packages.${pkgs.system}; [
+  programs.zen-browser.profiles.<name>.extensions.packages = 
+     with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
           ublock-origin
           dearrow
           proton-pass

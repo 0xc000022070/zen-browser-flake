@@ -35,6 +35,13 @@
     else linuxConfigPath
   )}";
 
+  # Actual profile directory path where places.sqlite is located
+  profilePath = "${(
+    if pkgs.stdenv.isDarwin
+    then "${darwinConfigPath}/Profiles"
+    else linuxConfigPath
+  )}";
+
   mkFirefoxModule = import "${home-manager.outPath}/modules/programs/firefox/mkFirefoxModule.nix";
 in {
   imports = [
@@ -328,8 +335,8 @@ in {
     in (mapAttrs' (
       profileName: profile: let
         sqlite3 = getExe' pkgs.sqlite "sqlite3";
-        scriptFile = "${configPath}/${profileName}/places_update.sh";
-        placesFile = "${config.home.homeDirectory}/${configPath}/${profileName}/places.sqlite";
+        scriptFile = "${profilePath}/${profileName}/places_update.sh";
+        placesFile = "${config.home.homeDirectory}/${profilePath}/${profileName}/places.sqlite";
 
         insertSpaces = ''
                     # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55

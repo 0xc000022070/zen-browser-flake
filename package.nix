@@ -71,9 +71,18 @@
     mkdir -p "$out/Applications/${applicationName}.app/Contents/Resources/distribution"
     ln -s ${policiesJson} "$out/Applications/${applicationName}.app/Contents/Resources/distribution/policies.json"
 
+    # Use symlink path to avoid installs.ini accumulation on Nix rebuilds
+    # The symlink is created by home-manager and remains stable across rebuilds
     cat > "$out/bin/${binaryName}" << EOF
     #!/bin/bash
-    exec /usr/bin/open -na "$out/Applications/${applicationName}.app" --args "\$@"
+    # Use stable path from home-manager to avoid creating new install IDs
+    STABLE_PATH="\$HOME/Applications/Home Manager Apps/${applicationName}.app"
+    if [[ -e "\$STABLE_PATH" ]]; then
+      exec /usr/bin/open -na "\$STABLE_PATH" --args "\$@"
+    else
+      # Fallback to nix store path if symlink doesn't exist yet
+      exec /usr/bin/open -na "$out/Applications/${applicationName}.app" --args "\$@"
+    fi
     EOF
 
     chmod +x "$out/bin/${binaryName}"

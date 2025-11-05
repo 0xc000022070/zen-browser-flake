@@ -612,6 +612,9 @@ in {
                 ${optionalString (profile.spacesForce) deleteSpaces}
                 ${optionalString (profile.pins != {}) insertPins}
                 ${optionalString (profile.pinsForce) deletePins}
+                
+                # Force WAL checkpoint to ensure changes are visible immediately
+                ${sqlite3} "${placesFile}" "PRAGMA wal_checkpoint(FULL);" || exit 1
               }
 
               error="$(update_places 2>&1 1>/dev/null)"

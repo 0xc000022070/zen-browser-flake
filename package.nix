@@ -67,6 +67,10 @@
     cp -r *.app "$out/Applications/${applicationName}.app"
     ln -s zen "$out/Applications/${applicationName}.app/Contents/MacOS/${binaryName}"
 
+    # Install policies.json for macOS
+    mkdir -p "$out/Applications/${applicationName}.app/Contents/Resources/distribution"
+    ln -s ${policiesJson} "$out/Applications/${applicationName}.app/Contents/Resources/distribution/policies.json"
+
     cat > "$out/bin/${binaryName}" << EOF
     #!/bin/bash
     exec /usr/bin/open -na "$out/Applications/${applicationName}.app" --args "\$@"

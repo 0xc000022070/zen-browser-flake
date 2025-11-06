@@ -137,6 +137,9 @@ further documentation.
 - `policies` (attrsOf anything): You can also modify the **extensions** and
   **preferences** from here.
 
+> [!IMPORTANT]  
+> If you're on macOS you'll need to configure [programs.zen-browser.darwinDefaultsId](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master) first.
+
 #### Some common policies
 
 ```nix

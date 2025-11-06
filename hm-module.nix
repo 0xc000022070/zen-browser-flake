@@ -29,12 +29,6 @@
   linuxConfigPath = ".zen";
   darwinConfigPath = "Library/Application Support/Zen";
 
-  configPath = "${(
-    if pkgs.stdenv.isDarwin
-    then darwinConfigPath
-    else linuxConfigPath
-  )}";
-
   # Actual profile directory path where places.sqlite is located
   profilePath = "${(
     if pkgs.stdenv.isDarwin
@@ -612,7 +606,7 @@ in {
                 ${optionalString (profile.spacesForce) deleteSpaces}
                 ${optionalString (profile.pins != {}) insertPins}
                 ${optionalString (profile.pinsForce) deletePins}
-                
+
                 # Force WAL checkpoint to ensure changes are visible immediately
                 ${sqlite3} "${placesFile}" "PRAGMA wal_checkpoint(FULL);" || exit 1
               }

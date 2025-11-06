@@ -106,7 +106,7 @@
 
     mkdir -p "$out/bin"
     ln -s "$prefix/lib/${libName}/zen" "$out/bin/${binaryName}"
-    ln -s "$out/bin/${binaryName}" "$out/bin/zen"
+    ln -s "$prefix/lib/${libName}/zen" "$out/bin/zen"
 
     mkdir -p "$out/lib/${libName}/distribution"
     ln -s ${policiesJson} "$out/lib/${libName}/distribution/policies.json"

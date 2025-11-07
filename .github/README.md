@@ -208,7 +208,17 @@ Check
 }
 ```
 
-You can find the `pluginId`s to use in the above snippet by
+This follows the pattern:
+```
+      "extension-ID" = "extension-name";
+```
+
+You can find the `extension-name` in the extension's URL:
+```
+https://addons.mozilla.org/en-US/firefox/addon/<extension-name>
+```
+
+The `extension-ID` can be found by
 1. installing the extensions you want to use as you would normally
 2. use about:debugging#/runtime/this-firefox to find their `Extension ID` 
 
@@ -232,6 +242,46 @@ echo "<paste-the-link-here>" \
    the result for the _entry key_.
 8. Don't forget to add the `install_url` and set `installation_mode` to
    `force_installed`.
+
+Alternatively, create a bash script to automatically extract the `extension-ID` from the .xpi link you obtained in step 4 above:
+```bash
+#!/usr/bin/env bash
+
+# Check if URL parameter is provided
+if [ -z "$1" ]; then
+    echo "Error: Please provide a Firefox extension URL"
+    echo "Usage: $0 <extension_url>"
+    exit 1
+fi
+
+# Store the input URL
+PLUGIN_URL="$1"
+
+# Create temporary directory
+TEMP_DIR="extension-id-$(date +%s)"
+mkdir "$TEMP_DIR" || { echo "Failed to create directory"; exit 1; }
+cd "$TEMP_DIR" || { echo "Failed to change directory"; exit 1; }
+
+# Extract extension name and construct download URL
+DOWNLOAD_URL=$(echo "$PLUGIN_URL" \
+    | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
+    | tr '_' '-' \
+    | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}')
+
+# Download the extension
+wget -q "$DOWNLOAD_URL" -O latest.xpi || { echo "Failed to download extension"; cd ..; rm -rf "$TEMP_DIR"; exit 1; }
+
+# Unzip the extension
+unzip -q latest.xpi -d unpacked || { echo "Failed to unzip extension"; cd ..; rm -rf "$TEMP_DIR"; exit 1; }
+
+# Extract and display the ID
+echo "The extension-ID is:"
+jq -r '.browser_specific_settings.gecko.id' unpacked/manifest.json || { echo "Failed to extract entry key"; cd ..; rm -rf "$TEMP_DIR"; exit 1; }
+
+# Cleanup
+cd ..
+rm -rf "$TEMP_DIR"
+```
 
 You can also use
 [rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/) like this:

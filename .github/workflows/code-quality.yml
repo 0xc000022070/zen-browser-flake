@@ -1,0 +1,35 @@
+name: Code Quality Checks
+on: [pull_request, push]
+
+jobs:
+  check-formatting:
+    name: "*.nix fmt check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Alejandra CLI
+        uses: 0xc000022070/setup-alejandra@v4.0.0
+
+      - name: Check formatting
+        run: alejandra --check **/*.nix
+
+  remove-dead-code:
+    name: Remove dead code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v16
+        with:
+          name: deadnix
+
+      - name: Run deadnix
+        run: |
+          nix run nixpkgs#deadnix -- --fail

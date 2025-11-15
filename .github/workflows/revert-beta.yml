@@ -1,0 +1,37 @@
+name: Revert Beta Update
+
+on:
+  workflow_dispatch:
+
+jobs:
+  revert-beta-update:
+    name: Revert last beta update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Find last beta update commit
+        id: find_commit
+        run: |
+          commit_hash=$(git log --oneline --grep="^chore(update):.*beta @" | head -1 | awk '{print $1}')
+          if [ -z "$commit_hash" ]; then
+            echo "No beta update commit found"
+            exit 1
+          fi
+          echo "commit_hash=$commit_hash" >> $GITHUB_OUTPUT
+
+      - name: Revert the commit
+        run: |
+          git revert --no-edit ${{ steps.find_commit.outputs.commit_hash }}
+          git commit --amend --no-edit -m "$(git log -1 --pretty=%B | sed 's/Revert/revert:/')"
+          git push

@@ -21,9 +21,12 @@ Just add it to your NixOS `flake.nix` or home-manager:
 inputs = {
   zen-browser = {
     url = "github:0xc000022070/zen-browser-flake";
-    # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
-    # to have it up-to-date or simply don't specify the nixpkgs input
-    inputs.nixpkgs.follows = "nixpkgs";
+    inputs = {
+      # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
+      # to have it up-to-date or simply don't specify the nixpkgs input
+      nixpkgs.follows = "nixpkgs";
+      home-manager.follows = "home-manager";
+    };
   };
   # ...
 }
@@ -209,18 +212,21 @@ Check
 ```
 
 This follows the pattern:
+
 ```
       "extension-ID" = "extension-name";
 ```
 
 You can find the `extension-name` in the extension's URL:
+
 ```
 https://addons.mozilla.org/en-US/firefox/addon/<extension-name>
 ```
 
 The `extension-ID` can be found by
+
 1. installing the extensions you want to use as you would normally
-2. use about:debugging#/runtime/this-firefox to find their `Extension ID` 
+2. use about:debugging#/runtime/this-firefox to find their `Extension ID`
 
 Or follow the following steps to find their IDs manually:
 
@@ -244,6 +250,7 @@ echo "<paste-the-link-here>" \
    `force_installed`.
 
 Alternatively, create a bash script to automatically extract the `extension-ID` from the .xpi link you obtained in step 4 above:
+
 ```bash
 #!/usr/bin/env bash
 

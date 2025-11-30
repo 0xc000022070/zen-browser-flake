@@ -205,6 +205,8 @@ in
       libva.out
       pciutils
       libGL
+      alsa-lib
+      pipewire
     ];
 
     appendRunpaths = lib.optionals stdenv.hostPlatform.isLinux [

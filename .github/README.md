@@ -429,7 +429,7 @@ You can search for package names by going to
 
 ## Pinned Tabs (pins)
 You are also able to declare your pinned tabs!
-For more info, see #132
+For more info, see [this PR](https://github.com/0xc000022070/zen-browser-flake/pull/132)
 ```nix
     programs.nix-browsers.profiles.default =
       let

@@ -140,8 +140,10 @@ further documentation.
 - `policies` (attrsOf anything): You can also modify the **extensions** and
   **preferences** from here.
 
-> [!IMPORTANT]  
-> If you're on macOS you'll need to configure [programs.zen-browser.darwinDefaultsId](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master) first.
+> [!IMPORTANT]\
+> If you're on macOS you'll need to configure
+> [programs.zen-browser.darwinDefaultsId](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master)
+> first.
 
 #### Some common policies
 
@@ -214,7 +216,7 @@ Check
 This follows the pattern:
 
 ```
-      "extension-ID" = "extension-name";
+"extension-ID" = "extension-name";
 ```
 
 You can find the `extension-name` in the extension's URL:
@@ -249,7 +251,8 @@ echo "<paste-the-link-here>" \
 8. Don't forget to add the `install_url` and set `installation_mode` to
    `force_installed`.
 
-Alternatively, create a bash script to automatically extract the `extension-ID` from the .xpi link you obtained in step 4 above:
+Alternatively, create a bash script to automatically extract the `extension-ID`
+from the .xpi link you obtained in step 4 above:
 
 ```bash
 #!/usr/bin/env bash
@@ -290,8 +293,12 @@ cd ..
 rm -rf "$TEMP_DIR"
 ```
 
-You can also use
-[rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/) like this:
+- profiles (bookmarks, search engines, extensions, spaces)
+
+### Extensions
+
+You can use [rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/)
+like this:
 
 ```nix
 inputs = {
@@ -304,7 +311,7 @@ inputs = {
 
 ```nix
 {
-  programs.zen-browser.profiles.<name>.extensions.packages = 
+  programs.zen-browser.profiles.*.extensions.packages = 
      with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
           ublock-origin
           dearrow
@@ -327,9 +334,63 @@ You can search for package names by going to
 > If you are not using the
 > [fireox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
 > configuration will still build with the configuration, but the extension will
-> not install.\
-> Doing so through the repo will throw a build error warning you about the
-> package being unfree
+> not install. Doing so through the repo will throw a build error warning you
+> about the package being unfree
+
+### Search
+
+[Search Engine Aliases](https://github.com/nix-community/home-manager/blob/master/modules/programs/firefox/profiles/search.nix#L211)
+
+```nix
+profiles.*.search = {
+        default = "ddg" # Short for duckduckgo, find other aliases through the link above
+        engines = {
+            # NixOS option search, just a nice shortcut to have :)
+          mynixos = {
+            name = "My NixOS";
+            urls = [
+              {
+                template = "https://mynixos.com/search?q={searchTerms}";
+                params = [
+                  {
+                    name = "query";
+                    value = "{searchTerms}";
+                  }
+                ];
+              }
+            ];
+
+            icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+            definedAliases = ["@nx"]; # definedAliases need to start with "@" or they will not work
+          };
+        };
+      };
+```
+
+### Bookmarks
+
+```nix
+profiles.*.bookmarks = {
+        force = true; # This setting is needed for nix to overwrite bookmarks on startup
+        settings = [
+          {
+            name = "Nix sites";
+            toolbar = true;
+            bookmarks = [
+              {
+                name = "homepage";
+                url = "https://nixos.org/";
+              }
+              {
+                name = "wiki";
+                tags = ["wiki" "nix"];
+                url = "https://wiki.nixos.org/";
+              }
+            ];
+          }
+        ];
+      };
+```
 
 ### Spaces
 
@@ -429,8 +490,8 @@ You can search for package names by going to
 
 ## Pinned Tabs (pins)
 
-You are also able to declare your pinned tabs!
-For more info, see [this PR](https://github.com/0xc000022070/zen-browser-flake/pull/132)
+You are also able to declare your pinned tabs! For more info, see
+[this PR](https://github.com/0xc000022070/zen-browser-flake/pull/132)
 
 ```nix
 {

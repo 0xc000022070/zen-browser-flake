@@ -140,8 +140,10 @@ further documentation.
 - `policies` (attrsOf anything): You can also modify the **extensions** and
   **preferences** from here.
 
-> [!IMPORTANT]  
-> If you're on macOS you'll need to configure [programs.zen-browser.darwinDefaultsId](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master) first.
+> [!IMPORTANT]\
+> If you're on macOS you'll need to configure
+> [programs.zen-browser.darwinDefaultsId](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master)
+> first.
 
 #### Some common policies
 
@@ -193,105 +195,16 @@ For more policies [read this](https://mozilla.github.io/policy-templates/).
 Check
 [this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
 
-#### Extensions
+- profiles:
+  - [extensions](#extensions)
+  - [search engines](#search)
+  - [bookmarks](#bookmarks)
+  - [spaces](#spaces)
 
-```nix
-{
-  programs.zen-browser.policies = let
-    mkExtensionSettings = builtins.mapAttrs (_: pluginId: {
-      install_url = "https://addons.mozilla.org/firefox/downloads/latest/${pluginId}/latest.xpi";
-      installation_mode = "force_installed";
-    });
-  in {
-    ExtensionSettings = mkExtensionSettings {
-      "wappalyzer@crunchlabz.com" = "wappalyzer";
-      "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = "github-file-icons";
-    };
-  };
-}
-```
+### Extensions
 
-This follows the pattern:
-
-```
-      "extension-ID" = "extension-name";
-```
-
-You can find the `extension-name` in the extension's URL:
-
-```
-https://addons.mozilla.org/en-US/firefox/addon/<extension-name>
-```
-
-The `extension-ID` can be found by
-
-1. installing the extensions you want to use as you would normally
-2. use about:debugging#/runtime/this-firefox to find their `Extension ID`
-
-Or follow the following steps to find their IDs manually:
-
-1. [Go to Add-ons for Firefox](https://addons.mozilla.org/en-US/firefox/).
-2. Go to the page of the extension that you want to declare.
-3. Go to "_See all versions_".
-4. Copy the link from any button to "Download file".
-5. Exec **wget** with the output of this command:
-
-```bash
-echo "<paste-the-link-here>" \
- | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
- | tr '_' '-' \
- | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}'
-```
-
-6. Run `unzip -*.xpi -d my-extension && cd my-extension`.
-7. Run `cat manifest.json | jq -r '.browser_specific_settings.gecko.id'` and use
-   the result for the _entry key_.
-8. Don't forget to add the `install_url` and set `installation_mode` to
-   `force_installed`.
-
-Alternatively, create a bash script to automatically extract the `extension-ID` from the .xpi link you obtained in step 4 above:
-
-```bash
-#!/usr/bin/env bash
-
-# Check if URL parameter is provided
-if [ -z "$1" ]; then
-    echo "Error: Please provide a Firefox extension URL"
-    echo "Usage: $0 <extension_url>"
-    exit 1
-fi
-
-# Store the input URL
-PLUGIN_URL="$1"
-
-# Create temporary directory
-TEMP_DIR="extension-id-$(date +%s)"
-mkdir "$TEMP_DIR" || { echo "Failed to create directory"; exit 1; }
-cd "$TEMP_DIR" || { echo "Failed to change directory"; exit 1; }
-
-# Extract extension name and construct download URL
-DOWNLOAD_URL=$(echo "$PLUGIN_URL" \
-    | sed -E 's|https://addons.mozilla.org/firefox/downloads/file/[0-9]+/([^/]+)-[^/]+\.xpi|\1|' \
-    | tr '_' '-' \
-    | awk '{print "https://addons.mozilla.org/firefox/downloads/latest/" $1 "/latest.xpi"}')
-
-# Download the extension
-wget -q "$DOWNLOAD_URL" -O latest.xpi || { echo "Failed to download extension"; cd ..; rm -rf "$TEMP_DIR"; exit 1; }
-
-# Unzip the extension
-unzip -q latest.xpi -d unpacked || { echo "Failed to unzip extension"; cd ..; rm -rf "$TEMP_DIR"; exit 1; }
-
-# Extract and display the ID
-echo "The extension-ID is:"
-jq -r '.browser_specific_settings.gecko.id' unpacked/manifest.json || { echo "Failed to extract entry key"; cd ..; rm -rf "$TEMP_DIR"; exit 1; }
-
-# Cleanup
-cd ..
-rm -rf "$TEMP_DIR"
-```
-
-You can also use
-[rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/) like this:
+You can use [rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/)
+like this:
 
 ```nix
 inputs = {
@@ -304,7 +217,7 @@ inputs = {
 
 ```nix
 {
-  programs.zen-browser.profiles.<name>.extensions.packages = 
+  programs.zen-browser.profiles.*.extensions.packages = 
      with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
           ublock-origin
           dearrow
@@ -327,9 +240,63 @@ You can search for package names by going to
 > If you are not using the
 > [fireox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
 > configuration will still build with the configuration, but the extension will
-> not install.\
-> Doing so through the repo will throw a build error warning you about the
-> package being unfree
+> not install. Doing so through the repo will throw a build error warning you
+> about the package being unfree
+
+### Search
+
+[Search Engine Aliases](https://github.com/nix-community/home-manager/blob/master/modules/programs/firefox/profiles/search.nix#L211)
+
+```nix
+profiles.*.search = {
+        default = "ddg" # Short for duckduckgo, find other aliases through the link above
+        engines = {
+            # NixOS option search, just a nice shortcut to have :)
+          mynixos = {
+            name = "My NixOS";
+            urls = [
+              {
+                template = "https://mynixos.com/search?q={searchTerms}";
+                params = [
+                  {
+                    name = "query";
+                    value = "{searchTerms}";
+                  }
+                ];
+              }
+            ];
+
+            icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+            definedAliases = ["@nx"]; # definedAliases need to start with "@" or they will not work
+          };
+        };
+      };
+```
+
+### Bookmarks
+
+```nix
+profiles.*.bookmarks = {
+        force = true; # This setting is needed for nix to overwrite bookmarks on startup
+        settings = [
+          {
+            name = "Nix sites";
+            toolbar = true;
+            bookmarks = [
+              {
+                name = "homepage";
+                url = "https://nixos.org/";
+              }
+              {
+                name = "wiki";
+                tags = ["wiki" "nix"];
+                url = "https://wiki.nixos.org/";
+              }
+            ];
+          }
+        ];
+      };
+```
 
 ### Spaces
 
@@ -429,8 +396,8 @@ You can search for package names by going to
 
 ## Pinned Tabs (pins)
 
-You are also able to declare your pinned tabs!
-For more info, see [this PR](https://github.com/0xc000022070/zen-browser-flake/pull/132)
+You are also able to declare your pinned tabs! For more info, see
+[this PR](https://github.com/0xc000022070/zen-browser-flake/pull/132)
 
 ```nix
 {

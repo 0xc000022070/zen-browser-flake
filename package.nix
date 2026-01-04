@@ -36,6 +36,7 @@
       then " (Twilight)"
       else ""
     ),
+  ...
 }: let
   binaryName = "zen-${name}";
 

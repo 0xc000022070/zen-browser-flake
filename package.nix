@@ -1,6 +1,7 @@
 {
   name,
   variant,
+  icon ? null,
   policies ? {},
   lib,
   stdenv,
@@ -138,7 +139,10 @@ in
         name = binaryName;
         desktopName = "Zen Browser${lib.optionalString (name == "twilight") " Twilight"}";
         exec = "${binaryName} %u";
-        icon = desktopIconName;
+        icon =
+          if icon != null && (lib.isString icon || lib.isPath icon)
+          then icon
+          else desktopIconName;
         type = "Application";
         mimeTypes = [
           "text/html"

@@ -71,6 +71,12 @@ in {
       description = "Extra preferences to be included.";
     };
 
+    icon = mkOption {
+      type = types.nullOr (types.either types.str types.path);
+      default = null;
+      description = "Icon to be used for the application. It's only expected to work on Linux.";
+    };
+
     profiles = mkOption {
       type = with types;
         attrsOf (
@@ -280,6 +286,12 @@ in {
   };
 
   config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.icon == null || pkgs.stdenv.isLinux;
+        message = "The 'icon' option is only supported on Linux.";
+      }
+    ];
     programs.zen-browser = {
       package = lib.mkDefault (
         (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
@@ -288,7 +300,9 @@ in {
             policies = cfg.policies;
           }) {
             icon =
-              if name == "beta"
+              if cfg.icon != null
+              then cfg.icon
+              else if name == "beta"
               then "zen-browser"
               else "zen-${name}";
           }).override

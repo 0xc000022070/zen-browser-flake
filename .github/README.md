@@ -12,6 +12,7 @@ This is a nix flake for the Zen browser.
 - Browser update checks are disabled by default
 - The default twilight version is reliable and reproducible
 - [Declarative \[Work\]Spaces (including themes, icons, containers)](#spaces)
+- [Declarative keyboard shortcuts with version protection](#keyboard-shortcuts)
 
 ## Installation
 
@@ -181,6 +182,7 @@ Check
   - [bookmarks](#bookmarks)
   - [spaces](#spaces)
   - [pinned tabs](#pinned-tabs-pins)
+  - [keyboard shortcuts](#keyboard-shortcuts)
   - [userChrome](#userchromecss)
 
 ### Extensions
@@ -527,6 +529,69 @@ You are also able to declare your pinned tabs! For more info, see
   };
 }
 ```
+
+### Keyboard Shortcuts
+
+Declarative overrides of Zen Browser's keyboard shortcuts with version protection against breaking changes.
+
+```nix
+{
+  programs.zen-browser.profiles.default = {
+    keyboardShortcuts = [
+      # Change compact mode toggle to Ctrl+Alt+S
+      {
+        id = "zen-compact-mode-toggle";
+        key = "s";
+        modifiers = {
+          control = true;
+          alt = true;
+        };
+      }
+      # Disable the quit shortcut to prevent accidental closes
+      {
+        id = "key_quitApplication";
+        disabled = true;
+      }
+    ];
+    # Fails activation on schema changes to detect potential regressions
+    # Find this in about:config or prefs.js of your profile
+    keyboardShortcutsVersion = 14;
+  };
+}
+```
+
+When you declare a shortcut override:
+
+- Identity fields (`id`, `group`, `action`, `l10nId`, `reserved`, `internal`) are preserved from Zen's defaults
+- Binding fields (`key`, `keycode`, `modifiers`, `disabled`) are completely replaced with your declaration
+
+#### Configuration Options
+
+- `profiles.*.keyboardShortcuts` (list of submodules): Declarative keyboard shortcuts configuration.
+  - `id` (string) **Required.** Unique identifier for the shortcut to modify.
+  - `key` (null or string) Character key (e.g., "a", "1", "+"). Leave null to use default.
+  - `keycode` (null or string) Virtual key code for special keys (e.g., "VK_F1", "VK_DELETE"). Leave null to use default.
+  - `disabled` (null or boolean) Set to true to disable the shortcut. Leave null to use default.
+  - `modifiers` (null or submodule) Modifier keys configuration. Leave null to use defaults.
+    - `control` (null or boolean) Ctrl key modifier.
+    - `alt` (null or boolean) Alt key modifier.
+    - `shift` (null or boolean) Shift key modifier.
+    - `meta` (null or boolean) Meta/Windows/Command key modifier.
+    - `accel` (null or boolean) Accelerator key (Ctrl on Linux/Windows, Cmd on macOS).
+
+- `profiles.*.keyboardShortcutsVersion` (null or integer) Expected version of the keyboard shortcuts schema. If set, activation will fail if the Zen Browser shortcuts version doesn't match, preventing silent breakage after Zen Browser updates. Find the current version in `about:config` as `zen.keyboard.shortcuts.version`.
+
+### Finding Shortcut IDs
+
+Find all shortcuts in `~/.zen/<profile>/zen-keyboard-shortcuts.json`. For example:
+
+```bash
+jq -c '.shortcuts[] | {id, key, keycode, action}' ~/.zen/default/zen-keyboard-shortcuts.json
+```
+
+### Notes on activation
+
+Keyboard shortcuts are still managed by Zen and the home manager module only overrides them on activation. That means, that zen needs to be started at least once to create the shortcuts file if it doesn't exist yet. Then, every rebuild of your configuration (`nixos-rebuild switch` or `home-manager switch`) will apply your keybindings. Also note that you can just re-run activation scripts with `systemctl start home-manager-${USER}.service`.
 
 ### userChrome.css
 

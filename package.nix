@@ -72,6 +72,12 @@
     mkdir -p "$out/Applications/${applicationName}.app/Contents/Resources/distribution"
     ln -s ${policiesJson} "$out/Applications/${applicationName}.app/Contents/Resources/distribution/policies.json"
 
+    # Re-sign with correct identifier to maintain AdGuard compatibility
+    # AdGuard uses code signing identifier (not CFBundleIdentifier) to recognize apps
+    /usr/bin/codesign --force --deep --sign - \
+      --identifier "app.zen-browser.zen" \
+      "$out/Applications/${applicationName}.app"
+
     # Use symlink path to avoid installs.ini accumulation on Nix rebuilds
     # The symlink is created by home-manager and remains stable across rebuilds
     cat > "$out/bin/${binaryName}" << EOF
@@ -212,12 +218,6 @@ in
 
     # Firefox uses "relrhack" to manually process relocations from a fixed offset
     patchelfFlags = ["--no-clobber-old-sections"];
-
-    # Stripping invalidates macOS code signatures. We avoid strip-and-re-sign
-    # because /usr/bin/codesign is inaccessible in the Nix sandbox. This also
-    # preserves the original code signing identifier that tools like AdGuard
-    # use (not CFBundleIdentifier) to recognize apps.
-    dontStrip = stdenv.hostPlatform.isDarwin;
 
     preFixup = ''
       gappsWrapperArgs+=(

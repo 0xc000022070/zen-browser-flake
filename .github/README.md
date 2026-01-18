@@ -13,6 +13,7 @@ This is a nix flake for the Zen browser.
 - The default twilight version is reliable and reproducible
 - [Declarative \[Work\]Spaces (including themes, icons, containers)](#spaces)
 - [Declarative keyboard shortcuts with version protection](#keyboard-shortcuts)
+- [Declarative mods installation from Zen theme store](#mods)
 
 ## Installation
 
@@ -176,6 +177,7 @@ Check
 
 - profiles:
   - [extensions](#extensions)
+  - [mods](#mods)
   - [search](#search)
   - [preferences](#preferences)
   - [bookmarks](#bookmarks)
@@ -226,6 +228,23 @@ You can search for package names by going to
 > not install.\
 > Doing so through the repo will throw a build error warning you about the
 > package being unfree
+
+### Mods
+
+Mods are themes and extensions available in the [Zen theme store](https://zen-browser.app/themes). You can browse and install them directly in the browser, but to make them declarative, you can list their UUIDs here.
+
+To find the UUID of a mod, visit the mod's page in the Zen theme store and copy the UUID from the URL or the mod details.
+
+> [!NOTE]
+> You need to restart the browser to see the changes.
+
+```nix
+{
+  programs.zen-browser.profiles.*.mods = [
+    "e122b5d9-d385-4bf8-9971-e137809097d0" # No Top Sites
+  ];
+}
+```
 
 ### Search
 

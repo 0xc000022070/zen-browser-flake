@@ -919,6 +919,11 @@ in {
 
                             # Install/update current mods
                             for mod_uuid in $MODS; do
+                              MOD_DIR="$BASE_DIR/chrome/zen-themes/$mod_uuid"
+                              if [ -d "$MOD_DIR" ]; then
+                                continue
+                              fi
+
                               THEME_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_uuid/theme.json"
                               echo "Fetching mod $mod_uuid from $THEME_URL"
 
@@ -937,12 +942,10 @@ in {
                               ${lib.getExe pkgs.jq} --arg uuid "$mod_uuid" --argjson theme "$THEME_JSON" '.[$uuid] = $theme' "$THEMES_FILE" > "$THEMES_FILE.tmp" && mv "$THEMES_FILE.tmp" "$THEMES_FILE"
 
                               # Download mod files
-                              MOD_DIR="$BASE_DIR/chrome/zen-themes/$mod_uuid"
                               mkdir -p "$MOD_DIR"
 
                               for file in chrome.css preferences.json readme.md; do
                                 FILE_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_uuid/$file"
-                                echo "Downloading $file for mod $mod_uuid"
                                 ${lib.getExe pkgs.curl} -s "$FILE_URL" -o "$MOD_DIR/$file" || true
                               done
                             done

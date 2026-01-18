@@ -17,7 +17,9 @@ in rec {
     icon = "zen-browser";
   };
   twilight = pkgs.wrapFirefox twilight-unwrapped {};
-  twilight-official = pkgs.wrapFirefox twilight-official-unwrapped {};
+  twilight-official = pkgs.wrapFirefox twilight-official-unwrapped {
+    icon = "zen-twilight";
+  };
 
   default = beta;
 }

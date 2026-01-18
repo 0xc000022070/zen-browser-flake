@@ -9,6 +9,7 @@ assignees: ''
 
 - [ ] I've updated the flake input to the latest version (seriously, you should try it)
 - [ ] XDG portals properly configured
+- [ ] I tried using nixpkgs-unstable to ensure compatibility with the latest Firefox version
 - [ ] I already searched the [zen-browser](https://github.com/zen-browser/desktop/issues?q=sort%3Aupdated-desc%20is%3Aissue%20is%3Aopen)'s github issues
 
 ## Describe the bug

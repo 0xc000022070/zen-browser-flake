@@ -23,8 +23,7 @@ inputs = {
   zen-browser = {
     url = "github:0xc000022070/zen-browser-flake";
     inputs = {
-      # IMPORTANT: we're using "libgbm" and it is only available in unstable so ensure
-      # to have it up-to-date or simply don't specify the nixpkgs input
+      # IMPORTANT: To ensure compatibility with the latest Firefox version, use nixpkgs-unstable.
       nixpkgs.follows = "nixpkgs";
       home-manager.follows = "home-manager";
     };

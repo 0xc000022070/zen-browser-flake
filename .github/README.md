@@ -4,7 +4,7 @@ This is a nix flake for the Zen browser.
 
 ## Features
 
-- Linux and MacOS support
+- Linux and macOS support
 - Available for _x86_64_ and _aarch64_
 - Support for _twilight_ and _beta_
 - [Policies can be modified via Home Manager and unwrapped package override](#policies)
@@ -23,7 +23,7 @@ inputs = {
   zen-browser = {
     url = "github:0xc000022070/zen-browser-flake";
     inputs = {
-      # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
+      # IMPORTANT: we're using "libgbm" and it is only available in unstable so ensure
       # to have it up-to-date or simply don't specify the nixpkgs input
       nixpkgs.follows = "nixpkgs";
       home-manager.follows = "home-manager";
@@ -75,7 +75,7 @@ Check the [Home Manager Reference](#home-manager-reference) and my rice
 <details>
 <summary><h4>With environment.systemPackages or home.packages</h4></summary>
 
-To integrate `Zen Browser` to your NixOS/Home Manager configuration, add the
+To integrate `Zen Browser` into your NixOS/Home Manager configuration, add the
 following to your `environment.systemPackages` or `home.packages`:
 
 ```nix
@@ -122,7 +122,7 @@ further documentation.
 
 `programs.zen-browser.*`
 
-- `enable` (_boolean_): Enable the home manager config.
+- `enable` (_boolean_): Enable the Home Manager config.
 
 - `nativeMessagingHosts` (listOf package): To
   [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging).
@@ -218,12 +218,12 @@ You can search for package names by going to
 > [!IMPORTANT]
 > Depending on how your flake is configured, you might not be able to install
 > extensions marked "unfree" like [improved-tube](https://improvedtube.com/).
-> For those extensions, the only way to install them is through the firefox
+> For those extensions, the only way to install them is through the Firefox
 > store
 >
 > If you are not using the
-> [fireox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
-> configuration will still build with the configuration, but the extension will
+> [firefox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
+> configuration will still build, but the extension will
 > not install.\
 > Doing so through the repo will throw a build error warning you about the
 > package being unfree
@@ -238,8 +238,8 @@ You can search for package names by going to
         force = true; # Needed for nix to overwrite search settings on rebuild
         default = "ddg"; # Aliased to duckduckgo, see other aliases in the link above
         engines = {
-            # My nixos Option and package search shortcut
-          mynixos = {
+           # My NixOS Option and package search shortcut
+         mynixos = {
             name = "My NixOS";
             urls = [
               {
@@ -266,7 +266,7 @@ You can search for package names by going to
 
 ```nix
 {
-  programs.zen-browser.profiiles.*.settings = {
+  programs.zen-browser.profiles.*.settings = {
     "browser.tabs.warnOnClose" = false;
     "browser.download.panel.shown" = false;
     # Since this is a json value, it can be nixified and translated by home-manager;
@@ -591,7 +591,7 @@ jq -c '.shortcuts[] | {id, key, keycode, action}' ~/.zen/default/zen-keyboard-sh
 
 ### Notes on activation
 
-Keyboard shortcuts are still managed by Zen and the home manager module only overrides them on activation. That means, that zen needs to be started at least once to create the shortcuts file if it doesn't exist yet. Then, every rebuild of your configuration (`nixos-rebuild switch` or `home-manager switch`) will apply your keybindings. Also note that you can just re-run activation scripts with `systemctl start home-manager-${USER}.service`.
+Keyboard shortcuts are still managed by Zen and the home manager module only overrides them on activation. That means that Zen needs to be started at least once to create the shortcuts file if it doesn't exist yet. Then, every rebuild of your configuration (`nixos-rebuild switch` or `home-manager switch`) will apply your keybindings. Also note that you can just re-run activation scripts with `systemctl start home-manager-${USER}.service`.
 
 ### userChrome.css
 
@@ -605,7 +605,7 @@ Keyboard shortcuts are still managed by Zen and the home manager module only ove
 }
 ```
 
-[Artile on how to costumize userChrome](https://mefmobile.org/how-to-customize-firefoxs-user-interface-with-userchrome-css/)
+[Article on how to customize userChrome](https://mefmobile.org/how-to-customize-firefoxs-user-interface-with-userchrome-css/)
 
 ## 1Password
 

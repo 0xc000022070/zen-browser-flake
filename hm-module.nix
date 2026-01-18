@@ -357,6 +357,11 @@ in {
                     Find the current version in about:config as "zen.keyboard.shortcuts.version".
                   '';
                 };
+                mods = mkOption {
+                  type = listOf str;
+                  default = [];
+                  description = "List of mod UUIDs to install from the Zen theme store.";
+                };
               };
             }
           )
@@ -736,24 +741,24 @@ in {
         }
     ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce) cfg.profiles));
 
-    home.activation =
-      let
-        inherit (builtins) toJSON;
-        inherit
-          (lib)
-          filterAttrs
-          mapAttrs'
-          nameValuePair
-          optionalString;
-        # Filter profiles that have keyboard shortcuts configured
-        profilesWithShortcuts = filterAttrs
-          (_: profile: profile.keyboardShortcuts != [ ])
-          cfg.profiles;
-
-      in
+    home.activation = let
+      inherit (builtins) toJSON;
+      inherit
+        (lib)
+        filterAttrs
+        mapAttrs'
+        nameValuePair
+        optionalString
+        ;
+      # Filter profiles that have keyboard shortcuts configured
+      profilesWithShortcuts =
+        filterAttrs
+        (_: profile: profile.keyboardShortcuts != [])
+        cfg.profiles;
+    in
       (mapAttrs'
-        (profileName: profile:
-          let
+        (
+          profileName: profile: let
             shortcutsFile = "${profilePath}/${profileName}/zen-keyboard-shortcuts.json";
             shortcutsFilePath = "${config.home.homeDirectory}/${shortcutsFile}";
             prefsFile = "${config.home.homeDirectory}/${profilePath}/${profileName}/prefs.js";
@@ -762,16 +767,25 @@ in {
             # All binding fields are included (with null/false defaults) to fully replace the binding
             shortcutToJson = shortcut: {
               inherit (shortcut) id;
-              key = if shortcut.key != null then shortcut.key else "";
+              key =
+                if shortcut.key != null
+                then shortcut.key
+                else "";
               keycode = shortcut.keycode;
-              modifiers = if shortcut.modifiers != null then shortcut.modifiers else {
-                control = false;
-                alt = false;
-                shift = false;
-                meta = false;
-                accel = false;
-              };
-              disabled = if shortcut.disabled != null then shortcut.disabled else false;
+              modifiers =
+                if shortcut.modifiers != null
+                then shortcut.modifiers
+                else {
+                  control = false;
+                  alt = false;
+                  shift = false;
+                  meta = false;
+                  accel = false;
+                };
+              disabled =
+                if shortcut.disabled != null
+                then shortcut.disabled
+                else false;
             };
 
             # Generate the shortcuts overrides array
@@ -816,7 +830,7 @@ in {
 
               # Use jq to merge overrides into existing shortcuts
               # For each override, preserve identity fields but completely replace binding fields
-              MERGED=$(echo "$EXISTING_SHORTCUTS" | ${pkgs.jq}/bin/jq --argjson overrides "$OVERRIDES" '
+              MERGED=$(echo "$EXISTING_SHORTCUTS" | ${lib.getExe pkgs.jq} --argjson overrides "$OVERRIDES" '
                 .shortcuts |= map(
                   . as $existing |
                   # Find if there is an override for this shortcut
@@ -848,22 +862,134 @@ in {
               echo "$MERGED" > "$SHORTCUTS_FILE"
 
               # Validate JSON
-              if ! ${pkgs.jq}/bin/jq empty "$SHORTCUTS_FILE" 2>/dev/null; then
+              if ! ${lib.getExe pkgs.jq} empty "$SHORTCUTS_FILE" 2>/dev/null; then
                 echo "Error: Generated invalid JSON in $SHORTCUTS_FILE"
                 exit 1
               fi
             '';
-
           in
-          nameValuePair "zen-keyboard-shortcuts-${profileName}" (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            ${updateScript}
-            if [[ "$?" -eq 0 ]]; then
-              $VERBOSE_ECHO "zen-keyboard-shortcuts: Updated keyboard shortcuts for profile '${profileName}'"
-            else
-              echo "zen-keyboard-shortcuts: Failed to update keyboard shortcuts for profile '${profileName}'!" >&2
-            fi
-          '')
+            nameValuePair "zen-keyboard-shortcuts-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
+              ${updateScript}
+              if [[ "$?" -eq 0 ]]; then
+                $VERBOSE_ECHO "zen-keyboard-shortcuts: Updated keyboard shortcuts for profile '${profileName}'"
+              else
+                echo "zen-keyboard-shortcuts: Failed to update keyboard shortcuts for profile '${profileName}'!" >&2
+              fi
+            '')
         )
-        profilesWithShortcuts);
+        profilesWithShortcuts)
+      # Mods activation
+      // (let
+        profilesWithMods =
+          filterAttrs
+          (_: profile: profile.mods != [])
+          cfg.profiles;
+      in
+        mapAttrs'
+        (
+          profileName: profile: let
+            themesFile = "${profilePath}/${profileName}/zen-themes.json";
+            themesFilePath = "${config.home.homeDirectory}/${themesFile}";
+
+            updateModsScript = pkgs.writeShellScript "zen-mods-update-${profileName}" ''
+                            THEMES_FILE="${themesFilePath}"
+                            MODS="${lib.concatStringsSep " " profile.mods}"
+                            BASE_DIR="${config.home.homeDirectory}/.zen/${profileName}"
+                            MANAGED_FILE="$BASE_DIR/zen-mods-nix-managed.json"
+
+                            if [ ! -f "$THEMES_FILE" ]; then
+                              echo '{}' > "$THEMES_FILE"
+                            fi
+
+                            # Read current managed mods
+                            if [ -f "$MANAGED_FILE" ]; then
+                              CURRENT_MANAGED=$(${lib.getExe pkgs.jq} -r '.[]' "$MANAGED_FILE" 2>/dev/null || echo "")
+                            else
+                              CURRENT_MANAGED=""
+                            fi
+
+                            # Remove mods not in current list
+                            for uuid in $CURRENT_MANAGED; do
+                              if [[ " $MODS " != *" $uuid "* ]]; then
+                                ${lib.getExe pkgs.jq} "del(.[\"$uuid\"])" "$THEMES_FILE" > "$THEMES_FILE.tmp" && mv "$THEMES_FILE.tmp" "$THEMES_FILE"
+                                rm -rf "$BASE_DIR/chrome/zen-themes/$uuid"
+                                echo "Removed mod $uuid"
+                              fi
+                            done
+
+                            # Install/update current mods
+                            for mod_uuid in $MODS; do
+                              THEME_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_uuid/theme.json"
+                              echo "Fetching mod $mod_uuid from $THEME_URL"
+
+                              THEME_JSON=$(${lib.getExe pkgs.curl} -s "$THEME_URL")
+                              if [ $? -ne 0 ] || [ -z "$THEME_JSON" ]; then
+                                echo "Failed to fetch theme for mod $mod_uuid"
+                                continue
+                              fi
+
+                              if ! echo "$THEME_JSON" | ${lib.getExe pkgs.jq} empty 2>/dev/null; then
+                                echo "Invalid JSON for mod $mod_uuid"
+                                continue
+                              fi
+
+                              # Merge into themes file
+                              ${lib.getExe pkgs.jq} --arg uuid "$mod_uuid" --argjson theme "$THEME_JSON" '.[$uuid] = $theme' "$THEMES_FILE" > "$THEMES_FILE.tmp" && mv "$THEMES_FILE.tmp" "$THEMES_FILE"
+
+                              # Download mod files
+                              MOD_DIR="$BASE_DIR/chrome/zen-themes/$mod_uuid"
+                              mkdir -p "$MOD_DIR"
+
+                              for file in chrome.css preferences.json readme.md; do
+                                FILE_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_uuid/$file"
+                                echo "Downloading $file for mod $mod_uuid"
+                                ${lib.getExe pkgs.curl} -s "$FILE_URL" -o "$MOD_DIR/$file" || true
+                              done
+                            done
+
+                            # Write new managed list
+                            echo "$MODS" | tr ' ' '\n' | ${lib.getExe pkgs.jq} -R -s 'split("\n") | map(select(. != ""))' > "$MANAGED_FILE"
+
+                            # Generate zen-themes.css
+                            ZEN_THEMES_CSS="$BASE_DIR/chrome/zen-themes.css"
+                            echo "/* Zen Mods - Generated by Zen Browser Flake." > "$ZEN_THEMES_CSS"
+                            cat >> "$ZEN_THEMES_CSS" << 'EOF'
+              * DO NOT EDIT THIS FILE DIRECTLY!
+              * Your changes will be overwritten.
+              * Instead, go to the preferences and edit the mods there.
+              */
+              EOF
+
+                            # Get enabled mods
+                            ENABLED_MODS=$(${lib.getExe pkgs.jq} -r 'to_entries[] | select(.value.enabled == null or .value.enabled == true) | .key' "$THEMES_FILE")
+
+                            for mod_uuid in $ENABLED_MODS; do
+                              MOD_CSS="$BASE_DIR/chrome/zen-themes/$mod_uuid/chrome.css"
+                              if [ -f "$MOD_CSS" ]; then
+                                MOD_INFO=$(${lib.getExe pkgs.jq} -r ".\"$mod_uuid\" | \"/* Name: \(.name) */\\n/* Description: \(.description) */\\n/* Author: @\(.author) */\"" "$THEMES_FILE")
+                                echo "$MOD_INFO" >> "$ZEN_THEMES_CSS"
+                                cat "$MOD_CSS" >> "$ZEN_THEMES_CSS"
+                                echo "" >> "$ZEN_THEMES_CSS"
+                              fi
+                            done
+
+                            echo "/* End of Zen Mods */" >> "$ZEN_THEMES_CSS"
+
+                            if ! ${lib.getExe pkgs.jq} empty "$THEMES_FILE" 2>/dev/null; then
+                              echo "Error: Generated invalid JSON in $THEMES_FILE"
+                              exit 1
+                            fi
+            '';
+          in
+            nameValuePair "zen-mods-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
+              ${updateModsScript}
+              if [[ "$?" -eq 0 ]]; then
+                $VERBOSE_ECHO "zen-mods: Updated mods for profile '${profileName}'"
+              else
+                echo "zen-mods: Failed to update mods for profile '${profileName}'!" >&2
+              fi
+            '')
+        )
+        profilesWithMods);
   };
 }

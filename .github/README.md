@@ -625,6 +625,14 @@ Keyboard shortcuts are still managed by Zen and the home manager module only ove
 
 [Article on how to customize userChrome](https://mefmobile.org/how-to-customize-firefoxs-user-interface-with-userchrome-css/)
 
+## User Configurations
+
+Here are some user configurations that showcase different setups using this flake:
+
+- [ch1bo](https://github.com/ch1bo/dotfiles/blob/master/home-modules/browser/zen.nix)
+- [luisnquin](https://github.com/luisnquin/nixos-config/blob/main/home/modules/programs/browser/zen/default.nix)
+- [skifli](https://github.com/skifli/nixos/blob/main/users/programs/browser/zen.nix)
+
 ## 1Password
 
 Zen has to be manually added to the list of browsers that 1Password will

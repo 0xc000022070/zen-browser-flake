@@ -233,9 +233,9 @@ You can also use [this alternative path](https://github.com/0xc000022070/zen-bro
 
 ### Mods
 
-Mods are themes and extensions available in the [Zen theme store](https://zen-browser.app/themes). You can browse and install them directly in the browser, but to make them declarative, you can list their UUIDs here.
+Mods are themes and extensions available in the [Zen theme store](https://zen-browser.app/mods). You can browse and install them directly in the browser, but to make them declarative, you can list their UUIDs here.
 
-To find the UUID of a mod, visit the mod's page in the Zen theme store and copy the UUID from the URL or the mod details.
+To find the UUID of a mod, visit the mod's page in the Zen theme store and copy the UUID from the URL.
 
 > [!NOTE]
 > You need to restart the browser to see the changes.

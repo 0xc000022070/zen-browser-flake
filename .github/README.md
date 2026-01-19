@@ -229,6 +229,8 @@ You can search for package names by going to
 > Doing so through the repo will throw a build error warning you about the
 > package being unfree
 
+You can also use [this alternative path](https://github.com/0xc000022070/zen-browser-flake/tree/b6b1e625e4aa049b59930611fc20790c0ccbc840?tab=readme-ov-file#extensions). Check [my config](https://github.com/luisnquin/nixos-config/blob/9f641d16c74cf9a90fdf5b654376a1d6c8cc1f86/home/modules/programs/browser/zen/policies-config.nix#L46) too.
+
 ### Mods
 
 Mods are themes and extensions available in the [Zen theme store](https://zen-browser.app/themes). You can browse and install them directly in the browser, but to make them declarative, you can list their UUIDs here.

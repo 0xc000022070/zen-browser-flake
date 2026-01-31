@@ -378,23 +378,26 @@ in {
     ];
     programs.zen-browser = {
       package = lib.mkDefault (
-        (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
-            # Seems like zen uses relative (to the original binary) path to the policies.json file
-            # and ignores the overrides by pkgs.wrapFirefox
-            policies = cfg.policies;
-          }) {
-            icon =
-              if cfg.icon != null
-              then cfg.icon
-              else if name == "beta"
-              then "zen-browser"
-              else "zen-${name}";
-          }).override
-        {
-          extraPrefs = cfg.extraPrefs;
-          extraPrefsFiles = cfg.extraPrefsFiles;
-          nativeMessagingHosts = cfg.nativeMessagingHosts;
-        }
+        if pkgs.stdenv.isDarwin then
+          self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped"
+        else
+          (pkgs.wrapFirefox (self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
+              # Seems like zen uses relative (to the original binary) path to the policies.json file
+              # and ignores the overrides by pkgs.wrapFirefox
+              policies = cfg.policies;
+            }) {
+              icon =
+                if cfg.icon != null
+                then cfg.icon
+                else if name == "beta"
+                then "zen-browser"
+                else "zen-${name}";
+            }).override
+          {
+            extraPrefs = cfg.extraPrefs;
+            extraPrefsFiles = cfg.extraPrefsFiles;
+            nativeMessagingHosts = cfg.nativeMessagingHosts;
+          }
       );
 
       policies = {
@@ -740,6 +743,12 @@ in {
           force = true;
         }
     ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce) cfg.profiles));
+
+    targets.darwin.defaults = mkIf pkgs.stdenv.isDarwin {
+      "app.zen-browser.zen" = {
+        EnterprisePoliciesEnabled = true;
+      } // cfg.policies;
+    };
 
     home.activation = let
       inherit (builtins) toJSON;

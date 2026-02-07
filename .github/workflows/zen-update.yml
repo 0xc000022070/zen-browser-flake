@@ -39,7 +39,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          .github/update.sh --ci
+          MAX_RETRIES=3
+
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo "::group::Attempt $attempt/$MAX_RETRIES"
+
+            if .github/update.sh --ci; then
+              echo "::endgroup::"
+              echo "::notice::Update successful on attempt $attempt"
+              exit 0
+            fi
+
+            EXIT_CODE=$?
+            echo "::endgroup::"
+
+            if [ $attempt -lt $MAX_RETRIES ]; then
+              echo "::warning::Attempt $attempt failed. Cleaning up and retrying..."
+              git checkout HEAD -- . && git clean -fd
+              sleep $((attempt * 5))
+            else
+              echo "::error::All $MAX_RETRIES attempts failed"
+              exit $EXIT_CODE
+            fi
+          done
 
       - name: Commit changes
         id: commit

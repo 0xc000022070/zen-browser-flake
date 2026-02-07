@@ -13,11 +13,11 @@ in rec {
   twilight-unwrapped = mkZen "twilight" "twilight";
   twilight-official-unwrapped = mkZen "twilight" "twilight-official";
 
-  beta = pkgs.wrapFirefox beta-unwrapped {
+  beta = if pkgs.stdenv.isDarwin then beta-unwrapped else pkgs.wrapFirefox beta-unwrapped {
     icon = "zen-browser";
   };
-  twilight = pkgs.wrapFirefox twilight-unwrapped {};
-  twilight-official = pkgs.wrapFirefox twilight-official-unwrapped {
+  twilight = if pkgs.stdenv.isDarwin then twilight-unwrapped else pkgs.wrapFirefox twilight-unwrapped {};
+  twilight-official = if pkgs.stdenv.isDarwin then twilight-official-unwrapped else pkgs.wrapFirefox twilight-official-unwrapped {
     icon = "zen-twilight";
   };
 

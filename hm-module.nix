@@ -76,6 +76,17 @@ in {
       default = null;
       description = "Icon to be used for the application. It's only expected to work on Linux.";
     };
+    nixGL = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Wrap Zen Browser with config.lib.nixGL for GPU acceleration on non-NixOS Linux.
+
+          See https://github.com/nix-community/nixGL for details.
+        '';
+      };
+    };
 
     profiles = mkOption {
       type = with types;
@@ -386,6 +397,10 @@ in {
             assertion = cfg.icon == null || pkgs.stdenv.isLinux;
             message = "The 'icon' option is only supported on Linux.";
           }
+          {
+            assertion = !cfg.nixGL.enable || (config.lib ? nixGL && config.lib.nixGL ? wrap);
+            message = "You don't meet the requirements to use the 'nixGL.enable' option. See https://github.com/nix-community/nixGL for details.";
+          }
         ]
         ++ (lib.mapAttrsToList (profileName: profile: {
             assertion = !(profile.sine.enable && profile.mods != []);
@@ -426,8 +441,8 @@ in {
                   '';
               })
             else defaultPackage;
-        in
-          lib.mkDefault (
+
+          wrappedPackage =
             (pkgs.wrapFirefox (getPackage isSineEnabled) {
               icon =
                 if cfg.icon != null
@@ -439,7 +454,12 @@ in {
               extraPrefs = cfg.extraPrefs;
               extraPrefsFiles = cfg.extraPrefsFiles;
               nativeMessagingHosts = cfg.nativeMessagingHosts;
-            }
+            };
+        in
+          lib.mkDefault (
+            if cfg.nixGL.enable
+            then config.lib.nixGL.wrap wrappedPackage
+            else wrappedPackage
           );
 
         policies = {

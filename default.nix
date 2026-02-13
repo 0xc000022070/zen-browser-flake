@@ -3,7 +3,7 @@
   system ? pkgs.stdenv.hostPlatform.system,
 }: let
   mkZen = name: entry: let
-    variant = (builtins.fromJSON (builtins.readFile ./sources.json)).variants.${entry}.${system};
+    variant = (builtins.fromJSON (builtins.readFile ./sources.json)).${entry}.${system};
   in
     pkgs.callPackage ./package.nix {
       inherit name variant;

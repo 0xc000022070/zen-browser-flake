@@ -389,6 +389,19 @@ in {
 
   config = let
     isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
+
+    getSine = {}: let
+      sourcesJson = builtins.fromJSON (builtins.readFile "${self}/sources.json");
+    in {
+      src = pkgs.fetchzip {
+        inherit (sourcesJson.addons.sine.src) url hash;
+        stripRoot = true;
+      };
+      bootloader = pkgs.fetchzip {
+        inherit (sourcesJson.addons.sine.bootloader) url hash;
+        stripRoot = true;
+      };
+    };
   in
     mkIf cfg.enable {
       assertions =
@@ -419,24 +432,18 @@ in {
           getPackage = sine:
             if sine
             then
-              defaultPackage.overrideAttrs (oldAttrs: rec {
-                sineconfig = builtins.fetchurl {
-                  url = "https://raw.githubusercontent.com/sineorg/bootloader/refs/heads/main/program/config.js";
-                  sha256 = "117a6gkaz1kinjflfzqc6qsb4r06x93w08q4lfdzh5a1cng95s5v";
-                };
-                configpref = builtins.fetchurl {
-                  url = "https://raw.githubusercontent.com/sineorg/bootloader/refs/heads/main/program/defaults/pref/config-prefs.js";
-                  sha256 = "1kkyq5qdp7nnq09ckbd3xgdhsm2q80xjmihgiqbzb3yi778jxzbb";
-                };
+              defaultPackage.overrideAttrs (oldAttrs: let
+                sine = getSine {};
+              in rec {
                 libname = "zen-bin-*";
                 postInstall =
                   (oldAttrs.postInstall or "")
                   + ''
                     for libdir in "$out"/lib/${libname}; do
                       chmod -R u+w "$libdir"
-                      cp "${sineconfig}" "$libdir/config.js"
+                      cp "${sine.bootloader}/program/config.js" "$libdir/config.js"
                       mkdir -p "$libdir/defaults/pref"
-                      cp "${configpref}" "$libdir/defaults/pref/config-pref.js"
+                      cp "${sine.bootloader}/program/defaults/pref/config-prefs.js" "$libdir/defaults/pref/config-pref.js"
                     done
                   '';
               })
@@ -808,23 +815,13 @@ in {
         ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce) cfg.profiles))
         // (
           if isSineEnabled
-          then let
-            sourcesJson = builtins.fromJSON (builtins.readFile "${self}/sources.json");
-            sine = {
-              src = pkgs.fetchzip {
-                inherit (sourcesJson.addons.sine.src) url hash;
-                stripRoot = true;
-              };
-              bootloader = pkgs.fetchzip {
-                inherit (sourcesJson.addons.sine.bootloader) url hash;
-                stripRoot = true;
-              };
-            };
-          in
+          then
             lib.concatMapAttrs (
               profileName: profile:
                 if profile.sine.enable
-                then {
+                then let
+                  sine = getSine {};
+                in {
                   "${profilePath}/${profileName}/chrome/JS/engine" = {
                     source = sine.src + "/engine";
                     recursive = true;

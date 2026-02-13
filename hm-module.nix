@@ -809,18 +809,15 @@ in {
         // (
           if isSineEnabled
           then let
+            sourcesJson = builtins.fromJSON (builtins.readFile "${self}/sources.json");
             sine = {
-              src = pkgs.fetchFromGitHub {
-                owner = "CosmoCreeper";
-                repo = "Sine";
-                rev = "2b0cd538aed197f4725298f52f350b7fd4c1c145";
-                hash = "sha256-b1Mk4B5OujWXGNfzIUEaSfBez55zec6p36ncbCluBtc=";
+              src = pkgs.fetchzip {
+                inherit (sourcesJson.addons.sine.src) url hash;
+                stripRoot = true;
               };
-              bootloader = pkgs.fetchFromGitHub {
-                owner = "sineorg";
-                repo = "bootloader";
-                rev = "e83ebd5f4137731726c759540166906ca646a939";
-                hash = "sha256-JvXNVd0HJ2OtVQuZ3bsOOvJW5VD5TIuZD8zxP1V2Y4Q=";
+              bootloader = pkgs.fetchzip {
+                inherit (sourcesJson.addons.sine.bootloader) url hash;
+                stripRoot = true;
               };
             };
           in

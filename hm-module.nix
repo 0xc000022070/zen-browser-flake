@@ -44,7 +44,6 @@ in {
       name = applicationName;
       wrappedPackageName = "zen-${name}";
       unwrappedPackageName = "zen-${name}-unwrapped";
-      visible = true;
       platforms = {
         linux = {
           vendorPath = linuxConfigPath;

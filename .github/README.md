@@ -743,7 +743,7 @@ schemes, you can add the following configuration to your Home Manager setup:
 
    ```bash
    # or zen-twilight
-   zen-beta -safe-mode
+   zen-beta --safe-mode
    ```
 
 

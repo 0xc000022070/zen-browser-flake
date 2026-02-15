@@ -722,6 +722,34 @@ schemes, you can add the following configuration to your Home Manager setup:
 
 ## Troubleshooting
 
+### Missing configuration after update
+
+1. The release [18.18.6b](****https://github.com/zen-browser/desktop/releases/tag/1.18.6b) 
+   changed the configuration location.
+   Please move your configuration from ~/.zen to ~/.config/zen and restart the browser
+
+   ```bash
+   mkdir -p ~/.config/zen
+   mv ~/.zen/* ~/.config/zen/
+   rmdir ~/.zen
+   ```
+
+   Then change every occurrence of ".zen" to ".config/zen" in:
+   - `.config/zen/<profile_name>/extensions.json`
+   - `.config/zen/<profile_name>/pkcs11.txt`
+   - `.config/zen/<profile_name>/chrome_debugger_profile/pkcs11.txt`
+
+   Then run zen in safe mode once and close it (it will perform the required migrations):
+
+   ```bash
+   # or zen-twilight
+   zen-beta --safe-mode
+   ```
+
+
+2. Please check that you're using the wrapped version of the package.
+   The -unwrapped variants should not be used directly. Instead, they should be wrapped with wrapFirefox or custom wrappers.
+
 #### The requested URL returned error: 404
 
 This usually happens when the Zen team deletes a beta release from the official

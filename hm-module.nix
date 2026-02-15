@@ -26,8 +26,8 @@
     "zen-browser"
   ];
 
-  linuxConfigPath = ".zen";
-  darwinConfigPath = "Library/Application Support/Zen";
+  linuxConfigPath = "${config.xdg.configHome}/zen";
+  darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
 
   # Actual profile directory path where places.sqlite is located
   profilePath = "${(
@@ -494,7 +494,7 @@ in {
           profileName: profile: let
             sqlite3 = getExe' pkgs.sqlite "sqlite3";
             scriptFile = "${profilePath}/${profileName}/places_update.sh";
-            placesFile = "${config.home.homeDirectory}/${profilePath}/${profileName}/places.sqlite";
+            placesFile = "${profilePath}/${profileName}/places.sqlite";
 
             insertSpaces = ''
                         # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
@@ -873,9 +873,8 @@ in {
         (mapAttrs'
           (
             profileName: profile: let
-              shortcutsFile = "${profilePath}/${profileName}/zen-keyboard-shortcuts.json";
-              shortcutsFilePath = "${config.home.homeDirectory}/${shortcutsFile}";
-              prefsFile = "${config.home.homeDirectory}/${profilePath}/${profileName}/prefs.js";
+              shortcutsFilePath = "${profilePath}/${profileName}/zen-keyboard-shortcuts.json";
+              prefsFile = "${profilePath}/${profileName}/prefs.js";
 
               # Convert Nix shortcut config to JSON format
               # All binding fields are included (with null/false defaults) to fully replace the binding
@@ -1002,13 +1001,12 @@ in {
           mapAttrs'
           (
             profileName: profile: let
-              themesFile = "${profilePath}/${profileName}/zen-themes.json";
-              themesFilePath = "${config.home.homeDirectory}/${themesFile}";
+              themesFilePath = "${profilePath}/${profileName}/zen-themes.json";
 
               updateModsScript = pkgs.writeShellScript "zen-mods-update-${profileName}" ''
                               THEMES_FILE="${themesFilePath}"
                               MODS="${lib.concatStringsSep " " profile.mods}"
-                              BASE_DIR="${config.home.homeDirectory}/.zen/${profileName}"
+                              BASE_DIR="${profilePath}/${profileName}"
                               MANAGED_FILE="$BASE_DIR/zen-mods-nix-managed.json"
 
                               if [ ! -f "$THEMES_FILE" ]; then

@@ -148,7 +148,7 @@ update_version() {
     # "linux" or "darwin"
     os=$3
 
-    meta=$(jq ".[\"$version_name\"][\"$arch-$os\"]" <sources.json)
+    meta=$(jq ".variants[\"$version_name\"][\"$arch-$os\"]" <sources.json)
 
     local_sha1=$(echo "$meta" | jq -r '.sha1')
     remote_sha1=$(resolve_version_remote_sha1 "$version_name")
@@ -156,7 +156,7 @@ update_version() {
     local=""
     remote=""
     if [ "$version_name" = "twilight" ]; then
-        local=$(jq -r '.twilight_metadata.updated_at' sources.json)
+        local=$(jq -r '.metadata_for.twilight.last_updated_at' sources.json)
         remote=$(get_updated_at_of_twilight_artifact_from_zen_repo)
     else
         local="$local_sha1"
@@ -246,12 +246,12 @@ update_version() {
                     echo "[skipping] An artifact $artifact_name already exists in $release_name @ following link: $self_download_url"
                 fi
 
-                jq ".[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                jq ".variants[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
                 mv sources.json.tmp sources.json
             done
     fi
 
-    jq ".[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    jq ".variants[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
     mv sources.json.tmp sources.json
 
     echo "$version_name was updated to $semver"
@@ -302,7 +302,7 @@ main() {
         # Update twilight metadata
         if [ "$commit_twilight_targets" != "" ]; then
             updated_at=$(get_updated_at_of_twilight_artifact_from_zen_repo)
-            jq ".[\"twilight_metadata\"][\"updated_at\"] = \"$updated_at"\" sources.json >sources.json.tmp
+            jq ".metadata_for.twilight.last_updated_at = \"$updated_at\"" sources.json >sources.json.tmp
             mv sources.json.tmp sources.json
         fi
 

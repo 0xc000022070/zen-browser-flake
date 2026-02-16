@@ -28,15 +28,15 @@
     formatter = forAllSystems (pkgs: pkgs.alejandra);
 
     homeModules = {
-      beta = import ./hm-module.nix {
+      beta = import ./hm-module {
         inherit self home-manager;
         name = "beta";
       };
-      twilight = import ./hm-module.nix {
+      twilight = import ./hm-module {
         inherit self home-manager;
         name = "twilight";
       };
-      twilight-official = import ./hm-module.nix {
+      twilight-official = import ./hm-module {
         inherit self home-manager;
         name = "twilight-official";
       };

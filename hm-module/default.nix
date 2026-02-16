@@ -17,6 +17,21 @@
 
   cfg = getAttrFromPath modulePath config;
 
+  mkSinePack = {}: let
+    sources = builtins.fromJSON (builtins.readFile "${self}/sources.json");
+  in {
+    manager = pkgs.fetchFromGitHub {
+      inherit (sources.addons.sine.manager) rev hash;
+      repo = "Sine";
+      owner = "CosmoCreeper";
+    };
+    bootloader = pkgs.fetchFromGitHub {
+      inherit (sources.addons.sine.bootloader) rev hash;
+      repo = "bootloader";
+      owner = "sineorg";
+    };
+  };
+
   applicationName = "Zen Browser";
   linuxConfigPath = "${config.xdg.configHome}/zen";
   darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
@@ -40,11 +55,11 @@ in {
         };
       };
     })
-    (import ./package.nix {inherit self name;})
+    (import ./package.nix {inherit self name mkSinePack;})
     (import ./places.nix)
     (import ./keyboard-shortcuts.nix)
     (import ./mods.nix)
-    (import ./sine.nix)
+    (import ./sine.nix {inherit mkSinePack;})
   ];
 
   config = mkIf cfg.enable {

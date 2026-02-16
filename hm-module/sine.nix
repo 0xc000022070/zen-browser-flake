@@ -1,4 +1,4 @@
-{
+{mkSinePack}: {
   config,
   pkgs,
   lib,
@@ -54,42 +54,29 @@ in {
     home.file =
       if isSineEnabled
       then let
-        sine = {
-          src = pkgs.fetchFromGitHub {
-            owner = "CosmoCreeper";
-            repo = "Sine";
-            rev = "2b0cd538aed197f4725298f52f350b7fd4c1c145";
-            hash = "sha256-b1Mk4B5OujWXGNfzIUEaSfBez55zec6p36ncbCluBtc=";
-          };
-          bootloader = pkgs.fetchFromGitHub {
-            owner = "sineorg";
-            repo = "bootloader";
-            rev = "e83ebd5f4137731726c759540166906ca646a939";
-            hash = "sha256-JvXNVd0HJ2OtVQuZ3bsOOvJW5VD5TIuZD8zxP1V2Y4Q=";
-          };
-        };
+        sinePack = mkSinePack {};
       in
         lib.concatMapAttrs (
           profileName: profile:
             if profile.sine.enable
             then {
               "${profilePath}/${profileName}/chrome/JS/engine" = {
-                source = sine.src + "/engine";
+                source = sinePack.manager + "/engine";
                 recursive = true;
                 force = true;
               };
               "${profilePath}/${profileName}/chrome/JS/sine.sys.mjs" = {
-                source = sine.src + "/sine.sys.mjs";
+                source = sinePack.manager + "/sine.sys.mjs";
                 recursive = false;
                 force = true;
               };
               "${profilePath}/${profileName}/chrome/utils" = {
-                source = sine.bootloader + "/profile/utils";
+                source = sinePack.bootloader + "/profile/utils";
                 recursive = true;
                 force = true;
               };
               "${profilePath}/${profileName}/chrome/locales" = {
-                source = sine.src + "/locales";
+                source = sinePack.manager + "/locales";
                 recursive = true;
                 force = true;
               };

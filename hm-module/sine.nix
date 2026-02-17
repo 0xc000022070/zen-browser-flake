@@ -13,8 +13,6 @@
 
   cfg = getAttrFromPath modulePath config;
 
-  isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
-
   linuxConfigPath = "${config.xdg.configHome}/zen";
   darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
 
@@ -51,41 +49,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.file =
-      if isSineEnabled
-      then let
-        sinePack = mkSinePack {};
-      in
-        lib.concatMapAttrs (
-          profileName: profile:
-            if profile.sine.enable
-            then {
-              "${profilePath}/${profileName}/chrome/JS/engine" = {
-                source = sinePack.manager + "/engine";
-                recursive = true;
-                force = true;
-              };
-              "${profilePath}/${profileName}/chrome/JS/sine.sys.mjs" = {
-                source = sinePack.manager + "/sine.sys.mjs";
-                recursive = false;
-                force = true;
-              };
-              "${profilePath}/${profileName}/chrome/utils" = {
-                source = sinePack.bootloader + "/profile/utils";
-                recursive = true;
-                force = true;
-              };
-              "${profilePath}/${profileName}/chrome/locales" = {
-                source = sinePack.manager + "/locales";
-                recursive = true;
-                force = true;
-              };
-            }
-            else {}
-        )
-        cfg.profiles
-      else {};
-
     home.activation = let
       inherit
         (lib)
@@ -94,15 +57,73 @@ in {
         nameValuePair
         ;
 
+      sinePack = mkSinePack {};
+
+      sineChromePackage = pkgs.runCommand "sine-chrome-package" {} ''
+        mkdir -p $out/JS $out/utils $out/locales
+
+        cp ${sinePack.manager}/sine.sys.mjs $out/JS/
+        cp -r ${sinePack.manager}/engine $out/JS/
+
+        cp ${sinePack.bootloader}/profile/utils/fs.sys.mjs $out/utils/
+        cp ${sinePack.bootloader}/profile/utils/uc_api.sys.mjs $out/utils/
+        cp ${sinePack.bootloader}/profile/utils/utils.sys.mjs $out/utils/
+
+        cp -r ${sinePack.manager}/locales/* $out/locales/
+      '';
+
+      profilesWithSine =
+        filterAttrs
+        (_: profile: profile.sine.enable)
+        cfg.profiles;
+
       profilesWithSineMods =
         filterAttrs
         (_: profile: profile.sine.mods != [])
         cfg.profiles;
-    in
-      mapAttrs'
-      (
-        profileName: profile: let
-          modsFilePath = "${profilePath}/${profileName}/chrome/sine-mods/mods.json";
+
+      sineAssetsActivations =
+        mapAttrs'
+        (
+          profileName: _profile: let
+            chromeDir = "${profilePath}/${profileName}/chrome";
+          in
+            nameValuePair "zen-sine-assets-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
+              CHROME_DIR="${chromeDir}"
+
+              mkdir -p "$CHROME_DIR/JS" "$CHROME_DIR/utils" "$CHROME_DIR/locales" "$CHROME_DIR/sine-mods"
+
+              rm -rf "$CHROME_DIR/JS/engine"
+              cp -rL "${sineChromePackage}/JS/engine" "$CHROME_DIR/JS/engine"
+              chmod -R u+w "$CHROME_DIR/JS/engine"
+
+              cp -fL "${sineChromePackage}/JS/sine.sys.mjs" "$CHROME_DIR/JS/sine.sys.mjs"
+
+              cp -fL "${sineChromePackage}/utils/fs.sys.mjs" "$CHROME_DIR/utils/fs.sys.mjs"
+              cp -fL "${sineChromePackage}/utils/uc_api.sys.mjs" "$CHROME_DIR/utils/uc_api.sys.mjs"
+              cp -fL "${sineChromePackage}/utils/utils.sys.mjs" "$CHROME_DIR/utils/utils.sys.mjs"
+
+              printf '%s\n' \
+                'content userchromejs ./' \
+                'content userscripts ../JS/' \
+                'content sine ../sine-mods/' \
+                'content locales ../locales/' \
+                > "$CHROME_DIR/utils/chrome.manifest"
+
+              rm -rf "$CHROME_DIR/locales"
+              cp -rL "${sineChromePackage}/locales" "$CHROME_DIR/locales"
+              chmod -R u+w "$CHROME_DIR/locales"
+
+              $VERBOSE_ECHO "zen-sine: Installed sine assets for profile '${profileName}'"
+            '')
+        )
+        profilesWithSine;
+
+      sineModsActivations =
+        mapAttrs'
+        (
+          profileName: profile: let
+            modsFilePath = "${profilePath}/${profileName}/chrome/sine-mods/mods.json";
 
           updateSineModsScript = pkgs.writeShellScript "zen-sine-mods-update-${profileName}" ''
             MODS_FILE="${modsFilePath}"
@@ -281,5 +302,7 @@ in {
           '')
       )
       profilesWithSineMods;
+    in
+      sineAssetsActivations // sineModsActivations;
   };
 }

@@ -32,7 +32,7 @@
     };
   };
 
-  applicationName = "Zen Browser";
+  applicationName = "Zen";
   linuxConfigPath = "${config.xdg.configHome}/zen";
   darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
 

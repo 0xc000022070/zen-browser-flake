@@ -14,11 +14,9 @@
     nixpkgs,
     home-manager,
   }: let
-    supportedSystems = [
-      "x86_64-linux"
-      "aarch64-linux"
-      "aarch64-darwin"
-    ];
+    linuxSystems = ["x86_64-linux" "aarch64-linux"];
+
+    supportedSystems = linuxSystems ++ ["aarch64-darwin"];
 
     forAllSystems = f:
       nixpkgs.lib.genAttrs supportedSystems (
@@ -28,6 +26,14 @@
     packages = forAllSystems (pkgs: import ./default.nix {inherit pkgs;});
 
     formatter = forAllSystems (pkgs: pkgs.alejandra);
+
+    checks =
+      nixpkgs.lib.genAttrs linuxSystems
+      (system:
+        import ./tests {
+          inherit self home-manager;
+          nixpkgs = nixpkgs.legacyPackages.${system};
+        });
 
     homeModules = {
       beta = import ./hm-module {

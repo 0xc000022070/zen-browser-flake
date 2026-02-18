@@ -7,8 +7,7 @@ assignees: ''
 
 ---
 
-- [ ] I've updated the flake input to the latest version (seriously, you should try it)
-- [ ] XDG portals properly configured
+- [ ] I've updated the flake input to the latest version <!-- seriously, you should try it -->
 - [ ] I tried using nixpkgs-unstable to ensure compatibility with the latest Firefox version
 - [ ] I already searched the [zen-browser](https://github.com/zen-browser/desktop/issues?q=sort%3Aupdated-desc%20is%3Aissue%20is%3Aopen)'s github issues
 
@@ -35,10 +34,22 @@ If applicable, add screenshots to help explain your problem.
 
 ## System Information
 
-- **OS**: (e.g. NixOS, Ubuntu, MacOS, etc)
-- **Zen Browser version**: (e.g. twilight, beta)
-- **Desktop / Compositor / WM**: (e.g. KDE, GNOME, Hyprland, Niri)
-- **NixOS config**: (link)
+**nixpkgs branch/version**: 
+(e.g. nixos-unstable, 26.05, custom commit)
+
+**Operating system**:
+- [ ] NixOS
+- [ ] macOS
+- [ ] Other Linux distro → specify:
+
+**Zen browser**
+- **Version**: (any / specify)
+- **Variant**:
+  - [ ] beta
+  - [ ] twilight
+  - [ ] twilight official
+
+- **NixOS config**: (link or snippet)
 
 ## Additional context
 

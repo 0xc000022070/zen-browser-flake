@@ -1,7 +1,6 @@
 {
   self,
   name,
-  mkSinePack,
 }: {
   config,
   pkgs,
@@ -60,18 +59,25 @@ in {
 
         getPackage = sine:
           if sine
-          then let
-            sinePack = mkSinePack {};
-          in
-            defaultPackage.overrideAttrs (oldAttrs: {
+          then
+            defaultPackage.overrideAttrs (oldAttrs: rec {
+              sineconfig = builtins.fetchurl {
+                url = "https://raw.githubusercontent.com/sineorg/bootloader/refs/heads/main/program/config.js";
+                sha256 = "117a6gkaz1kinjflfzqc6qsb4r06x93w08q4lfdzh5a1cng95s5v";
+              };
+              configpref = builtins.fetchurl {
+                url = "https://raw.githubusercontent.com/sineorg/bootloader/refs/heads/main/program/defaults/pref/config-prefs.js";
+                sha256 = "1kkyq5qdp7nnq09ckbd3xgdhsm2q80xjmihgiqbzb3yi778jxzbb";
+              };
+              libname = "zen-bin-*";
               postInstall =
                 (oldAttrs.postInstall or "")
                 + ''
-                  for libdir in "$out"/lib/zen-bin-*; do
+                  for libdir in "$out"/lib/${libname}; do
                     chmod -R u+w "$libdir"
-                    cp "${sinePack.bootloader}/program/config.js" "$libdir/config.js"
+                    cp "${sineconfig}" "$libdir/config.js"
                     mkdir -p "$libdir/defaults/pref"
-                    cp "${sinePack.bootloader}/program/defaults/pref/config-prefs.js" "$libdir/defaults/pref/config-pref.js"
+                    cp "${configpref}" "$libdir/defaults/pref/config-pref.js"
                   done
                 '';
             })

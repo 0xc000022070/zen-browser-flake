@@ -750,6 +750,8 @@ schemes, you can add the following configuration to your Home Manager setup:
 2. Please check that you're using the wrapped version of the package.
    The -unwrapped variants should not be used directly. Instead, they should be wrapped with wrapFirefox or custom wrappers.
 
+Alternatively, you can review [this discussion](https://github.com/zen-browser/desktop/discussions/12366#discussioncomment-15810794) in the official Zen Browser repository.
+
 #### The requested URL returned error: 404
 
 This usually happens when the Zen team deletes a beta release from the official

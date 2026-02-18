@@ -109,8 +109,7 @@ $ sudo nixos-rebuild switch # or home-manager switch
 ### Start the browser
 
 ```shell
-# it's a symlink, if you install two versions they will collide and you should either specify "zen-twilight" or "zen-beta"
-$ zen
+$ zen-beta # or zen-twilight
 ```
 
 ## Home Manager reference

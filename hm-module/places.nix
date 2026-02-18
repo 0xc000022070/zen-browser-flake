@@ -232,343 +232,237 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.file = let
+    home.activation = let
       inherit
         (builtins)
         isNull
         toJSON
-        toString
         ;
       inherit
         (lib)
-        concatStringsSep
-        concatMapStringsSep
-        concatMapAttrsStringSep
         filterAttrs
         getExe
-        getExe'
         mapAttrs'
         mapAttrsToList
         nameValuePair
+        optionalAttrs
         optionalString
-        pipe
         ;
+
+      profilesWithPlaces =
+        filterAttrs
+        (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce)
+        cfg.profiles;
     in
       mapAttrs' (
         profileName: profile: let
-          sqlite3 = getExe' pkgs.sqlite "sqlite3";
-          scriptFile = "${profilePath}/${profileName}/places_update.sh";
-          placesFile = "${profilePath}/${profileName}/places.sqlite";
+          mozlz4a = getExe pkgs.mozlz4a;
+          jq = getExe pkgs.jq;
+          sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
 
-          insertSpaces = ''
-                      # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L25-L55
-                      ${sqlite3} "${placesFile}" "${
-              concatStringsSep " " [
-                "CREATE TABLE IF NOT EXISTS zen_workspaces ("
-                "id INTEGER PRIMARY KEY,"
-                "uuid TEXT UNIQUE NOT NULL,"
-                "name TEXT NOT NULL,"
-                "icon TEXT,"
-                "container_id INTEGER,"
-                "position INTEGER NOT NULL DEFAULT 0,"
-                "created_at INTEGER NOT NULL,"
-                "updated_at INTEGER NOT NULL"
-                ");"
+          spacesJson = toJSON (mapAttrsToList (
+              _: s: {
+                uuid = "{${s.id}}";
+                inherit (s) name position;
+                icon = s.icon;
+                containerTabId =
+                  if isNull s.container
+                  then 0
+                  else s.container;
+                theme = {
+                  type =
+                    if isNull s.theme.type
+                    then "gradient"
+                    else s.theme.type;
+                  gradientColors =
+                    if isNull s.theme.colors
+                    then []
+                    else
+                      (map (c: {
+                          inherit (c) algorithm lightness position type;
+                          c = [c.red c.green c.blue];
+                          isCustom = c.custom;
+                          isPrimary = c.primary;
+                        })
+                        s.theme.colors);
+                  opacity =
+                    if isNull s.theme.opacity
+                    then 0.5
+                    else s.theme.opacity;
+                  rotation = s.theme.rotation;
+                  texture =
+                    if isNull s.theme.texture
+                    then 0
+                    else s.theme.texture;
+                };
+                hasCollapsedPinnedTabs = false;
+              }
+            )
+            profile.spaces);
+
+          pinsJson = toJSON (mapAttrsToList (
+              _: p:
+                {
+                  pinned = true;
+                  hidden = false;
+                  zenWorkspace =
+                    if isNull p.workspace
+                    then null
+                    else "{${p.workspace}}";
+                  zenSyncId = "{${p.id}}";
+                  zenEssential = p.isEssential;
+                  zenDefaultUserContextId = "true";
+                  zenPinnedIcon = null;
+                  zenIsEmpty = false;
+                  zenHasStaticIcon = false;
+                  zenGlanceId = null;
+                  zenIsGlance = false;
+                  searchMode = null;
+                  userContextId =
+                    if isNull p.container
+                    then 0
+                    else p.container;
+                  attributes = {};
+                  index = p.position;
+                  lastAccessed = 0;
+                }
+                // optionalAttrs (!isNull p.url) {
+                  entries = [
+                    {
+                      url = p.url;
+                      title = p.title;
+                      charset = "UTF-8";
+                      ID = 0;
+                      persist = true;
+                    }
+                  ];
+                }
+            )
+            profile.pins);
+
+          spacesJsonFile = pkgs.writeText "zen-declared-spaces-${profileName}.json" spacesJson;
+          pinsJsonFile = pkgs.writeText "zen-declared-pins-${profileName}.json" pinsJson;
+
+          jqFilterFile = pkgs.writeText "zen-sessions-filter-${profileName}.jq" ''
+            ($declaredSpaces[0]) as $spaces |
+            ($declaredPins[0]) as $pins |
+
+            .spaces = (.spaces // []) |
+            .tabs = (.tabs // []) |
+
+            ([$spaces[].uuid]) as $dsUuids |
+            ([.spaces[].uuid]) as $esUuids |
+
+            .spaces = [.spaces[] |
+              . as $e |
+              ($spaces | map(select(.uuid == $e.uuid)) | .[0] // null) as $o |
+              if $o != null then ($e * $o) else . end
+            ] |
+            .spaces += [$spaces[] | select(.uuid as $u | $esUuids | index($u) | not)] |
+
+            ${optionalString profile.spacesForce ".spaces = [.spaces[] | select(.uuid as $u | $dsUuids | index($u) != null)] |"}
+
+            ([$pins[].zenSyncId]) as $dpIds |
+            ([.tabs[].zenSyncId]) as $etIds |
+
+            .tabs = [.tabs[] |
+              . as $e |
+              ($pins | map(select(.zenSyncId == $e.zenSyncId)) | .[0] // null) as $o |
+              if $o != null then
+                $e + {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index}
+              else . end
+            ] |
+            .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)]
+
+            ${optionalString profile.pinsForce ''
+              |
+              .tabs = [.tabs[] |
+                if (.pinned == true or .zenEssential == true) then
+                  select(.zenSyncId as $id | $dpIds | index($id) != null)
+                else . end
               ]
-            }" || exit 1
+            ''}
+          '';
 
-                      columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_workspaces');"))
-                      if [[ ! "''${columns[@]}" =~ "theme_type" ]]; then
-                        ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_type TEXT;" || exit 1
-                      fi
-                      if [[ ! "''${columns[@]}" =~ "theme_colors" ]]; then
-                        ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_colors TEXT;" || exit 1
-                      fi
-                      if [[ ! "''${columns[@]}" =~ "theme_opacity" ]]; then
-                        ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_opacity REAL;" || exit 1
-                      fi
-                      if [[ ! "''${columns[@]}" =~ "theme_rotation" ]]; then
-                        ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_rotation INTEGER;" || exit 1
-                      fi
-                      if [[ ! "''${columns[@]}" =~ "theme_texture" ]]; then
-                        ${sqlite3} "${placesFile}" "ALTER TABLE zen_workspaces ADD COLUMN theme_texture REAL;" || exit 1
-                      fi
+          updateScript = pkgs.writeShellScript "zen-sessions-update-${profileName}" ''
+            SESSIONS_FILE="${sessionsFile}"
+            SESSIONS_TMP="$(mktemp)"
+            SESSIONS_MODIFIED="$(mktemp)"
+            BACKUP_FILE="''${SESSIONS_FILE}.backup"
 
-                      # Reference: https://github.com/zen-browser/desktop/blob/4e2dfd8a138fd28767bb4799a3ca9d8aab80430e/src/zen/workspaces/ZenWorkspacesStorage.mjs#L141-L149
-                      ${sqlite3} "${placesFile}" <<-'SQL' || exit 1
-            ${
-              (concatStringsSep " " [
-                "INSERT OR REPLACE INTO zen_workspaces ("
-                "uuid,"
-                "name,"
-                "icon,"
-                "container_id,"
-                "position,"
-
-                "theme_type,"
-                "theme_colors,"
-                "theme_opacity,"
-                "theme_rotation,"
-                "theme_texture,"
-
-                "created_at,"
-                "updated_at"
-                ") VALUES "
-              ])
-              + (pipe profile.spaces [
-                (mapAttrsToList (
-                  _: s: [
-                    "'{${s.id}}'"
-                    "'${s.name}'"
-                    (
-                      if isNull s.icon
-                      then "NULL"
-                      else "'${s.icon}'"
-                    )
-                    (
-                      if isNull s.container
-                      then "NULL"
-                      else toString s.container
-                    )
-                    (toString s.position)
-                    (
-                      if isNull s.theme.type
-                      then "NULL"
-                      else "'${s.theme.type}'"
-                    )
-                    (
-                      if isNull s.theme.colors
-                      then "NULL"
-                      else "'${
-                        toJSON (
-                          map (c: {
-                            inherit
-                              (c)
-                              algorithm
-                              lightness
-                              position
-                              type
-                              ;
-                            c = [
-                              c.red
-                              c.green
-                              c.blue
-                            ];
-                            isCustom = c.custom;
-                            isPrimary = c.primary;
-                          })
-                          s.theme.colors
-                        )
-                      }'"
-                    )
-                    (
-                      if isNull s.theme.opacity
-                      then "NULL"
-                      else toString s.theme.opacity
-                    )
-                    (
-                      if isNull s.theme.rotation
-                      then "NULL"
-                      else toString s.theme.rotation
-                    )
-                    (
-                      if isNull s.theme.texture
-                      then "NULL"
-                      else toString s.theme.texture
-                    )
-                    "COALESCE((SELECT created_at FROM zen_workspaces WHERE uuid = '{${s.id}}'), strftime('%s', 'now'))"
-                    "strftime('%s', 'now')"
-                  ]
-                ))
-                (map (row: concatStringsSep "," row))
-                (concatMapStringsSep "," (row: "(${row})"))
-              ])
+            cleanup() {
+              rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
             }
-            SQL
-          '';
 
-          deleteSpaces = ''
-            ${sqlite3} "${placesFile}" "DELETE FROM zen_workspaces ${
-              if profile.spaces != {}
-              then "WHERE "
-              else ""
-            }${concatMapAttrsStringSep " AND " (_: s: "NOT uuid = '{${s.id}}'") profile.spaces}" || exit 1
-          '';
-
-          insertPins = ''
-            #Reference https://github.com/zen-browser/desktop/blob/28bf0458e43e2bb741cd67834d2b50ce2b5587c6/src/zen/tabs/ZenPinnedTabsStorage.mjs#L12-L26
-            # Create the pins table if it doesn't exist
-            ${sqlite3} "${placesFile}" "${
-              concatStringsSep " " [
-                "CREATE TABLE IF NOT EXISTS zen_pins ("
-                "id INTEGER PRIMARY KEY,"
-                "uuid TEXT UNIQUE NOT NULL,"
-                "title TEXT NOT NULL,"
-                "url TEXT,"
-                "container_id INTEGER,"
-                "workspace_uuid TEXT,"
-                "position INTEGER NOT NULL DEFAULT 0,"
-                "is_essential BOOLEAN NOT NULL DEFAULT 0,"
-                "is_group BOOLEAN NOT NULL DEFAULT 0,"
-                "created_at INTEGER NOT NULL,"
-                "updated_at INTEGER NOT NULL"
-                ");"
-              ]
-            }" || exit 1
-
-            columns=($(${sqlite3} "${placesFile}" "SELECT name FROM pragma_table_info('zen_pins');"))
-
-            if [[ ! "''${columns[@]}" =~ "edited_title" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN edited_title BOOLEAN NOT NULL DEFAULT 0;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "is_folder_collapsed" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN is_folder_collapsed BOOLEAN NOT NULL DEFAULT 0;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "folder_icon" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN folder_icon TEXT DEFAULT NULL;" || exit 1
-            fi
-            if [[ ! "''${columns[@]}" =~ "folder_parent_uuid" ]]; then
-              ${sqlite3} "${placesFile}" "ALTER TABLE zen_pins ADD COLUMN folder_parent_uuid TEXT DEFAULT NULL;" || exit 1
-            fi
-
-            # Reference https://github.com/zen-browser/desktop/blob/28bf0458e43e2bb741cd67834d2b50ce2b5587c6/src/zen/tabs/ZenPinnedTabsStorage.mjs#L103-L112
-            # Insert or replace the pin
-            ${sqlite3} "${placesFile}" <<-'SQL' || exit 1
-            ${
-              (concatStringsSep " " [
-                "INSERT OR REPLACE INTO zen_pins ("
-                "uuid,"
-                "title,"
-                "url,"
-                "container_id,"
-                "workspace_uuid,"
-                "position,"
-                "is_essential,"
-                "is_group,"
-                "folder_parent_uuid,"
-                "edited_title,"
-                "created_at,"
-                "updated_at,"
-                "is_folder_collapsed,"
-                "folder_icon"
-                ") VALUES "
-              ])
-              + (pipe profile.pins [
-                (mapAttrsToList (
-                  _: p: [
-                    "'{${p.id}}'"
-                    "'${p.title}'"
-                    (
-                      if isNull p.url
-                      then "NULL"
-                      else "'${p.url}'"
-                    )
-                    (
-                      if isNull p.container
-                      then "NULL"
-                      else toString p.container
-                    )
-                    (
-                      if isNull p.workspace
-                      then "NULL"
-                      else "'{${p.workspace}}'"
-                    )
-                    (toString p.position)
-                    (
-                      if p.isEssential
-                      then "1"
-                      else "0"
-                    )
-                    (
-                      if p.isGroup
-                      then "1"
-                      else "0"
-                    )
-                    (
-                      if isNull p.folderParentId
-                      then "NULL"
-                      else "'{${p.folderParentId}}'"
-                    )
-                    (
-                      if p.editedTitle
-                      then "1"
-                      else "0"
-                    )
-                    "COALESCE((SELECT created_at FROM zen_pins WHERE uuid = '{${p.id}}'), strftime('%s', 'now'))"
-                    "strftime('%s', 'now')"
-                    (
-                      if p.isFolderCollapsed
-                      then "1"
-                      else "0"
-                    )
-                    (
-                      if isNull p.folderIcon
-                      then "NULL"
-                      else "'${p.folderIcon}'"
-                    )
-                  ]
-                ))
-                (map (row: concatStringsSep "," row))
-                (concatMapStringsSep "," (row: "(${row})"))
-              ])
+            restore_and_cleanup() {
+              if [ -f "$BACKUP_FILE" ]; then
+                mv "$BACKUP_FILE" "$SESSIONS_FILE"
+              fi
+              cleanup
             }
-            SQL
-          '';
 
-          deletePins = ''
-            ${sqlite3} "${placesFile}" "DELETE FROM zen_pins ${
-              if profile.pins != {}
-              then "WHERE "
-              else ""
-            }${concatMapAttrsStringSep " AND " (_: p: "NOT uuid = '{${p.id}}'") profile.pins}" || exit 1
+            trap cleanup EXIT
+
+            if [ ! -f "$SESSIONS_FILE" ]; then
+              echo "zen-sessions: Sessions file not found at $SESSIONS_FILE"
+              echo "zen-sessions: Zen Browser will create it on first run"
+              exit 0
+            fi
+
+            if pgrep "zen" > /dev/null 2>&1; then
+              echo "zen-sessions: Zen Browser appears to be running."
+              echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
+              exit 1
+            fi
+
+            cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
+              echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
+              exit 1
+            }
+
+            ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
+              echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
+              restore_and_cleanup
+              exit 1
+            }
+
+            ${jq} \
+              --slurpfile declaredSpaces ${spacesJsonFile} \
+              --slurpfile declaredPins ${pinsJsonFile} \
+              -f ${jqFilterFile} \
+              "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
+              echo "zen-sessions: Failed to apply modifications to sessions data"
+              restore_and_cleanup
+              exit 1
+            }
+
+            if [ ! -s "$SESSIONS_MODIFIED" ]; then
+              echo "zen-sessions: Modified sessions file is empty, restoring backup"
+              restore_and_cleanup
+              exit 1
+            fi
+
+            ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
+              echo "zen-sessions: Failed to recompress sessions file"
+              restore_and_cleanup
+              exit 1
+            }
+
+            rm -f "$BACKUP_FILE"
           '';
         in
-          nameValuePair scriptFile {
-            source = getExe (
-              pkgs.writeShellScriptBin "places_update_${profileName}" ''
-                # This file is generated by Zen browser Home Manager module, please to not change it since it
-                # will be overridden and executed on every rebuild of the home environment.
-
-                function update_places() {
-                  ${optionalString (profile.spaces != {}) insertSpaces}
-                  ${optionalString (profile.spacesForce) deleteSpaces}
-                  ${optionalString (profile.pins != {}) insertPins}
-                  ${optionalString (profile.pinsForce) deletePins}
-
-                  # Force WAL checkpoint to ensure changes are visible immediately
-                  ${sqlite3} "${placesFile}" "PRAGMA wal_checkpoint(FULL);" || exit 1
-                }
-
-                error="$(update_places 2>&1 1>/dev/null)"
-                if [[ "$?" -ne 0 ]]; then
-                  if [[ "$error" == *"database is locked"* ]]; then
-                    echo "$error"
-
-                    YELLOW="\033[1;33m"
-                    NC="\033[0m"
-                    echo -e "zen-update-places:''${YELLOW} Atempted to update the \"zen_workspaces\" table with values declared in \"programs.zen.profiles.\"${profileName}\".spaces\".''${NC}"
-                    echo -e "zen-update-places:''${YELLOW} Failed to update \"${placesFile}\" due to a Zen browser instance for profile \"${profileName}\" being opened, please close''${NC}"
-                    echo -e "zen-update-places:''${YELLOW} Zen browser and rebuild the home environment to rerun \"home-manager-${config.home.username}.service\" and update places.sqlite.''${NC}"
-                  else
-                    echo "$error"
-                  fi
-                  exit 1
-                else
-                  exit 0
-                fi
-              ''
-            );
-            onChange = ''
-              "${scriptFile}"
-              if [[ "$?" -ne 0 ]]; then
-                RED="\033[0;31m"
-                NC="\033[0m"
-                echo -e "zen-update-places:''${RED} Failed to update places.sqlite file for Zen browser \"${profileName}\" profile.''${NC}"
-              fi
-            '';
-            executable = true;
-            force = true;
-          }
-      ) (filterAttrs (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce) cfg.profiles);
+          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
+            ${updateScript}
+            if [[ "$?" -eq 0 ]]; then
+              $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"
+            else
+              YELLOW="\033[1;33m"
+              NC="\033[0m"
+              echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
+              echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
+            fi
+          '')
+      )
+      profilesWithPlaces;
   };
 }

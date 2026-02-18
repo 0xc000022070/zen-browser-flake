@@ -328,11 +328,11 @@ To find the UUID of a mod, visit the mod's page in the Zen theme store and copy 
 ### Spaces
 
 > [!WARNING]
-> Spaces declaration may change your rebuild experience with Home Manager. Due
-> to limitations on how Zen handles spaces, the updating of them is done via a
-> activation script on your `home-manager-<user>.service`. This may cause the
-> service to fail, to prevent this, it is recommended to close your Zen browser
-> instance before rebuilding.
+> Spaces and pins are stored in `zen-sessions.jsonlz4` (a Mozilla LZ4 compressed
+> JSON file). The activation script decompresses it, applies your configuration,
+> and recompresses it. A backup is created before any modification and restored
+> on failure. However, it is still recommended to close your Zen browser instance
+> before rebuilding to avoid conflicts.
 
 - `profiles.*.spaces` (attrsOf submodule): Declare profile's \[work\]spaces.
   - `name` (string) Name of space, defaults to submodule/attribute name.

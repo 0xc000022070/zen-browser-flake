@@ -457,7 +457,7 @@ in {
               . as $e |
               ($pins | map(select(.zenSyncId == $e.zenSyncId)) | .[0] // null) as $o |
               if $o != null then
-                $e + {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index}
+                $e * {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index, entries: $o.entries, groupId: $o.groupId}
               else . end
             ] |
             .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)]

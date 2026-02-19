@@ -2,22 +2,22 @@
   "variants": {
     "beta": {
       "x86_64-linux": {
-        "version": "1.18.8b",
-        "sha1": "813fc16986c3cf83269d3cef9587f33648cd7c99",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.18.8b/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-uoBPxUAY4eQht91PmSpMc2T4MIxwPYvukI0Ie4ELuK4="
+        "version": "1.18.9b",
+        "sha1": "a8e245b28a01edf352619b25278224211ddca567",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.18.9b/zen.linux-x86_64.tar.xz",
+        "sha256": "sha256-mQDgb+NMVLyXqKS1erELxaC1NAgTZZ1ilPlDVh4DbNg="
       },
       "aarch64-linux": {
-        "version": "1.18.8b",
-        "sha1": "813fc16986c3cf83269d3cef9587f33648cd7c99",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.18.8b/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-KBssS0W2YjFWHiw+83TcCYVIS6xrptFQnxLWRGiHp+0="
+        "version": "1.18.9b",
+        "sha1": "a8e245b28a01edf352619b25278224211ddca567",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.18.9b/zen.linux-aarch64.tar.xz",
+        "sha256": "sha256-ZlhCVvqrFecuNyBKcFfaZubqDn86lORvaIv1+b6S3Ec="
       },
       "aarch64-darwin": {
-        "version": "1.18.8b",
-        "sha1": "813fc16986c3cf83269d3cef9587f33648cd7c99",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.18.8b/zen.macos-universal.dmg",
-        "sha256": "sha256-HFiEuDtGyftlMDo/3n9p0nD3xUfcTPC/9GDBEBxTHMU="
+        "version": "1.18.9b",
+        "sha1": "a8e245b28a01edf352619b25278224211ddca567",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.18.9b/zen.macos-universal.dmg",
+        "sha256": "sha256-HoqtHEDFkK3EPXeJo6fHXR5tSlF2LC/Wc5F5eCWxM9M="
       }
     },
     "twilight": {

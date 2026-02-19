@@ -300,55 +300,143 @@ in {
             )
             profile.spaces);
 
-          pinsJson = toJSON (mapAttrsToList (
-              _: p:
-                {
-                  pinned = true;
-                  hidden = false;
-                  zenWorkspace =
-                    if isNull p.workspace
+          pinsJson = toJSON (
+            let
+              nonGroupPins = filterAttrs (_: p: !p.isGroup) profile.pins;
+            in
+              mapAttrsToList (
+                _: p:
+                  {
+                    pinned = true;
+                    hidden = false;
+                    zenWorkspace =
+                      if isNull p.workspace
+                      then null
+                      else "{${p.workspace}}";
+                    zenSyncId = "{${p.id}}";
+                    zenEssential = p.isEssential;
+                    zenDefaultUserContextId = "true";
+                    zenPinnedIcon = null;
+                    zenIsEmpty = false;
+                    zenHasStaticIcon = false;
+                    zenGlanceId = null;
+                    zenIsGlance = false;
+                    searchMode = null;
+                    userContextId =
+                      if isNull p.container
+                      then 0
+                      else p.container;
+                    attributes = {};
+                    index = p.position;
+                    lastAccessed = 0;
+                    groupId =
+                      if p.isGroup || p.folderParentId != null
+                      then
+                        if p.isGroup
+                        then "{${p.id}}"
+                        else "{${p.folderParentId}}"
+                      else null;
+                  }
+                  // optionalAttrs (!isNull p.url) {
+                    entries = [
+                      {
+                        url = p.url;
+                        title = p.title;
+                        charset = "UTF-8";
+                        ID = 0;
+                        persist = true;
+                      }
+                    ];
+                  }
+              )
+              nonGroupPins
+          );
+
+          foldersJson = toJSON (
+            let
+              groupPins = filterAttrs (_: p: p.isGroup) profile.pins;
+              folderData =
+                mapAttrsToList (_: p: {
+                  id = "{${p.id}}";
+                  name = p.title;
+                  parentId =
+                    if p.folderParentId == null
+                    then null
+                    else "{${p.folderParentId}}";
+                  workspaceId =
+                    if p.workspace == null
                     then null
                     else "{${p.workspace}}";
-                  zenSyncId = "{${p.id}}";
-                  zenEssential = p.isEssential;
-                  zenDefaultUserContextId = "true";
-                  zenPinnedIcon = null;
-                  zenIsEmpty = false;
-                  zenHasStaticIcon = false;
-                  zenGlanceId = null;
-                  zenIsGlance = false;
-                  searchMode = null;
-                  userContextId =
-                    if isNull p.container
-                    then 0
-                    else p.container;
-                  attributes = {};
+                  collapsed = p.isFolderCollapsed or false;
+                  icon = p.folderIcon;
                   index = p.position;
-                  lastAccessed = 0;
-                }
-                // optionalAttrs (!isNull p.url) {
-                  entries = [
-                    {
-                      url = p.url;
-                      title = p.title;
-                      charset = "UTF-8";
-                      ID = 0;
-                      persist = true;
-                    }
-                  ];
-                }
-            )
-            profile.pins);
+                })
+                groupPins;
+            in
+              map (f: {
+                pinned = true;
+                splitViewGroup = false;
+                id = f.id;
+                name = f.name;
+                collapsed = f.collapsed;
+                saveOnWindowClose = true;
+                parentId = f.parentId;
+                prevSiblingInfo = {
+                  type = "start";
+                  id = null;
+                };
+                emptyTabIds = [];
+                userIcon =
+                  if f.icon == null
+                  then ""
+                  else f.icon;
+                workspaceId = f.workspaceId;
+                index = f.index;
+              })
+              folderData
+          );
+
+          groupsJson = toJSON (
+            let
+              groupPins = filterAttrs (_: p: p.isGroup) profile.pins;
+              folderData =
+                mapAttrsToList (_: p: {
+                  id = "{${p.id}}";
+                  name = p.title;
+                  parentId = p.folderParentId;
+                  collapsed = p.isFolderCollapsed or false;
+                  index = p.position;
+                })
+                groupPins;
+            in
+              map (f: {
+                pinned = true;
+                splitView = false;
+                id = f.id;
+                name = f.name;
+                color = "zen-workspace-color";
+                collapsed = f.collapsed;
+                saveOnWindowClose = true;
+                index = f.index;
+              })
+              folderData
+          );
 
           spacesJsonFile = pkgs.writeText "zen-declared-spaces-${profileName}.json" spacesJson;
           pinsJsonFile = pkgs.writeText "zen-declared-pins-${profileName}.json" pinsJson;
+          foldersJsonFile = pkgs.writeText "zen-declared-folders-${profileName}.json" foldersJson;
+          groupsJsonFile = pkgs.writeText "zen-declared-groups-${profileName}.json" groupsJson;
 
           jqFilterFile = pkgs.writeText "zen-sessions-filter-${profileName}.jq" ''
             ($declaredSpaces[0]) as $spaces |
             ($declaredPins[0]) as $pins |
+            ($declaredFolders[0]) as $folders |
+            ($declaredGroups[0]) as $groups |
 
             .spaces = (.spaces // []) |
             .tabs = (.tabs // []) |
+            .folders = (.folders // []) |
+            .groups = (.groups // []) |
 
             ([$spaces[].uuid]) as $dsUuids |
             ([.spaces[].uuid]) as $esUuids |
@@ -381,7 +469,31 @@ in {
                   select(.zenSyncId as $id | $dpIds | index($id) != null)
                 else . end
               ]
-            ''}
+            ''} |
+
+            ([$folders[].id]) as $dfIds |
+            ([.folders[].id]) as $efIds |
+
+            .folders = [.folders[] |
+              . as $e |
+              ($folders | map(select(.id == $e.id)) | .[0] // null) as $o |
+              if $o != null then ($e * $o) else . end
+            ] |
+            .folders += [$folders[] | select(.id as $id | $efIds | index($id) | not)] |
+
+            ([$groups[].id]) as $dgIds |
+            ([.groups[].id]) as $egIds |
+
+            .groups = [.groups[] |
+              . as $e |
+              ($groups | map(select(.id == $e.id)) | .[0] // null) as $o |
+              if $o != null then ($e * $o) else . end
+            ] |
+            .groups += [$groups[] | select(.id as $id | $egIds | index($id) | not)] |
+
+            .tabs = (.tabs | sort_by(.index // 0)) |
+            .folders = (.folders | sort_by(.index // 0)) |
+            .groups = (.groups | sort_by(.index // 0))
           '';
 
           updateScript = pkgs.writeShellScript "zen-sessions-update-${profileName}" ''
@@ -429,6 +541,8 @@ in {
             ${jq} \
               --slurpfile declaredSpaces ${spacesJsonFile} \
               --slurpfile declaredPins ${pinsJsonFile} \
+              --slurpfile declaredFolders ${foldersJsonFile} \
+              --slurpfile declaredGroups ${groupsJsonFile} \
               -f ${jqFilterFile} \
               "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
               echo "zen-sessions: Failed to apply modifications to sessions data"

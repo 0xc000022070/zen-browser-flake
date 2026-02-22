@@ -602,10 +602,10 @@ When you declare a shortcut override:
 
 ### Finding Shortcut IDs
 
-Search for shortcut IDs and their actions in `~/.zen/<profile>/zen-keyboard-shortcuts.json`. For example:
+Search for shortcut IDs and their actions in `~/.config/zen/<profile>/zen-keyboard-shortcuts.json`. For example:
 
 ```bash
-jq -c '.shortcuts[] | {id, key, keycode, action}' ~/.zen/default/zen-keyboard-shortcuts.json | fzf
+jq -c '.shortcuts[] | {id, key, keycode, action}' ~/.config/zen/default/zen-keyboard-shortcuts.json | fzf
 ```
 
 Alternatively, you could also go to the keyboard shorcuts page in settings, and then inspect the input field of the shortcut you want to change, in the inspect window look for "key={whatever}", the value of "key" is the id you should put in your configuration

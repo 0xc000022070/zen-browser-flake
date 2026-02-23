@@ -49,14 +49,30 @@ in {
         '';
       };
     };
+
+    unwrappedPackage = mkOption {
+      type = types.nullOr types.package;
+      default = null;
+      description = ''
+        An unwrapped Firefox-based browser derivation to use as the base instead of
+        the flake's built-in variants (beta, twilight, etc.). When set, this package
+        is wrapped with the same settings (policies, extraPrefs, etc.) and used as
+        the program. Useful to use a different Zen build, another Firefox-based
+        browser, or a custom unwrapped derivation.
+      '';
+    };
   };
 
   config = mkIf cfg.enable {
     programs.zen-browser = {
       package = let
-        defaultPackage = self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
-          policies = cfg.policies;
-        };
+        defaultPackage =
+          if cfg.unwrappedPackage != null
+          then cfg.unwrappedPackage
+          else
+            self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
+              policies = cfg.policies;
+            };
 
         getPackage = sine:
           if sine

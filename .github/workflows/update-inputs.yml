@@ -24,3 +24,5 @@ jobs:
           pr-labels: |
             dependencies
             automated
+          commit-msg: |
+            flake-update: update all inputs

@@ -1,0 +1,32 @@
+name: Nix flake check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.nix"
+      - "flake.lock"
+      - "sources.json"
+
+  pull_request:
+    paths:
+      - "**/*.nix"
+      - "flake.lock"
+      - "sources.json"
+
+jobs:
+  flake-check:
+    name: nix flake check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Check flake
+        run: nix flake check

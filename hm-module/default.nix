@@ -73,16 +73,42 @@ in {
   };
 
   config = mkIf cfg.enable {
-    warnings = lib.optional (pkgs.stdenv.isLinux && !cfg.suppressXdgMigrationWarning) ''
-      [Zen Browser] Starting from release 18.18.6b, the configuration directory
-      has changed from ~/.zen to ~/.config/zen.
+    warnings = let
+      migrationWarning =
+        if pkgs.stdenv.isLinux && !cfg.suppressXdgMigrationWarning
+        then ''
+          [Zen Browser] Starting from release 18.18.6b, the configuration directory
+          has changed from ~/.zen to ~/.config/zen.
 
-      If you haven't migrated yet, please follow the migration guide:
-      https://github.com/0xc000022070/zen-browser-flake#missing-configuration-after-update
+          If you haven't migrated yet, please follow the migration guide:
+          https://github.com/0xc000022070/zen-browser-flake#missing-configuration-after-update
 
-      To suppress this warning after completing the migration, set:
-        programs.zen-browser.suppressXdgMigrationWarning = true;
-    '';
+          To suppress this warning after completing the migration, set:
+            programs.zen-browser.suppressXdgMigrationWarning = true;
+        ''
+        else null;
+
+      essentialPinsWarning = let
+        hasIssue = lib.any (
+          profile:
+            ((profile.settings or {})."zen.window-sync.enabled" or true)
+            == false
+            && lib.any (p: p.isEssential or false) (lib.attrValues (profile.pins or {}))
+        ) (lib.attrValues cfg.profiles);
+      in
+        if hasIssue
+        then ''
+          [Zen Browser] You have essential pins (isEssential = true) but window-sync is disabled.
+          Essentials may not display. Consider enabling window-sync, e.g. with:
+            "zen.window-sync.enabled" = true;
+            "zen.window-sync.sync-only-pinned-tabs" = true;
+        ''
+        else null;
+    in
+      lib.concatStringsSep "\n\n" (lib.filter (w: w != null) [
+        migrationWarning
+        essentialPinsWarning
+      ]);
 
     assertions =
       [

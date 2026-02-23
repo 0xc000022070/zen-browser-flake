@@ -60,7 +60,7 @@ in {
         profileName: profile: let
           themesFilePath = "${profilePath}/${profileName}/zen-themes.json";
 
-          updateModsScript = pkgs.writeShellScript "zen-mods-update-${profileName}" ''
+          updateModsScript = pkgs.writeShellScript "zen-mods-update-${profileName}" ''            # bash
                       THEMES_FILE="${themesFilePath}"
                       MODS="${lib.concatStringsSep " " profile.mods}"
                       BASE_DIR="${profilePath}/${profileName}"

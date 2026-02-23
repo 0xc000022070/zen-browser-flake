@@ -29,7 +29,7 @@
     };
   };
 
-  testScript = wrapWithX11 ''
+  testScript = wrapWithX11 ''    # python
     machine.succeed("test -f /home/testuser/.config/zen/profiles.ini")
     machine.succeed("grep -q 'Name=default' /home/testuser/.config/zen/profiles.ini")
     machine.succeed("test -d /home/testuser/.config/zen/default")

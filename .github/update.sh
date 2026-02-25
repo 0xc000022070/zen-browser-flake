@@ -43,7 +43,7 @@ get_beta_tag_short_meta() {
 
 get_twilight_tag_full_meta() {
     # Remove control characters
-    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight
+    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight-1
 }
 
 twilight_tag=$(get_twilight_tag_full_meta)
@@ -74,7 +74,7 @@ download_artifact_from_zen_repo() {
 }
 
 get_updated_at_of_twilight_artifact_from_zen_repo() {
-    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight | jq -r '.assets | (map(select(.name | test("zen.linux-(x86_64|aarch64).tar.xz")))) | first | .updated_at'
+    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight-1 | jq -r '.assets | (map(select(.name | test("zen.linux-(x86_64|aarch64).tar.xz")))) | first | .updated_at'
 }
 
 get_twilight_version_name() {
@@ -182,7 +182,7 @@ update_version() {
 
     target_release_name="$semver"
     if [ "$version_name" = "twilight" ]; then
-        target_release_name="twilight"
+        target_release_name="twilight-1"
     fi
 
     if [ "$os" = "darwin" ]; then

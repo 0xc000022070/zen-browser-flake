@@ -16,7 +16,7 @@ on:
 
 jobs:
   flake-check:
-    name: nix flake check
+    name: Check flake
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,4 +29,4 @@ jobs:
         uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Check flake
-        run: nix flake check
+        run: nix flake check --debug

@@ -41,20 +41,63 @@ get_beta_tag_short_meta() {
     echo "$remote_tags" | jq -r '(map(select(.name | test("[0-9]+\\.[0-9]+b$")))) | first'
 }
 
-get_twilight_tag_short_meta() {
-    # tags like twilight-1, twilight-2, etc... or you'll make me angry
-    echo "$remote_tags" | jq -r '(map(select(.name | test("^twilight-[0-9]+$")))) | sort_by(.name | split("-")[1] | tonumber) | reverse | first'
+get_twilight_tag_full_meta() {
+    # Remove control characters
+    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight
 }
 
+twilight_tag=$(get_twilight_tag_full_meta)
 beta_tag=$(get_beta_tag_short_meta)
-twilight_tag=$(get_twilight_tag_short_meta)
+
+get_twilight_release_artifact_meta_from_zen_repo() {
+    arch=$1
+    os=$2
+
+    if [ "$os" = "darwin" ]; then
+        echo "$twilight_tag" | tr -d '\000-\031' | jq -r \
+            '.assets[] | select(.name | contains("zen.macos-universal.dmg")) | "\(.id) \(.name)"'
+    else
+        echo "$twilight_tag" | tr -d '\000-\031' | jq -r --arg arch "$arch" \
+            '.assets[] | select(.name | contains("zen.linux") and contains($arch)) | "\(.id) \(.name)"'
+    fi
+}
+
+download_artifact_from_zen_repo() {
+    artifact_id="$1"
+    # relative or absolute path
+    file_path="$2"
+
+    curl -L \
+        -H "Accept: application/octet-stream" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/zen-browser/desktop/releases/assets/$artifact_id" >"$file_path"
+}
+
+get_updated_at_of_twilight_artifact_from_zen_repo() {
+    with_retry gh api repos/zen-browser/desktop/releases/tags/twilight | jq -r '.assets | (map(select(.name | test("zen.linux-(x86_64|aarch64).tar.xz")))) | first | .updated_at'
+}
+
+get_twilight_version_name() {
+    echo "$twilight_tag" | tr -d '\000-\031' | jq -r '.name' | grep -oE '([0-9\.])+(t|-t.[0-9]+)'
+}
+
+resolve_full_sha1_from_zen_repo() {
+    short_sha1="$1"
+
+    with_retry curl -sL \
+        -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "https://api.github.com/repos/zen-browser/desktop/commits/$short_sha1" |
+        jq -r '.sha'
+}
 
 resolve_version_remote_sha1() {
     # twilight or beta
     version="$1"
 
     if [ "$version" = "twilight" ]; then
-        echo "$twilight_tag" | jq -r '.commit.sha'
+        short_sha1=$(echo "$twilight_tag" | tr -d '\000-\031' | jq -r '.body' | grep -oE '^[-•] [0-9a-f]{7,}' | head -n 1 | awk '{print $2}')
+        resolve_full_sha1_from_zen_repo "$short_sha1"
         return
     fi
 
@@ -67,11 +110,18 @@ resolve_version_remote_sha1() {
     exit 1
 }
 
+twilight_version_name=$(get_twilight_version_name)
+if [ "$twilight_version_name" = "" ]; then
+    echo "No twilight version name could be extracted... (clue: $twilight_tag))" 1>&2
+    exit 1
+fi
+
 resolve_semver() {
+    # twilight or beta
     version="$1"
 
     if [ "$version" = "twilight" ]; then
-        echo "$twilight_tag" | jq -r '.name'
+        echo "$twilight_version_name"
         return
     fi
 
@@ -103,8 +153,15 @@ update_version() {
     local_sha1=$(echo "$meta" | jq -r '.sha1')
     remote_sha1=$(resolve_version_remote_sha1 "$version_name")
 
-    local="$local_sha1"
-    remote="$remote_sha1"
+    local=""
+    remote=""
+    if [ "$version_name" = "twilight" ]; then
+        local=$(jq -r '.metadata_for.twilight.last_updated_at' sources.json)
+        remote=$(get_updated_at_of_twilight_artifact_from_zen_repo)
+    else
+        local="$local_sha1"
+        remote="$remote_sha1"
+    fi
 
     echo "Checking $version_name version @ $arch... local=$local remote=$remote"
 
@@ -113,7 +170,7 @@ update_version() {
         return
     fi
 
-    echo "Local $version_name version mismatch with remote so we assume it's outdated"
+    echo "Local $version_name version mismatch with remote so we* assume it's outdated"
 
     if $only_check; then
         echo "should_update=true" >>"$GITHUB_OUTPUT"
@@ -121,7 +178,12 @@ update_version() {
     fi
 
     semver=$(resolve_semver "$version_name")
+    updated_at="$remote"
+
     target_release_name="$semver"
+    if [ "$version_name" = "twilight" ]; then
+        target_release_name="twilight"
+    fi
 
     if [ "$os" = "darwin" ]; then
         download_url="https://github.com/zen-browser/desktop/releases/download/$target_release_name/zen.macos-universal.dmg"
@@ -139,12 +201,58 @@ update_version() {
     entry_name="$version_name"
 
     if [ "$version_name" = "twilight" ]; then
-        jq ".variants[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"} | .variants[\"twilight-official\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
-        mv sources.json.tmp sources.json
-    else
-        jq ".variants[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
-        mv sources.json.tmp sources.json
+        entry_name="twilight-official"
+        semver="$twilight_version_name"
+
+        updated_at_epoch="$(date -d "$updated_at" +%s)"
+
+        release_name="$semver-$updated_at_epoch"
+        release_title="$semver#$updated_at_epoch"
+
+        flake_repo_location="0xc000022070/zen-browser-flake"
+
+        if ! gh release list | grep "$release_title" >/dev/null; then
+            echo "Creating $release_name release..."
+
+            # Users with push access to the repository can create a release.
+            gh release --repo="$flake_repo_location" \
+                create "$release_name" --title="$release_title" \
+                --notes "Artifacts from https://github.com/zen-browser/desktop/releases/tag/twilight [;"
+        else
+            echo "Release $release_name already exists, skipping creation..."
+        fi
+
+        get_twilight_release_artifact_meta_from_zen_repo "$arch" "$os" |
+            while read -r line; do
+                artifact_id=$(echo "$line" | cut -d' ' -f1)
+                artifact_name=$(echo "$line" | cut -d' ' -f2)
+
+                if [ "$os" = "darwin" ]; then
+                    self_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.macos-universal.dmg"
+                else
+                    self_download_url="https://github.com/0xc000022070/zen-browser-flake/releases/download/$release_name/zen.linux-$arch.tar.xz"
+                fi
+
+                if ! gh release --repo="$flake_repo_location" view "$release_name" | grep "$artifact_name" >/dev/null; then
+                    echo "[downloading] An artifact $artifact_name doesn't exists in $release_name"
+
+                    download_artifact_from_zen_repo "$artifact_id" "/tmp/$artifact_name"
+
+                    gh release --repo="$flake_repo_location" \
+                        upload "$release_name" "/tmp/$artifact_name"
+
+                    echo "[uploaded] The artifact is available @ following link: $self_download_url"
+                else
+                    echo "[skipping] An artifact $artifact_name already exists in $release_name @ following link: $self_download_url"
+                fi
+
+                jq ".variants[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                mv sources.json.tmp sources.json
+            done
     fi
+
+    jq ".variants[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    mv sources.json.tmp sources.json
 
     echo "$version_name was updated to $semver"
 
@@ -164,8 +272,11 @@ update_version() {
 
     if [ "$version_name" = "twilight" ]; then
         if [ "$commit_twilight_targets" = "" ]; then
+            updated_at="$remote"
+            updated_at_epoch="$(date -d "$updated_at" +%s)"
+
             commit_twilight_targets="$arch"
-            commit_twilight_version="$semver"
+            commit_twilight_version="$twilight_version_name#$updated_at_epoch"
         elif ! echo "$commit_twilight_targets" | grep -q "$arch"; then
             commit_twilight_targets="$commit_twilight_targets && $arch"
         fi
@@ -178,19 +289,24 @@ main() {
     update_version "beta" "x86_64" "linux"
     update_version "beta" "aarch64" "linux"
     update_version "beta" "aarch64" "darwin"
-
-    if [ "$twilight_tag" != "null" ] && [ -n "$twilight_tag" ]; then
-        update_version "twilight" "x86_64" "linux"
-        update_version "twilight" "aarch64" "linux"
-        update_version "twilight" "aarch64" "darwin"
-    fi
+    update_version "twilight" "x86_64" "linux"
+    update_version "twilight" "aarch64" "linux"
+    update_version "twilight" "aarch64" "darwin"
 
     if $only_check && $ci; then
         echo "should_update=false" >>"$GITHUB_OUTPUT"
     fi
 
-    # touch output.txt && GITHUB_OUTPUT=output.txt .github/update.sh --ci
+    # Check if there are changes
     if ! git diff --exit-code >/dev/null; then
+        # Update twilight metadata
+        if [ "$commit_twilight_targets" != "" ]; then
+            updated_at=$(get_updated_at_of_twilight_artifact_from_zen_repo)
+            jq ".metadata_for.twilight.last_updated_at = \"$updated_at\"" sources.json >sources.json.tmp
+            mv sources.json.tmp sources.json
+        fi
+
+        # Prepare commit message
         init_message="chore(update):"
         message="$init_message"
 

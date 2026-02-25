@@ -104,27 +104,10 @@ in {
             "zen.window-sync.sync-only-pinned-tabs" = true;
         ''
         else null;
-
-      twilightOfficialMigrationWarning =
-        if name == "twilight-official"
-        then ''
-          [Zen Browser] The twilight-official variant is deprecated. Both twilight and twilight-official
-          now use assets directly from the upstream repository (zen-browser/desktop).
-
-          Please migrate to the "twilight" home module:
-
-            homeManagerModules.zen-browser-flake.homeModules.twilight
-
-          instead of:
-
-            homeManagerModules.zen-browser-flake.homeModules.twilight-official
-        ''
-        else null;
     in
       lib.filter (w: w != null) [
         migrationWarning
         essentialPinsWarning
-        twilightOfficialMigrationWarning
       ];
 
     assertions =

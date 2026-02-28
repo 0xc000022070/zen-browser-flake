@@ -60,6 +60,7 @@ in {
     (import ./keyboard-shortcuts.nix)
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
+    (import ./presets/catppuccin.nix)
   ];
 
   options = setAttrByPath modulePath {

@@ -2,10 +2,7 @@
   homeModule = {
     imports = [zen-browser-flake.homeModules.beta];
 
-    programs.zen-browser = {
-      enable = true;
-      suppressXdgMigrationWarning = true;
-    };
+    programs.zen-browser.enable = true;
   };
 
   testScript = ''    # python

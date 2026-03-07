@@ -8,8 +8,6 @@
 
     programs.zen-browser = {
       enable = true;
-      suppressXdgMigrationWarning = true;
-
       profiles.default = {
         pins = {
           "Test Pin" = {

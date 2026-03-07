@@ -8,7 +8,7 @@
   lib,
   ...
 }: let
-  inherit (lib) getAttrFromPath mkIf mkOption setAttrByPath;
+  inherit (lib) getAttrFromPath mkIf;
 
   modulePath = [
     "programs"
@@ -61,34 +61,15 @@ in {
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
     (import ./default-browser.nix {inherit name;})
+    (lib.mkRemovedOptionModule [
+      "programs"
+      "zen-browser"
+      "suppressXdgMigrationWarning"
+    ] "The XDG migration stage has ended.")
   ];
-
-  options = setAttrByPath modulePath {
-    suppressXdgMigrationWarning = mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = ''
-        Set to true to suppress the XDG config directory migration warning.
-      '';
-    };
-  };
 
   config = mkIf cfg.enable {
     warnings = let
-      migrationWarning =
-        if pkgs.stdenv.isLinux && !cfg.suppressXdgMigrationWarning
-        then ''
-          [Zen Browser] Starting from release 18.18.6b, the configuration directory
-          has changed from ~/.zen to ~/.config/zen.
-
-          If you haven't migrated yet, please follow the migration guide:
-          https://github.com/0xc000022070/zen-browser-flake#missing-configuration-after-update
-
-          To suppress this warning after completing the migration, set:
-            programs.zen-browser.suppressXdgMigrationWarning = true;
-        ''
-        else null;
-
       essentialPinsWarning = let
         hasIssue = lib.any (
           profile:
@@ -107,7 +88,6 @@ in {
         else null;
     in
       lib.filter (w: w != null) [
-        migrationWarning
         essentialPinsWarning
       ];
 

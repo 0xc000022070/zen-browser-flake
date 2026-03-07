@@ -246,6 +246,5 @@ in
       platforms = builtins.attrNames mozillaPlatforms;
       hydraPlatforms = [];
       mainProgram = binaryName;
-      desktopFileName = "${binaryName}.desktop";
     };
   }

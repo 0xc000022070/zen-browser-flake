@@ -60,6 +60,7 @@ in {
     (import ./keyboard-shortcuts.nix)
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
+    (import ./default-browser.nix {inherit name;})
   ];
 
   options = setAttrByPath modulePath {

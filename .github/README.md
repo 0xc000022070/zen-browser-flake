@@ -691,7 +691,7 @@ schemes, you can add the following configuration to your Home Manager setup:
     value = let
       zen-browser = inputs.zen-browser.packages.${system}.beta; # or twilight
     in
-      zen-browser.meta.desktopFileName;
+      zen-browser.desktopItem.name
 
     associations = builtins.listToAttrs (map (name: {
         inherit name value;

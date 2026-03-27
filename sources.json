@@ -2,22 +2,22 @@
   "variants": {
     "beta": {
       "x86_64-linux": {
-        "version": "1.19.3b",
-        "sha1": "11af62c94e43fee02f4b1d4c8f44db2176104db9",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.19.3b/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-zWuuwNREq7f7bGkrZE0eyb+b7paeswpWU/tE9bgE+nQ="
+        "version": "1.19.4b",
+        "sha1": "ae6fe48777678c9fcd018949b84f6d52a8f26ba0",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.19.4b/zen.linux-x86_64.tar.xz",
+        "sha256": "sha256-iZy/CGdLgQt5baNioyzRDKsgIkUS3JecJ+rEFe39jM0="
       },
       "aarch64-linux": {
-        "version": "1.19.3b",
-        "sha1": "11af62c94e43fee02f4b1d4c8f44db2176104db9",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.19.3b/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-X983MDk4aqhgFhXjj+tHIAXJpTtVD5EaY1AWPjrRK94="
+        "version": "1.19.4b",
+        "sha1": "ae6fe48777678c9fcd018949b84f6d52a8f26ba0",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.19.4b/zen.linux-aarch64.tar.xz",
+        "sha256": "sha256-UB5noxpi3HWY3rtzRrtSCTYKOMA4p8L6qomr30ZxOXc="
       },
       "aarch64-darwin": {
-        "version": "1.19.3b",
-        "sha1": "11af62c94e43fee02f4b1d4c8f44db2176104db9",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.19.3b/zen.macos-universal.dmg",
-        "sha256": "sha256-TqzzSX71eG7V1zcur0RMQmVuI5bWl8z0bySeuzUGmIQ="
+        "version": "1.19.4b",
+        "sha1": "ae6fe48777678c9fcd018949b84f6d52a8f26ba0",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.19.4b/zen.macos-universal.dmg",
+        "sha256": "sha256-VTMRYa3L0Za6kcK6mkiXZn69XR5sLGSnHPcMuFGzzwY="
       }
     },
     "twilight": {

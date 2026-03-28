@@ -499,7 +499,7 @@ in {
             .groups = (.groups | sort_by(.index // 0))
           '';
 
-          updateScript = pkgs.writeShellScript "zen-sessions-update-${profileName}" ''            # bash
+          updateScript = pkgs.writeShellScript "zen-sessions-update-${profileName}" /* bash */ ''
             SESSIONS_FILE="${sessionsFile}"
             SESSIONS_TMP="$(mktemp)"
             SESSIONS_MODIFIED="$(mktemp)"
@@ -568,7 +568,7 @@ in {
             rm -f "$BACKUP_FILE"
           '';
         in
-          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''            # bash
+          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] /* bash */ ''
             ${updateScript}
             if [[ "$?" -eq 0 ]]; then
               $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"

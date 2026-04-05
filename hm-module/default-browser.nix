@@ -49,5 +49,9 @@ in {
       associations.added = associations;
       defaultApplications = associations;
     };
+
+    home.sessionVariables = {
+      BROWSER = "zen-${name}";
+    };
   };
 }

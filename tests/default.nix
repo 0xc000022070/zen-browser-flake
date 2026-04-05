@@ -64,6 +64,7 @@
     "enable-beta-via-module" = ./enable-beta.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "default-browser" = ./default-browser.nix;
+    "private-desktop-entry" = ./private-desktop-entry.nix;
   };
 in
   pkgs.lib.mapAttrs (name: path: mkGenericTest name path) suites

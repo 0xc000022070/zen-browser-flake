@@ -71,7 +71,7 @@ in {
           then cfg.unwrappedPackage
           else
             self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
-              policies = cfg.policies;
+              inherit (cfg) policies enablePrivateDesktopEntry;
             };
 
         getPackage = sine:
@@ -102,9 +102,7 @@ in {
               then "zen-browser"
               else "zen-${name}";
           }).override {
-            extraPrefs = cfg.extraPrefs;
-            extraPrefsFiles = cfg.extraPrefsFiles;
-            nativeMessagingHosts = cfg.nativeMessagingHosts;
+            inherit (cfg) extraPrefs extraPrefsFiles nativeMessagingHosts;
           };
       in
         mkDefault (

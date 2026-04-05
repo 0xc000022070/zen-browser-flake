@@ -3,6 +3,7 @@
   variant,
   icon ? null,
   policies ? {},
+  enablePrivateDesktopEntry ? false,
   lib,
   stdenv,
   config,
@@ -138,49 +139,61 @@ in
 
     sourceRoot = lib.optionalString stdenv.hostPlatform.isDarwin ".";
 
-    desktopItems = [
-      (makeDesktopItem {
-        name = binaryName;
-        desktopName = "Zen Browser${lib.optionalString (name == "twilight") " Twilight"}";
-        exec = "${binaryName} %u";
-        icon =
-          if icon != null && (lib.isString icon || lib.isPath icon)
-          then icon
-          else desktopIconName;
-        type = "Application";
-        mimeTypes = [
-          "text/html"
-          "text/xml"
-          "application/xhtml+xml"
-          "x-scheme-handler/http"
-          "x-scheme-handler/https"
-          "application/x-xpinstall"
-          "application/pdf"
-          "application/json"
-        ];
-        startupWMClass = binaryName;
-        categories = ["Network" "WebBrowser"];
-        startupNotify = true;
-        terminal = false;
-        keywords = ["Internet" "WWW" "Browser" "Web" "Explorer"];
-        extraConfig.X-MultipleArgs = "false";
-
-        actions = {
-          new-windows = {
-            name = "Open a New Window";
-            exec = "${binaryName} %u";
+    desktopItems = let
+      mkDesktopEntry = args:
+        makeDesktopItem (args
+          // {
+            icon =
+              if icon != null && (lib.isString icon || lib.isPath icon)
+              then icon
+              else desktopIconName;
+            type = "Application";
+            mimeTypes = [
+              "text/html"
+              "text/xml"
+              "application/xhtml+xml"
+              "x-scheme-handler/http"
+              "x-scheme-handler/https"
+              "application/x-xpinstall"
+              "application/pdf"
+              "application/json"
+            ];
+            startupWMClass = binaryName;
+            categories = ["Network" "WebBrowser"];
+            startupNotify = true;
+            terminal = false;
+            extraConfig.X-MultipleArgs = "false";
+            keywords = ["Internet" "WWW" "Browser" "Web" "Explorer"];
+          });
+    in
+      [
+        (mkDesktopEntry {
+          name = binaryName;
+          desktopName = "Zen Browser${lib.optionalString (name == "twilight") " Twilight"}";
+          exec = "${binaryName} %u";
+          actions = {
+            new-windows = {
+              name = "Open a New Window";
+              exec = "${binaryName} %u";
+            };
+            new-private-window = {
+              name = "Open a New Private Window";
+              exec = "${binaryName} --private-window %u";
+            };
+            profilemanager = {
+              name = "Open the Profile Manager";
+              exec = "${binaryName} --ProfileManager %u";
+            };
           };
-          new-private-window = {
-            name = "Open a New Private Window";
-            exec = "${binaryName} --private-window %u";
-          };
-          profilemanager = {
-            name = "Open the Profile Manager";
-            exec = "${binaryName} --ProfileManager %u";
-          };
-        };
-      })
-    ];
+        })
+      ]
+      ++ lib.optionals (enablePrivateDesktopEntry == true) [
+        (mkDesktopEntry {
+          name = "${binaryName}-private";
+          desktopName = "${applicationName} - Private Session";
+          exec = "${binaryName} --private-window %u";
+        })
+      ];
 
     nativeBuildInputs =
       lib.optionals stdenv.hostPlatform.isLinux [

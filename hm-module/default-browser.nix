@@ -13,6 +13,14 @@
   cfg = getAttrFromPath modulePath config;
 in {
   options = setAttrByPath modulePath {
+    enablePrivateDesktopEntry = mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether to enable an additional desktop entry for Zen Browser to launch directly in a private window.
+      '';
+    };
+
     setAsDefaultBrowser = mkOption {
       type = lib.types.bool;
       default = false;

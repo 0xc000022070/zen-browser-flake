@@ -5,7 +5,7 @@
     programs.zen-browser.enable = true;
   };
 
-  testScript = ''    # python
+  testScript = /* python */ ''
     machine.succeed("su - testuser -c 'zen-beta --version'")
   '';
 }

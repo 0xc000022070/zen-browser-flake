@@ -15,6 +15,8 @@ This is a nix flake for the Zen browser.
 - [Declarative keyboard shortcuts with version protection](#keyboard-shortcuts)
 - [Declarative mods installation from Zen theme store](#mods)
 
+_A flake for Zen Browser that lets you fine-tune more than other flakes._
+
 ## Installation
 
 Just add it to your NixOS `flake.nix` or home-manager:
@@ -115,525 +117,92 @@ $ sudo nixos-rebuild switch # or home-manager switch
 $ zen-beta # or zen-twilight
 ```
 
-## Home Manager reference
+## Configuration Examples
 
-This is only an attempt to document some of the options provided by the
-[mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207)
-module, so feel free to experiment with other program options and help with
-further documentation.
+See the `examples/` directory for standalone configuration examples:
 
-`programs.zen-browser.*`
+| Example                                                                       | Description                               |
+| ----------------------------------------------------------------------------- | ----------------------------------------- |
+| [01-basic-home-manager.nix](../examples/01-basic-home-manager.nix)               | Minimal Home Manager setup                |
+| [02-policies-configuration.nix](../examples/02-policies-configuration.nix)       | System policies (policies.json)           |
+| [02a-policies-preferences.nix](../examples/02a-policies-preferences.nix)         | Locked preferences (policies.Preferences) |
+| [02b-settings-preferences.nix](../examples/02b-settings-preferences.nix)         | User settings (profiles.\*.settings)      |
+| [03-policies-package-override.nix](../examples/03-policies-package-override.nix) | Package-level policy override             |
+| [04-extensions.nix](../examples/04-extensions.nix)                               | Firefox addons                            |
+| [04b-extensions-rycee.nix](../examples/04b-extensions-rycee.nix)                 | Firefox addons via rycee.nix              |
+| [05-mods-installation.nix](../examples/05-mods-installation.nix)                 | Zen theme store mods                      |
+| [06-search-engines.nix](../examples/06-search-engines.nix)                       | Custom search engines                     |
+| [07-bookmarks.nix](../examples/07-bookmarks.nix)                                 | Bookmark organization                     |
+| [08-containers.nix](../examples/08-containers.nix)                               | Multi-container setup                     |
+| [09-spaces-themes.nix](../examples/09-spaces-themes.nix)                         | Spaces with themes                        |
+| [10-pinned-tabs.nix](../examples/10-pinned-tabs.nix)                             | Pinned tabs and folders                   |
+| [11-keyboard-shortcuts.nix](../examples/11-keyboard-shortcuts.nix)               | Keyboard shortcut overrides               |
+| [12-userchrome-css.nix](../examples/12-userchrome-css.nix)                       | userChrome CSS customization              |
+| [13-complete-setup.nix](../examples/13-complete-setup.nix)                       | Full real-world configuration             |
+| [14-native-messaging.nix](../examples/14-native-messaging.nix)                   | Native messaging hosts (1Password, etc.)  |
 
-- `enable` (_boolean_): Enable the Home Manager config.
+## Home Manager Reference
 
-- `setAsDefaultBrowser` (_boolean_): Whether to set Zen Browser as the default application for various file types and URL schemes.
+This module is based on Home Manager's
+[mkFirefoxModule](https://github.com/nix-community/home-manager/blob/67f60ebce88a89939fb509f304ac554bcdc5bfa6/modules/programs/firefox/mkFirefoxModule.nix#L207).
+Refer to the examples above for common patterns.
 
-- `nativeMessagingHosts` (listOf package): To
-  [enable communication between the browser and native applications](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Native_messaging).
+Core options:
 
-  **Example:**
-
-  ```nix
-  {
-    # Add any other native connectors here
-    programs.zen-browser.nativeMessagingHosts = [pkgs.firefoxpwa];
-  }
-  ```
-
-- `policies` (attrsOf anything):
-
-> [!IMPORTANT]\
-> If you're on macOS you'll need to configure
-> [programs.zen-browser.darwinDefaultsId](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master)
-> first.
-
-### Some common policies
-
-```nix
-{
-  programs.zen-browser.policies = {
-    AutofillAddressEnabled = true;
-    AutofillCreditCardEnabled = false;
-    DisableAppUpdate = true;
-    DisableFeedbackCommands = true;
-    DisableFirefoxStudies = true;
-    DisablePocket = true;
-    DisableTelemetry = true;
-    DontCheckDefaultBrowser = true;
-    NoDefaultBookmarks = true;
-    OfferToSaveLogins = false;
-    EnableTrackingProtection = {
-      Value = true;
-      Locked = true;
-      Cryptomining = true;
-      Fingerprinting = true;
-    };
-  };
-}
-```
-
-For more policies [read this](https://mozilla.github.io/policy-templates/).
-
-##### Zen-specific preferences
-
-Check
-[this comment](https://github.com/0xc000022070/zen-browser-flake/issues/59#issuecomment-2964607780).
-
-- profiles:
-  - [extensions](#extensions)
-  - [mods](#mods)
-  - [search](#search)
-  - [preferences](#preferences)
-  - [bookmarks](#bookmarks)
-  - [spaces](#spaces)
-  - [pinned tabs](#pinned-tabs-pins)
-  - [keyboard shortcuts](#keyboard-shortcuts)
-  - [userChrome](#userchromecss)
-
-### Extensions
-
-You can use [rycee's firefox-addons](https://nur.nix-community.org/repos/rycee/)
-like this:
-
-```nix
-inputs = {
-  firefox-addons = {
-    url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-}
-```
-
-```nix
-{
-  programs.zen-browser.profiles.*.extensions.packages = 
-     with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
-          ublock-origin
-          dearrow
-          proton-pass
-          ...
-        ];
-    ];
-}
-```
-
-You can search for package names by going to
-[the NUR website](https://nur.nix-community.org/repos/rycee/)
+- `enable` (boolean): Enable Home Manager config
+- `setAsDefaultBrowser` (boolean): Set Zen as default for URLs and file types
 
 > [!IMPORTANT]
-> Depending on how your flake is configured, you might not be able to install
-> extensions marked "unfree" like [improved-tube](https://improvedtube.com/).
-> For those extensions, the only way to install them is through the Firefox
-> store
+> macOS users need to configure `programs.zen-browser.darwinDefaultsId` first.
+> See [home-manager options](https://home-manager-options.extranix.com/?query=programs.firefox.darwinDefaultsId&release=master).
+
+## Configuration Layers
+
+Three distinct configuration layers, stored differently:
+
+| Layer                  | File                                                                    | Storage       | User Can Override |
+| ---------------------- | ----------------------------------------------------------------------- | ------------- | ----------------- |
+| **System Policies**    | [02-policies-configuration.nix](../examples/02-policies-configuration.nix) | policies.json | No (enforced)     |
+| **Locked Preferences** | [02a-policies-preferences.nix](../examples/02a-policies-preferences.nix)   | policies.json | No (enforced)     |
+| **User Settings**      | [02b-settings-preferences.nix](../examples/02b-settings-preferences.nix)   | prefs.js      | Yes (defaults)    |
+
+## Profile Configuration
+
+Profiles support many sub-options. See examples directory for:
+
+- **Extensions**: [04-extensions.nix](../examples/04-extensions.nix), [04b-extensions-unfree.nix](../examples/04b-extensions-unfree.nix) (rycee's NUR)
+- **Mods**: [05-mods-installation.nix](../examples/05-mods-installation.nix) (Zen theme store)
+- **Search**: [06-search-engines.nix](../examples/06-search-engines.nix) (custom search shortcuts)
+- **Bookmarks**: [07-bookmarks.nix](../examples/07-bookmarks.nix)
+- **Containers**: [08-containers.nix](../examples/08-containers.nix)
+- **Spaces**: [09-spaces-themes.nix](../examples/09-spaces-themes.nix) with custom gradient themes
+- **Pinned Tabs**: [10-pinned-tabs.nix](../examples/10-pinned-tabs.nix) with folder grouping
+- **Keyboard Shortcuts**: [11-keyboard-shortcuts.nix](../examples/11-keyboard-shortcuts.nix)
+- **userChrome.css**: [12-userchrome-css.nix](../examples/12-userchrome-css.nix)
+
+### Browser State Management
+
+> [!CRITICAL]
+> **Close Zen browser before `home-manager switch`** if you declare:
 >
-> If you are not using the
-> [firefox-addons](https://nur.nix-community.org/repos/rycee/) repo, your
-> configuration will still build, but the extension will
-> not install.\
-> Doing so through the repo will throw a build error warning you about the
-> package being unfree
+> - Any `spaces` (with or without `spacesForce`)
+> - Any `pins` (with or without `pinsForce`)
+> - Any `containers` (with or without `containersForce`)
+> - Any `keyboardShortcuts`
 
-You can also use [this alternative path](https://github.com/0xc000022070/zen-browser-flake/tree/b6b1e625e4aa049b59930611fc20790c0ccbc840?tab=readme-ov-file#extensions). Check [my config](https://github.com/luisnquin/nixos-config/blob/9f641d16c74cf9a90fdf5b654376a1d6c8cc1f86/home/modules/programs/browser/zen/policies-config.nix#L46) too.
+If you only declare simple options like policies/extensions/bookmarks, rebuilding while Zen is open is ok, and closure won't be required.
 
-### Mods
+Spaces, pins, and containers are stored in `zen-sessions.jsonlz4` (Mozilla LZ4 compressed JSON). The activation script:
 
-Mods are themes and extensions available in the [Zen theme store](https://zen-browser.app/mods). You can browse and install them directly in the browser, but to make them declarative, you can list their UUIDs here.
+1. Checks if Zen is running via `pgrep "zen"`—exits with error if browser is open
+2. Decompresses zen-sessions.jsonlz4 from LZ4 to JSON
+3. Modifies it with jq to apply your declared config
+4. Recompresses back to LZ4
+5. Restores backup on any failure
 
-To find the UUID of a mod, visit the mod's page in the Zen theme store and copy the UUID from the URL.
+Browser must be closed because the file is locked in memory while Zen runs. The `*Force` options just control whether undeclared items are deleted—the state modification happens either way.
 
-> [!NOTE]
-> You need to restart the browser to see the changes.
-
-```nix
-{
-  programs.zen-browser.profiles.*.mods = [
-    "e122b5d9-d385-4bf8-9971-e137809097d0" # No Top Sites
-  ];
-}
-```
-
-### Search
-
-[Search Engine Aliases](https://github.com/nix-community/home-manager/blob/master/modules/programs/firefox/profiles/search.nix#L211)
-
-```nix
-{
-   programs.zen-browser.profiles.*.search = {
-        force = true; # Needed for nix to overwrite search settings on rebuild
-        default = "ddg"; # Aliased to duckduckgo, see other aliases in the link above
-        engines = {
-           # My NixOS Option and package search shortcut
-         mynixos = {
-            name = "My NixOS";
-            urls = [
-              {
-                template = "https://mynixos.com/search?q={searchTerms}";
-                params = [
-                  {
-                    name = "query";
-                    value = "searchTerms";
-                  }
-                ];
-              }
-            ];
-
-            icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
-            definedAliases = ["@nx"]; # Keep in mind that aliases defined here only work if they start with "@"
-          };
-        };
-      };
-
-}
-```
-
-### Preferences
-
-```nix
-{
-  programs.zen-browser.profiles.*.settings = {
-    "browser.tabs.warnOnClose" = false;
-    "browser.download.panel.shown" = false;
-    # Since this is a json value, it can be nixified and translated by home-manager;
-    browser = {
-      tabs.warnOnClose = false;
-      download.panel.shown = false;
-    };
-    # Find all settings in about:config
-  };
-}
-```
-
-### Bookmarks
-
-```nix
-{
-   programs.zen-browser.profiles.*.bookmarks = {
-        force = true; # Required for nix to overwrite bookmarks on rebuild
-        settings = [
-          {
-            name = "Nix sites";
-            toolbar = true;
-            bookmarks = [
-              {
-                name = "homepage";
-                url = "https://nixos.org/";
-              }
-              {
-                name = "wiki";
-                tags = ["wiki" "nix"];
-                url = "https://wiki.nixos.org/";
-              }
-            ];
-          }
-        ];
-      };
-}
-```
-
-### Spaces
-
-> [!WARNING]
-> Spaces and pins are stored in `zen-sessions.jsonlz4` (a Mozilla LZ4 compressed
-> JSON file). The activation script decompresses it, applies your configuration,
-> and recompresses it. A backup is created before any modification and restored
-> on failure. However, it is still recommended to close your Zen browser instance
-> before rebuilding to avoid conflicts.
-
-- `profiles.*.spaces` (attrsOf submodule): Declare profile's \[work\]spaces.
-  - `name` (string) Name of space, defaults to submodule/attribute name.
-  - `id` (string) **Required.** UUID v4 of space. **Changing this after a
-    rebuild will re-create the space as a new one,** losing opened tabs, groups,
-    etc. If `spacesForce` is true, the space with the previous UUID will be
-    deleted.
-  - `position` (unsigned integer) Position/order of space in the left bar.
-  - `icon` (null or (string or path)) Emoji, URI or file path for icon to be
-    used as space icon.
-  - `container` (null or unsigned integer) Container ID to be used as default in
-    space.
-  - `theme.type` (nullOr string) Type of theme, defaults to "gradient".
-  - `theme.color` (listOf submodule) List of JSON colors to be used as theme:
-    - `red` (integer between 0 and 255) Red value of color (first value of "c"
-      array in JSON object).
-    - `green` (integer between 0 and 255) Green value of color (second value of
-      "c" array in JSON object).
-    - `blue` (integer between 0 and 255) Blue value of color (third value of "c"
-      array in JSON object).
-    - `custom` (boolean) Is custom color ("isCustom" in JSON object).
-    - `algorithm` (enum of "complementary", "floating" or "analogous") color
-      algorithm (defaults to "floating").
-    - `lightness` (integer) Lightness of color.
-    - `position.x` (integer) X Position of color in gradient picker on Zen
-      browser.
-    - `position.y` (integer) Y Position of color in gradient picker on Zen
-      browser.
-    - `type` (enum of "undefined" or "explicit-lightness") Type of color
-      (default to "undefined").
-  - `theme.opacity` (null or float) Opacity of theme (defaults to 0.5).
-  - `theme.rotation` (null or integer) Rotation of theme gradient (defaults to
-    null).
-  - `theme.texture` (null or float) Amount of texture of theme (defaults to
-    0.0).
-- `profiles.*.spacesForce` (boolean) Whether to delete existing spaces not
-  declared in the configuration. Recommended to make spaces fully declarative
-  (defaults to false).
-
-```nix
-{
-  programs.zen-browser = {
-    enable = true;
-    profiles."default" = {
-      containersForce = true;
-      containers = {
-        Personal = {
-          color = "purple";
-          icon = "fingerprint";
-          id = 1;
-        };
-        Work = {
-          color = "blue";
-          icon = "briefcase";
-          id = 2;
-        };
-        Shopping = {
-          color = "yellow";
-          icon = "dollarsign";
-          id = 3;
-        };
-      };
-      spacesForce = true;
-      spaces = let
-        containers = config.programs.zen-browser.profiles."default".containers;
-      in {
-        "Space" = {
-          id = "c6de089c-410d-4206-961d-ab11f988d40a";
-          position = 1000;
-        };
-        "Work" = {
-          id = "cdd10fab-4fc5-494b-9041-325e5759195b";
-          icon = "chrome://browser/skin/zen-icons/selectable/star-2.svg";
-          container = containers."Work".id;
-          position = 2000;
-        };
-        "Shopping" = {
-          id = "78aabdad-8aae-4fe0-8ff0-2a0c6c4ccc24";
-          icon = "💸";
-          container = containers."Shopping".id;
-          position = 3000;
-        };
-      };
-    };
-  };
-}
-```
-
-### Pinned Tabs (pins)
-
-You are also able to declare your pinned tabs! For more info, see
-[this PR](https://github.com/0xc000022070/zen-browser-flake/pull/132)
-
-```nix
-{
-  programs.zen-browser.profiles.default = let
-    containers = {
-      Work = {
-        color = "blue";
-        icon = "briefcase";
-        id = 1;
-      };
-      Life = {
-        color = "green";
-        icon = "tree";
-        id = 2;
-      };
-    };
-    spaces = {
-      "Rendezvous" = {
-        id = "572910e1-4468-4832-a869-0b3a93e2f165";
-        icon = "🎭";
-        position = 1000;
-        container = containers.Life.id;
-      };
-      "Github" = {
-        id = "08be3ada-2398-4e63-bb8e-f8bf9caa8d10";
-        icon = "🐙";
-        position = 2000;
-        theme = {
-          type = "gradient";
-          colors = [
-            {
-              red = 185;
-              green = 200;
-              blue = 215;
-              algorithm = "floating";
-              type = "explicit-lightness";
-            }
-          ];
-          opacity = 0.8;
-          texture = 0.5;
-        };
-      };
-      "Nix" = {
-        id = "2441acc9-79b1-4afb-b582-ee88ce554ec0";
-        icon = "❄️";
-        position = 3000;
-        theme = {
-          type = "gradient";
-          colors = [
-            {
-              red = 150;
-              green = 190;
-              blue = 230;
-              algorithm = "floating";
-              type = "explicit-lightness";
-            }
-          ];
-          opacity = 0.2;
-          texture = 0.5;
-        };
-      };
-    };
-    pins = {
-      "mail" = {
-        id = "9d8a8f91-7e29-4688-ae2e-da4e49d4a179";
-        container = containers.Life.id;
-        url = "https://outlook.live.com/mail/";
-        isEssential = true;
-        position = 101;
-      };
-      "Notion" = {
-        id = "8af62707-0722-4049-9801-bedced343333";
-        container = containers.Life.id;
-        url = "https://notion.com";
-        isEssential = true;
-        position = 102;
-      };
-      "Folo" = {
-        id = "fb316d70-2b5e-4c46-bf42-f4e82d635153";
-        container = containers.Life.id;
-        url = "https://app.folo.is/";
-        isEssential = true;
-        position = 103;
-      };
-      "Nix awesome" = {
-        id = "d85a9026-1458-4db6-b115-346746bcc692";
-        workspace = spaces.Nix.id;
-        isGroup = true;
-        isFolderCollapsed = false;
-        editedTitle = true;
-        position = 200;
-      };
-      "Nix Packages" = {
-        id = "f8dd784e-11d7-430a-8f57-7b05ecdb4c77";
-        workspace = spaces.Nix.id;
-        folderParentId = pins."Nix awesome".id;
-        url = "https://search.nixos.org/packages";
-        position = 201;
-      };
-      "Nix Options" = {
-        id = "92931d60-fd40-4707-9512-a57b1a6a3919";
-        workspace = spaces.Nix.id;
-        folderParentId = pins."Nix awesome".id;
-        url = "https://search.nixos.org/options";
-        position = 202;
-      };
-      "Home Manager Options" = {
-        id = "2eed5614-3896-41a1-9d0a-a3283985359b";
-        workspace = spaces.Nix.id;
-        folderParentId = pins."Nix awesome".id;
-        url = "https://home-manager-options.extranix.com";
-        position = 203;
-      };
-    };
-  in {
-    containersForce = true;
-    pinsForce = true;
-    spacesForce = true;
-    inherit containers pins spaces;
-    # ...
-  };
-}
-```
-
-### Keyboard Shortcuts
-
-Declarative overrides of Zen Browser's keyboard shortcuts with version protection against breaking changes.
-
-```nix
-{
-  programs.zen-browser.profiles.default = {
-    keyboardShortcuts = [
-      # Change compact mode toggle to Ctrl+Alt+S
-      {
-        id = "zen-compact-mode-toggle";
-        key = "s";
-        modifiers = {
-          control = true;
-          alt = true;
-        };
-      }
-      # Disable the quit shortcut to prevent accidental closes
-      {
-        id = "key_quitApplication";
-        disabled = true;
-      }
-    ];
-    # Fails activation on schema changes to detect potential regressions
-    # Find this in about:config or prefs.js of your profile
-    keyboardShortcutsVersion = 16;
-  };
-}
-```
-
-When you declare a shortcut override:
-
-- Identity fields (`id`, `group`, `action`, `l10nId`, `reserved`, `internal`) are preserved from Zen's defaults
-- Binding fields (`key`, `keycode`, `modifiers`, `disabled`) are completely replaced with your declaration
-
-#### Configuration Options
-
-- `profiles.*.keyboardShortcuts` (list of submodules): Declarative keyboard shortcuts configuration.
-  - `id` (string) **Required.** Unique identifier for the shortcut to modify.
-  - `key` (null or string) Character key (e.g., "a", "1", "+"). Leave null to use default.
-  - `keycode` (null or string) Virtual key code for special keys (e.g., "VK_F1", "VK_DELETE"). Leave null to use default.
-  - `disabled` (null or boolean) Set to true to disable the shortcut. Leave null to use default.
-  - `modifiers` (null or submodule) Modifier keys configuration. Leave null to use defaults.
-    - `control` (null or boolean) Ctrl key modifier.
-    - `alt` (null or boolean) Alt key modifier.
-    - `shift` (null or boolean) Shift key modifier.
-    - `meta` (null or boolean) Meta/Windows/Command key modifier.
-    - `accel` (null or boolean) Accelerator key (Ctrl on Linux/Windows, Cmd on macOS).
-
-- `profiles.*.keyboardShortcutsVersion` (null or integer) Expected version of the keyboard shortcuts schema. If set, activation will fail if the Zen Browser shortcuts version doesn't match, preventing silent breakage after Zen Browser updates. Find the current version in `about:config` as `zen.keyboard.shortcuts.version`.
-
-### Finding Shortcut IDs
-
-Search for shortcut IDs and their actions in `~/.config/zen/<profile>/zen-keyboard-shortcuts.json`. For example:
-
-```bash
-jq -c '.shortcuts[] | {id, key, keycode, action}' ~/.config/zen/default/zen-keyboard-shortcuts.json | fzf
-```
-
-Alternatively, you could also go to the keyboard shorcuts page in settings, and then inspect the input field of the shortcut you want to change, in the inspect window look for "key={whatever}", the value of "key" is the id you should put in your configuration
-
-### Notes on activation
-
-Keyboard shortcuts are still managed by Zen and the home manager module only overrides them on activation. That means that Zen needs to be started at least once to create the shortcuts file if it doesn't exist yet. Then, every rebuild of your configuration (`nixos-rebuild switch` or `home-manager switch`) will apply your keybindings. Also note that you can just re-run activation scripts with `systemctl start home-manager-${USER}.service`.
-
-### userChrome.css
-
-```nix
-{
-  programs.zen-browser.profiles.*.userChrome = ''
-    #navigator-toolbox {
-      background-color: #2b2b2b; /* Changes the toolbar background color */
-    }
-  '';
-}
-```
-
-[Article on how to customize userChrome](https://mefmobile.org/how-to-customize-firefoxs-user-interface-with-userchrome-css/)
-
-## User Configurations
+## Showcase
 
 Here are some user configurations that showcase different setups using this flake:
 
@@ -687,7 +256,7 @@ Check the [Home Manager Reference](#home-manager-reference).
 
 ### Missing configuration after update
 
-1. The release [18.18.6b](****https://github.com/zen-browser/desktop/releases/tag/1.18.6b) 
+1. The release [18.18.6b](****https://github.com/zen-browser/desktop/releases/tag/1.18.6b)
    changed the configuration location.
    Please move your configuration from ~/.zen to ~/.config/zen and restart the browser
 
@@ -708,7 +277,6 @@ Check the [Home Manager Reference](#home-manager-reference).
    # or zen-twilight
    zen-beta --safe-mode
    ```
-
 
 2. Please check that you're using the wrapped version of the package.
    The -unwrapped variants should not be used directly. Instead, they should be wrapped with wrapFirefox or custom wrappers.

@@ -14,7 +14,7 @@
     };
   };
 
-  testScript = ''    # python
+  testScript = ''
     mimeapps = machine.succeed("cat /home/testuser/.config/mimeapps.list")
     assert "application/json=other-app.desktop" in mimeapps, "application/json is not overridden correctly: \n" + mimeapps
     assert "text/html=zen-twilight.desktop" in mimeapps, "text/html default from zen is missing: \n" + mimeapps

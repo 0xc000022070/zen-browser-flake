@@ -200,7 +200,7 @@ Spaces, pins, and containers are stored in `zen-sessions.jsonlz4` (Mozilla LZ4 c
 4. Recompresses back to LZ4
 5. Restores backup on any failure
 
-Browser must be closed because the file is locked in memory while Zen runs. The `*Force` options just control whether undeclared items are deleted—the state modification happens either way.
+Browser must be closed because the file is locked in memory while Zen runs. With `pinsForce = true`, `pinsForceAction` (default `demote`) selects whether undeclared pinned or essential tabs are removed or demoted to normal tabs; with `pinsForce = false`, no changes are made to pins.
 
 ## Showcase
 

@@ -124,6 +124,9 @@ in {
         zen-live-folders.jsonlz4 (undeclared ids are kept; declared ids merge provider
         ``data.state`` over existing rows while preserving ``lastFetched``, ``lastErrorId``,
         ``dismissedItems``, and ``tabsState``). Close Zen before rebuild.
+        Keep ``zen.window-sync.enabled`` true in profile settings; if startup cannot attach session ``folders[]``
+        to the window, Zen clears ``zen-live-folders.jsonlz4`` on save. Use ids copied from Zen session files
+        (Zen generates ids like ``Timestamp-N``, not arbitrary UUIDs).
       '';
     };
     liveFoldersForce = mkOption {

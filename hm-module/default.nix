@@ -87,6 +87,22 @@ in {
         ''
         else null;
 
+      liveFoldersWindowSyncWarning = let
+        hasIssue = lib.any (
+          profile:
+            ((profile.settings or {})."zen.window-sync.enabled" or true)
+            == false
+            && (profile.liveFolders != {} || profile.liveFoldersForce or false)
+        ) (lib.attrValues cfg.profiles);
+      in
+        if hasIssue
+        then ''
+          [Zen Browser] liveFolders needs profile.settings."zen.window-sync.enabled" = true (do not turn window sync off).
+          With window-sync disabled, Zen skips applying sidebar folders to the window at startup, so no zen-folder row matches your ids;
+          the live-folder manager then saves an empty zen-live-folders.jsonlz4 on the next session save.
+        ''
+        else null;
+
       pinIconIgnoredWarnings = lib.concatLists (
         lib.mapAttrsToList (
           profileName: profile:
@@ -119,7 +135,7 @@ in {
         cfg.profiles
       );
     in
-      lib.filter (w: w != null) ([essentialPinsWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
+      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
 
     assertions =
       [

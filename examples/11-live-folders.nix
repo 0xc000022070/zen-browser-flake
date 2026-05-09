@@ -15,6 +15,9 @@
 #   5. home-manager switch / rebuild. Zen must stay closed during activation.
 #
 # Notes:
+#   - Enable window sync or Zen never applies sidebar folder rows on startup and may empty zen-live-folders on save:
+#       settings."zen.window-sync.enabled" = true;
+#   - Random UUIDs for ``id`` almost never match Zen; copy opaque ids from step 3 or Zen skips restore and wipes the file.
 #   - If ``zen-sessions.jsonlz4`` did not exist yet, older HM wrote only ``zen-live-folders.jsonlz4``; Zen then
 #     emptied that file on launch (no matching ``folders[]`` rows). Current module creates a minimal session stub first.
 #     Still verify after rebuild: ``jq '.folders[] | select(.isLiveFolder == true)'`` on decompressed sessions matches each ``id``.
@@ -29,6 +32,10 @@
 #   - This is independent of pins.isGroup folders (different feature).
 {
   programs.zen-browser.profiles.default = {
+    settings = {
+      "zen.window-sync.enabled" = true;
+    };
+
     liveFolders = {
       # Replace id/title/feedUrl with values from your machine (step 3 above).
       "Prisma blog" = {

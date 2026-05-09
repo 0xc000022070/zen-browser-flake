@@ -80,6 +80,15 @@
       machine.succeed(
           "jq -e '[.groups[] | select(.id == \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\")] | length == 1' /tmp/sessions-live.json"
       )
+      machine.succeed(
+          "jq -e '.folders[] | select(.id == \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\") | (.emptyTabIds | length == 1) and (.prevSiblingInfo.type == \"start\")' /tmp/sessions-live.json"
+      )
+      machine.succeed(
+          """jq -e '
+            (.folders[] | select(.id == "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee") | .emptyTabIds[0]) as $e |
+            [.tabs[] | select(.zenSyncId == $e and .groupId == "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" and .zenIsEmpty == true)] | length == 1
+          ' /tmp/sessions-live.json"""
+      )
 
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-live-folders.jsonlz4 /tmp/live-out.json")
       machine.succeed("test $(jq '. | length' /tmp/live-out.json) -eq 1")

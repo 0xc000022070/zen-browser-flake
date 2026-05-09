@@ -8,19 +8,18 @@
   optionalString,
 }: let
   inherit (builtins) map toJSON;
-  inherit (lib) mapAttrsToList;
+  inherit (lib) imap0 mapAttrsToList optionalAttrs sort;
 
   zenId = import ./id.nix {inherit lib;};
 
   liveFoldersFetchIntervalMs = 1800000;
 
-  singleDeclaredSpaceId =
-    let
-      names = builtins.attrNames profile.spaces;
-    in
-      if builtins.length names != 1
-      then null
-      else (builtins.getAttr (builtins.elemAt names 0) profile.spaces).id;
+  singleDeclaredSpaceId = let
+    names = builtins.attrNames profile.spaces;
+  in
+    if builtins.length names != 1
+    then null
+    else (builtins.getAttr (builtins.elemAt names 0) profile.spaces).id;
 
   resolvedWorkspace = lf:
     if lf.workspace != null
@@ -39,34 +38,29 @@
               inherit (lf) kind title feedUrl maxItems timeRange repos githubOptions collapsed workspace folderParentId folderIcon position;
             };
       in
-        lf // {inherit id;}
+        lf // {inherit attrName id;}
     )
-      profile.liveFolders;
+    profile.liveFolders;
+
+  sortedLiveFolderEntries = sort (a: b: a.position < b.position) liveFolderEntries;
 
   liveFolderSessionFolder = lf: {
     pinned = true;
-    essential = false;
     splitViewGroup = false;
     id = lf.id;
     name = lf.title;
     collapsed = lf.collapsed;
     saveOnWindowClose = true;
-    prevSiblingInfo = {
-      type = "start";
-      id = null;
-    };
-    emptyTabIds = [];
     userIcon =
       if lf.folderIcon == null
       then ""
       else lf.folderIcon;
-    workspaceId =
-      let
-        w = resolvedWorkspace lf;
-      in
-        if w == null
-        then null
-        else "{${w}}";
+    workspaceId = let
+      w = resolvedWorkspace lf;
+    in
+      if w == null
+      then null
+      else "{${w}}";
     parentId =
       if lf.folderParentId == null
       then null
@@ -74,6 +68,79 @@
     index = lf.position;
     isLiveFolder = true;
   };
+
+  liveFolderRows =
+    imap0 (
+      idx: lf: let
+        prevId =
+          if idx == 0
+          then null
+          else (builtins.elemAt sortedLiveFolderEntries (idx - 1)).id;
+        prevSiblingInfo =
+          if prevId == null
+          then {
+            type = "start";
+            id = null;
+          }
+          else {
+            type = "group";
+            id = prevId;
+          };
+        placeholderSyncId = zenId.mkZenLiveFolderPlaceholderTabSyncId {
+          inherit profileName;
+          inherit (lf) attrName;
+          folderId = lf.id;
+        };
+      in
+        (liveFolderSessionFolder lf)
+        // {
+          inherit prevSiblingInfo;
+          emptyTabIds = [placeholderSyncId];
+        }
+    )
+    sortedLiveFolderEntries;
+
+  liveFolderPlaceholderTabs =
+    map (lf: let
+      placeholderSyncId = zenId.mkZenLiveFolderPlaceholderTabSyncId {
+        inherit profileName;
+        inherit (lf) attrName;
+        folderId = lf.id;
+      };
+    in {
+      entries = [
+        {
+          url = "about:blank";
+          triggeringPrincipal_base64 = "{\"3\":{}}";
+        }
+      ];
+      lastAccessed = 0;
+      pinned = true;
+      hidden = false;
+      groupId = lf.id;
+      zenWorkspace = null;
+      zenSyncId = placeholderSyncId;
+      zenEssential = false;
+      zenDefaultUserContextId = null;
+      zenPinnedIcon = null;
+      zenIsEmpty = true;
+      zenHasStaticIcon = false;
+      zenGlanceId = null;
+      zenIsGlance = false;
+      _zenPinnedInitialState = {
+        entry = {url = "about:blank";};
+        image = null;
+      };
+      zenLiveFolderItemId = null;
+      searchMode = null;
+      userContextId = 0;
+      attributes = {};
+      index = 1;
+      image = "";
+      userTypedValue = "";
+      userTypedClear = 0;
+    })
+    sortedLiveFolderEntries;
 
   liveFolderZenEntry = lf: let
     interval = liveFoldersFetchIntervalMs;
@@ -115,12 +182,17 @@
               then "https://github.com/pulls"
               else "https://github.com/issues";
             repos = lf.repos;
-            options = {
-              repoExcludes = lf.githubOptions.repoExcludes;
-              authorMe = lf.githubOptions.authorMe;
-              assignedMe = lf.githubOptions.assignedMe;
-              reviewRequested = lf.githubOptions.reviewRequested;
-            };
+            options =
+              {repoExcludes = lf.githubOptions.repoExcludes;}
+              // optionalAttrs lf.githubOptions.authorMe {
+                inherit (lf.githubOptions) authorMe;
+              }
+              // optionalAttrs (!lf.githubOptions.assignedMe) {
+                assignedMe = false;
+              }
+              // optionalAttrs lf.githubOptions.reviewRequested {
+                inherit (lf.githubOptions) reviewRequested;
+              };
             inherit interval;
             lastFetched = 0;
             lastErrorId = null;
@@ -170,8 +242,7 @@
     $from_decl ${optionalString (!profile.liveFoldersForce) "+ $orphans"}
   '';
 
-  liveFolderRows =
-    map liveFolderSessionFolder liveFolderEntries;
+  liveFolderPlaceholderTabsJson = toJSON liveFolderPlaceholderTabs;
 
   # SessionStore expects a matching `groups[]` tab-group entry so Zen can attach the DOM node
   # before LiveFolders applies metadata (`ZenFolders.mjs` restore path).
@@ -186,7 +257,7 @@
       saveOnWindowClose = true;
       index = lf.position;
     })
-      liveFolderEntries;
+    liveFolderEntries;
 
   jqZenSessionsLiveFoldersForce = optionalString profile.liveFoldersForce ''
     .folders = [.folders[] |
@@ -199,6 +270,7 @@ in {
   inherit
     liveFolderRows
     liveFolderGroupRows
+    liveFolderPlaceholderTabsJson
     liveFoldersZenJson
     runLiveFoldersUpdate
     liveFoldersDeclaredIdsJson

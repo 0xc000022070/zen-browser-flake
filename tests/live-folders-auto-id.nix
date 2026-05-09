@@ -37,6 +37,13 @@
       machine.succeed(
           "jq -e '([.folders[] | select(.isLiveFolder == true)][0].id) as $fid | [.groups[] | select(.id == $fid)] | length == 1' /tmp/sess-auto.json"
       )
+      machine.succeed(
+          """jq -e '
+            (.folders[] | select(.isLiveFolder == true) | .id) as $fid |
+            (.folders[] | select(.id == $fid) | .emptyTabIds[0]) as $e |
+            [.tabs[] | select(.zenSyncId == $e and .groupId == $fid and .zenIsEmpty == true)] | length == 1
+          ' /tmp/sess-auto.json"""
+      )
 
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-live-folders.jsonlz4 /tmp/live-auto.json")
       machine.succeed(

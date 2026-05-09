@@ -69,6 +69,27 @@
       then mod (hexToInt (substring 24 12 h)) (maxMillis - 1) + 1
       else part1;
   in "${toString safe1}-${toString part2}";
+
+  # Placeholder pinned tab (`about:blank`) Zen puts in `emptyTabIds`; independent id shape, deterministic here.
+  mkZenLiveFolderPlaceholderTabSyncId = {
+    profileName,
+    attrName,
+    folderId,
+  }: let
+    payload = builtins.concatStringsSep "\n" [
+      profileName
+      attrName
+      folderId
+      "zen-live-folder-placeholder-tab-v1"
+    ];
+    h = hashString "sha256" payload;
+    part1 = mod (hexToInt (substring 0 12 h)) maxMillis;
+    part2 = mod (hexToInt (substring 12 8 h)) 100;
+    safe1 =
+      if part1 == 0
+      then mod (hexToInt (substring 24 12 h)) (maxMillis - 1) + 1
+      else part1;
+  in "${toString safe1}-${toString part2}";
 in {
-  inherit mkZenLiveFolderId;
+  inherit mkZenLiveFolderId mkZenLiveFolderPlaceholderTabSyncId;
 }

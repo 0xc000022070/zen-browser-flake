@@ -111,5 +111,11 @@
       machine.succeed(
           "jq -e '[.groups[] | select(.id == \"keep-live-folder-id\")] | length == 1' /tmp/sess-force-out.json"
       )
+      machine.succeed(
+          """jq -e '
+            (.folders[] | select(.id == "keep-live-folder-id") | .emptyTabIds[0]) as $e |
+            [.tabs[] | select(.zenSyncId == $e and .groupId == "keep-live-folder-id")] | length == 1
+          ' /tmp/sess-force-out.json"""
+      )
     '';
 }

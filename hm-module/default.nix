@@ -106,7 +106,8 @@ in {
       liveFoldersWorkspaceWarning = let
         multiSpace = profile: (builtins.length (builtins.attrNames (profile.spaces or {}))) > 1;
         liveFolderMissingWorkspace = profile:
-          profile.liveFolders != {}
+          profile.liveFolders
+          != {}
           && lib.any (lf: lf.workspace == null) (lib.attrValues profile.liveFolders);
         hasIssue = lib.any (
           profile: multiSpace profile && liveFolderMissingWorkspace profile

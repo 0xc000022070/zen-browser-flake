@@ -475,7 +475,7 @@ in {
                   saveOnWindowClose = true;
                   index = f.index;
                 })
-                  folderData;
+                folderData;
             in
               pinGroupRows ++ zenLf.liveFolderGroupRows
           );
@@ -484,12 +484,16 @@ in {
           pinsJsonFile = pkgs.writeText "zen-declared-pins-${profileName}.json" pinsJson;
           foldersJsonFile = pkgs.writeText "zen-declared-folders-${profileName}.json" foldersJson;
           groupsJsonFile = pkgs.writeText "zen-declared-groups-${profileName}.json" groupsJson;
+          liveFolderTabsJsonFile =
+            pkgs.writeText "zen-declared-live-folder-tabs-${profileName}.json" zenLf.liveFolderPlaceholderTabsJson;
 
           jqFilterFile = pkgs.writeText "zen-sessions-filter-${profileName}.jq" ''
             ($declaredSpaces[0]) as $spaces |
             ($declaredPins[0]) as $pins |
             ($declaredFolders[0]) as $folders |
             ($declaredGroups[0]) as $groups |
+            ($declaredLiveFolderTabs[0]) as $lftabs |
+            ([$lftabs[].zenSyncId]) as $lfTabIds |
 
             .spaces = (.spaces // []) |
             .tabs = (.tabs // []) |
@@ -518,12 +522,19 @@ in {
                 $e * {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index, entries: $o.entries, groupId: $o.groupId, zenStaticLabel: $o.zenStaticLabel}
               else . end
             ] |
-            .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)]
+            .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)] |
+
+            .tabs = [.tabs[] |
+              . as $e |
+              ($lftabs | map(select(.zenSyncId == $e.zenSyncId)) | .[0] // null) as $o |
+              if $o != null then ($e * $o) else . end
+            ] |
+            .tabs += [$lftabs[] | select(.zenSyncId as $id | $etIds | index($id) | not)]
 
             ${optionalString (profile.pinsForce && profile.pinsForceAction == "remove") ''
               | .tabs = [.tabs[] |
                 if (.pinned == true or .zenEssential == true) then
-                  select(.zenSyncId as $id | $dpIds | index($id) != null)
+                  select(.zenSyncId as $id | ($dpIds + $lfTabIds) | index($id) != null)
                 else . end
               ]
             ''}
@@ -534,8 +545,8 @@ in {
                   ($ent | group_by(.value.zenWorkspace // "") | map(sort_by(.key))
                   | map(
                       . as $ws |
-                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | $dpIds | index($id) != null)))) as $declaredEnt |
-                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | $dpIds | index($id) == null)))) as $orphanEnt |
+                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | ($dpIds + $lfTabIds) | index($id) != null)))) as $declaredEnt |
+                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | ($dpIds + $lfTabIds) | index($id) == null)))) as $orphanEnt |
                       ($ws | map(select((.value.pinned != true) and (.value.zenEssential != true)))) as $normalEnt |
                       (($declaredEnt | sort_by(.value.index // 0)) | map(.value)) as $decl |
                       (($orphanEnt | sort_by(.key)) | map(.value | . * {pinned: false, zenEssential: false, groupId: null})) as $dem |
@@ -632,6 +643,7 @@ in {
                 --slurpfile declaredPins ${pinsJsonFile} \
                 --slurpfile declaredFolders ${foldersJsonFile} \
                 --slurpfile declaredGroups ${groupsJsonFile} \
+                --slurpfile declaredLiveFolderTabs ${liveFolderTabsJsonFile} \
                 ${optionalString profile.liveFoldersForce "--slurpfile declaredLiveFolderIds ${zenLf.liveFoldersIdsFile}"} \
                 -f ${jqFilterFile} \
                 "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {

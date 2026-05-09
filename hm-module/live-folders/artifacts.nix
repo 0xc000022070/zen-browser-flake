@@ -10,7 +10,25 @@
   inherit (builtins) map toJSON;
   inherit (lib) mapAttrsToList;
 
+  zenId = import ./id.nix {inherit lib;};
+
   liveFoldersFetchIntervalMs = 1800000;
+
+  liveFolderEntries =
+    mapAttrsToList (
+      attrName: lf: let
+        id =
+          if lf.id != null && lf.id != ""
+          then lf.id
+          else
+            zenId.mkZenLiveFolderId {
+              inherit profileName attrName;
+              inherit (lf) kind title feedUrl maxItems timeRange repos githubOptions collapsed workspace folderParentId folderIcon position;
+            };
+      in
+        lf // {inherit id;}
+    )
+      profile.liveFolders;
 
   liveFolderSessionFolder = lf: {
     pinned = true;
@@ -95,13 +113,13 @@
         };
       };
 
-  liveFoldersZenList = map liveFolderZenEntry (mapAttrsToList (_: v: v) profile.liveFolders);
+  liveFoldersZenList = map liveFolderZenEntry liveFolderEntries;
   liveFoldersZenJson = toJSON liveFoldersZenList;
 
   runLiveFoldersUpdate = profile.liveFolders != {} || profile.liveFoldersForce;
 
   liveFoldersDeclaredIdsJson =
-    toJSON (map (lf: lf.id) (mapAttrsToList (_: v: v) profile.liveFolders));
+    toJSON (map (lf: lf.id) liveFolderEntries);
   liveFoldersIdsFile =
     pkgs.writeText "zen-declared-live-folder-ids-${profileName}.json" liveFoldersDeclaredIdsJson;
 
@@ -137,7 +155,7 @@
   '';
 
   liveFolderRows =
-    map liveFolderSessionFolder (mapAttrsToList (_: v: v) profile.liveFolders);
+    map liveFolderSessionFolder liveFolderEntries;
 
   jqZenSessionsLiveFoldersForce = optionalString profile.liveFoldersForce ''
     .folders = [.folders[] |

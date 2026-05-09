@@ -65,6 +65,7 @@
     "live-folders" = ./live-folders.nix;
     "live-folders-force" = ./live-folders-force.nix;
     "live-folders-bootstrap" = ./live-folders-bootstrap.nix;
+    "live-folders-auto-id" = ./live-folders-auto-id.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
     "default-browser" = ./default-browser.nix;

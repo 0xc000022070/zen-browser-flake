@@ -4,32 +4,19 @@
 #   ~/.config/zen/<profile>/zen-live-folders.jsonlz4   — provider config + dismissedItems + tabsState
 #   ~/.config/zen/<profile>/zen-sessions.jsonlz4      — sidebar folder row (isLiveFolder, id, title, index, …)
 #
-# Workflow (recommended):
-#   1. In Zen: sidebar → create the live folder (RSS / GitHub PRs / GitHub issues) once.
-#   2. Quit Zen completely.
-#   3. Inspect ids so Nix matches Zen (mozlz4a from nixpkgs; decompress to a temp json file, then jq):
-#        mozlz4a -d ~/.config/zen/default/zen-live-folders.jsonlz4 /tmp/live.json && jq '.[].id' /tmp/live.json
-#        mozlz4a -d ~/.config/zen/default/zen-sessions.jsonlz4 /tmp/sess.json && jq '.folders[] | select(.isLiveFolder==true) | {id,name}' /tmp/sess.json
-#      Use that exact `id` string in liveFolders below (opaque, e.g. "1778364952102-44").
-#   4. Import this flake’s home module and set programs.zen-browser.profiles.<profile>.liveFolders.
-#   5. home-manager switch / rebuild. Zen must stay closed during activation.
+# Workflow:
+#   1. Import this flake home module and set ``programs.zen-browser.profiles.<profile>.liveFolders``.
+#   2. Keep ``settings."zen.window-sync.enabled" = true`` so Zen applies sidebar ``folders[]`` on startup.
+#   3. ``home-manager switch`` / rebuild with Zen closed.
+#
+# Ids: omit ``id`` — the module generates a stable ``<digits>-<digits>`` id (Zen-shaped). Set ``id`` only to
+# adopt an existing folder from your profile (exact string from a session dump).
 #
 # Notes:
-#   - Enable window sync or Zen never applies sidebar folder rows on startup and may empty zen-live-folders on save:
-#       settings."zen.window-sync.enabled" = true;
-#   - Random UUIDs for ``id`` almost never match Zen; copy opaque ids from step 3 or Zen skips restore and wipes the file.
-#   - If ``zen-sessions.jsonlz4`` did not exist yet, older HM wrote only ``zen-live-folders.jsonlz4``; Zen then
-#     emptied that file on launch (no matching ``folders[]`` rows). Current module creates a minimal session stub first.
-#     Still verify after rebuild: ``jq '.folders[] | select(.isLiveFolder == true)'`` on decompressed sessions matches each ``id``.
+#   - If ``zen-sessions.jsonlz4`` did not exist yet, the module creates a minimal stub before merge so both files stay aligned.
 #   - Sidebar strip below the separator lists normal *tabs* (including pages opened from a live folder).
-#     Only the folder row (eye icon) is `folders[]`; feed entries as tabs stay unpinned unless you pin them in Zen.
-#   - Use ``workspace`` when the folder belongs to a Zen space: same bare UUID as ``programs.zen-browser.profiles.*.spaces.*``;
-#     the module writes ``workspaceId`` as ``'{uuid}'`` like pin folders.
-#   - Undeclared live-folder ids already on disk are kept unless liveFoldersForce = true (then removed
-#     from zen-live-folders.jsonlz4 and undeclared isLiveFolder rows from zen-sessions folders).
-#   - Declared ids merge over provider fields and preserve lastFetched / dismissedItems / tabsState when possible.
-#   - workspace / folderParentId / folderIcon are optional; copy strings from session dumps if you use them.
-#   - This is independent of pins.isGroup folders (different feature).
+#   - Use ``workspace`` when the folder belongs to a Zen space (bare UUID as in ``spaces.*.id``).
+#   - Undeclared live-folder ids on disk are kept unless ``liveFoldersForce = true``.
 {
   programs.zen-browser.profiles.default = {
     settings = {
@@ -37,9 +24,7 @@
     };
 
     liveFolders = {
-      # Replace id/title/feedUrl with values from your machine (step 3 above).
       "Prisma blog" = {
-        id = "1778364952102-44";
         kind = "rss";
         title = "Prisma blog";
         feedUrl = "https://www.prisma.io/blog/rss.xml";
@@ -49,7 +34,6 @@
       };
 
       "GitHub PRs" = {
-        id = "66666666-7777-8888-9999-aaaaaaaaaaaa";
         kind = "github-pull-requests";
         title = "Pull requests";
         position = 11;

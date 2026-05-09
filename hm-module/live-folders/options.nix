@@ -16,12 +16,13 @@ in {
                 default = name;
               };
               id = mkOption {
-                type = str;
+                type = nullOr str;
+                default = null;
                 description = ''
-                  REQUIRED. Exact folder id string from Zen browser session files — not “any UUID you choose”.
-                  Live folders often use ids like ``1778364952102-44`` or ``1778365609604-96`` (timestamp-style
-                  with a suffix), and the same prefix appears in ``dismissedItems`` / ``tabsState`` composite keys.
-                  It must match ``zen-live-folders.jsonlz4`` and ``zen-sessions.jsonlz4`` ``folders[].id`` byte for byte.
+                  Omit for a deterministic id in Zen’s usual shape (digits-digits, same style as
+                  ``Date.now()`` + suffix). Derived from profile name, attribute key, and folder fields —
+                  changing those changes the id (new session rows vs previous Zen state).
+                  Set only to adopt an existing folder from disk (exact string) or pin an explicit id.
                 '';
               };
               kind = mkOption {

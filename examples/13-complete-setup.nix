@@ -1,7 +1,7 @@
 # Complete real-world setup combining multiple features
 # This example shows a fully configured Zen Browser with spaces, containers, pins, and shortcuts.
 # ⚠ Close Zen before home-manager switch
-# (uses spacesForce, pinsForce, keyboardShortcuts—these modify state files)
+# (uses spacesForce, pinsForce, pinsForceAction, keyboardShortcuts—these modify state files)
 {inputs, ...}: {
   imports = [inputs.zen-browser.homeModules.beta];
 
@@ -72,7 +72,8 @@
         };
       };
 
-      pinsForce = true; # Delete pins not declared here
+      pinsForce = true;
+      pinsForceAction = "remove"; # "remove" drops undeclared pins; default is "demote"
       pins = {
         "GitHub" = {
           id = "48e8a119-5a14-4826-9545-91c8e8dd3bf6";

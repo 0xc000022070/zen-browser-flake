@@ -39,7 +39,8 @@
       };
     };
   in {
-    pinsForce = true; # Delete pins not declared here
+    pinsForce = true;
+    pinsForceAction = "remove"; # omit or "demote" to keep undeclared pins as normal tabs
     inherit pins;
   };
 }

@@ -62,7 +62,7 @@
     then "zen-browser"
     else binaryName;
 
-  installDarwin = /* bash */ ''
+  installDarwin = ''
     runHook preInstall
 
     mkdir -p "$out/Applications" "$out/bin"
@@ -98,7 +98,7 @@
     runHook postInstall
   '';
 
-  installLinux = /* bash */ ''
+  installLinux = ''
     runHook preInstall
 
     # Linux tarball installation

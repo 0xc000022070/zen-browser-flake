@@ -151,8 +151,27 @@ in {
                 };
                 pinsForce = mkOption {
                   type = bool;
-                  description = "Whether to delete existing pins not declared in the configuration.";
+                  description = ''
+                    When true, apply `pinsForceAction` to pinned or essential tabs whose
+                    `zenSyncId` is not declared in `pins`. When false, those tabs are left unchanged.
+                  '';
                   default = false;
+                };
+                pinsForceAction = mkOption {
+                  type = enum [
+                    "remove"
+                    "demote"
+                  ];
+                  default = "demote";
+                  description = ''
+                    Used only if `pinsForce` is true.
+
+                    - `remove`: delete undeclared pinned or essential tabs from the session.
+                    - `demote`: clear pin/essential state and pin-folder membership, then place those
+                      tabs at the top of the normal strip (after declared pins), preserving their
+                      previous relative order. Tab `index` fields are rewritten to match this order so
+                      Zen does not reorder by stale indices.
+                  '';
                 };
                 pins = mkOption {
                   type = attrsOf (
@@ -270,7 +289,12 @@ in {
 
       profilesWithPlaces =
         filterAttrs
-        (_: profile: profile.spaces != {} || profile.spacesForce || profile.pins != {} || profile.pinsForce)
+        (_: profile:
+          profile.spaces
+          != {}
+          || profile.spacesForce
+          || profile.pins != {}
+          || profile.pinsForce)
         cfg.profiles;
     in
       mapAttrs' (
@@ -484,13 +508,32 @@ in {
             ] |
             .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)]
 
-            ${optionalString profile.pinsForce ''
-              |
-              .tabs = [.tabs[] |
+            ${optionalString (profile.pinsForce && profile.pinsForceAction == "remove") ''
+              | .tabs = [.tabs[] |
                 if (.pinned == true or .zenEssential == true) then
                   select(.zenSyncId as $id | $dpIds | index($id) != null)
                 else . end
               ]
+            ''}
+            ${optionalString (profile.pinsForce && profile.pinsForceAction == "demote") ''
+              | .tabs = (
+                  .tabs as $allTabsIn |
+                  ($allTabsIn | to_entries) as $ent |
+                  ($ent | group_by(.value.zenWorkspace // "") | map(sort_by(.key))
+                  | map(
+                      . as $ws |
+                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | $dpIds | index($id) != null)))) as $declaredEnt |
+                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | $dpIds | index($id) == null)))) as $orphanEnt |
+                      ($ws | map(select((.value.pinned != true) and (.value.zenEssential != true)))) as $normalEnt |
+                      (($declaredEnt | sort_by(.value.index // 0)) | map(.value)) as $decl |
+                      (($orphanEnt | sort_by(.key)) | map(.value | . * {pinned: false, zenEssential: false, groupId: null})) as $dem |
+                      (($normalEnt | sort_by(.key)) | map(.value)) as $norm |
+                      $decl + $dem + $norm
+                    )
+                  | flatten
+                )
+              )
+              | .tabs = [.tabs | to_entries[] | .value * {index: .key}]
             ''} |
 
             ([$folders[].id]) as $dfIds |
@@ -513,91 +556,96 @@ in {
             ] |
             .groups += [$groups[] | select(.id as $id | $egIds | index($id) | not)] |
 
-            .tabs = (.tabs | sort_by(.index // 0)) |
+            ${optionalString (!(profile.pinsForce && profile.pinsForceAction == "demote")) ''
+              .tabs = (.tabs | sort_by(.index // 0)) |
+            ''}
             .folders = (.folders | sort_by(.index // 0)) |
             .groups = (.groups | sort_by(.index // 0))
           '';
 
-          updateScript = pkgs.writeShellScript "zen-sessions-update-${profileName}" /* bash */ ''
-            SESSIONS_FILE="${sessionsFile}"
-            SESSIONS_TMP="$(mktemp)"
-            SESSIONS_MODIFIED="$(mktemp)"
-            BACKUP_FILE="''${SESSIONS_FILE}.backup"
+          updateScript =
+            pkgs.writeShellScript "zen-sessions-update-${profileName}"
+            ''
+              SESSIONS_FILE="${sessionsFile}"
+              SESSIONS_TMP="$(mktemp)"
+              SESSIONS_MODIFIED="$(mktemp)"
+              BACKUP_FILE="''${SESSIONS_FILE}.backup"
 
-            cleanup() {
-              rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
-            }
+              cleanup() {
+                rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
+              }
 
-            restore_and_cleanup() {
-              if [ -f "$BACKUP_FILE" ]; then
-                mv "$BACKUP_FILE" "$SESSIONS_FILE"
+              restore_and_cleanup() {
+                if [ -f "$BACKUP_FILE" ]; then
+                  mv "$BACKUP_FILE" "$SESSIONS_FILE"
+                fi
+                cleanup
+              }
+
+              trap cleanup EXIT
+
+              if [ ! -f "$SESSIONS_FILE" ]; then
+                echo "zen-sessions: Sessions file not found at $SESSIONS_FILE"
+                echo "zen-sessions: Zen Browser will create it on first run"
+                exit 0
               fi
-              cleanup
-            }
 
-            trap cleanup EXIT
+              if pgrep "zen" > /dev/null 2>&1; then
+                echo "zen-sessions: Zen Browser appears to be running."
+                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
+                exit 1
+              fi
 
-            if [ ! -f "$SESSIONS_FILE" ]; then
-              echo "zen-sessions: Sessions file not found at $SESSIONS_FILE"
-              echo "zen-sessions: Zen Browser will create it on first run"
-              exit 0
-            fi
+              cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
+                echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
+                exit 1
+              }
 
-            if pgrep "zen" > /dev/null 2>&1; then
-              echo "zen-sessions: Zen Browser appears to be running."
-              echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
-              exit 1
-            fi
+              ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
+                echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
+                restore_and_cleanup
+                exit 1
+              }
 
-            cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
-              echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
-              exit 1
-            }
+              ${jq} \
+                --slurpfile declaredSpaces ${spacesJsonFile} \
+                --slurpfile declaredPins ${pinsJsonFile} \
+                --slurpfile declaredFolders ${foldersJsonFile} \
+                --slurpfile declaredGroups ${groupsJsonFile} \
+                -f ${jqFilterFile} \
+                "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
+                echo "zen-sessions: Failed to apply modifications to sessions data"
+                restore_and_cleanup
+                exit 1
+              }
 
-            ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
-              echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
-              restore_and_cleanup
-              exit 1
-            }
+              if [ ! -s "$SESSIONS_MODIFIED" ]; then
+                echo "zen-sessions: Modified sessions file is empty, restoring backup"
+                restore_and_cleanup
+                exit 1
+              fi
 
-            ${jq} \
-              --slurpfile declaredSpaces ${spacesJsonFile} \
-              --slurpfile declaredPins ${pinsJsonFile} \
-              --slurpfile declaredFolders ${foldersJsonFile} \
-              --slurpfile declaredGroups ${groupsJsonFile} \
-              -f ${jqFilterFile} \
-              "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
-              echo "zen-sessions: Failed to apply modifications to sessions data"
-              restore_and_cleanup
-              exit 1
-            }
+              ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
+                echo "zen-sessions: Failed to recompress sessions file"
+                restore_and_cleanup
+                exit 1
+              }
 
-            if [ ! -s "$SESSIONS_MODIFIED" ]; then
-              echo "zen-sessions: Modified sessions file is empty, restoring backup"
-              restore_and_cleanup
-              exit 1
-            fi
-
-            ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
-              echo "zen-sessions: Failed to recompress sessions file"
-              restore_and_cleanup
-              exit 1
-            }
-
-            rm -f "$BACKUP_FILE"
-          '';
+              rm -f "$BACKUP_FILE"
+            '';
         in
-          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] /* bash */ ''
-            ${updateScript}
-            if [[ "$?" -eq 0 ]]; then
-              $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"
-            else
-              YELLOW="\033[1;33m"
-              NC="\033[0m"
-              echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
-              echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
-            fi
-          '')
+          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
+            ''
+              ${updateScript}
+              if [[ "$?" -eq 0 ]]; then
+                $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"
+              else
+                YELLOW="\033[1;33m"
+                NC="\033[0m"
+                echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
+                echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
+              fi
+            '')
       )
       profilesWithPlaces;
   };

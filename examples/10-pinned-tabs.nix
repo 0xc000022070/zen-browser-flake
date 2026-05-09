@@ -23,6 +23,7 @@
         isFolderCollapsed = false;
         editedTitle = true;
         position = 200;
+        folderIcon = "chrome://browser/skin/zen-icons/selectable/eye.svg";
       };
       "NixOS Packages" = {
         id = "f8dd784e-11d7-430a-8f57-7b05ecdb4c77";

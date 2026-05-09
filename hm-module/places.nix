@@ -209,8 +209,27 @@ in {
                             description = "Required boolean flag for folder collapse state, defaults to false";
                           };
                           folderIcon = mkOption {
-                            type = nullOr str;
-                            description = "Emoji or icon URI to be used as pin folder icon.";
+                            type = nullOr (either str path);
+                            description = ''
+                              Folder icon only when `isGroup = true` (sessions `userIcon`). Emoji, `chrome://…`, or path (`file://…`).
+                              Normal pinned tabs: no declarative icon — set in Zen for now; workspaces use `spaces.*.icon`.
+                            '';
+                            apply = v:
+                              if isPath v
+                              then "file://${v}"
+                              else v;
+                            default = null;
+                          };
+                          icon = mkOption {
+                            type = nullOr (either str path);
+                            visible = false;
+                            description = ''
+                              Ignored on pins (warning if set). Tab icons: configure in Zen for now. Folders: `folderIcon`.
+                            '';
+                            apply = v:
+                              if isPath v
+                              then "file://${v}"
+                              else v;
                             default = null;
                           };
                           folderParentId = mkOption {

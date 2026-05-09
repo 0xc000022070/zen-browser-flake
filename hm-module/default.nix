@@ -86,10 +86,38 @@ in {
             "zen.window-sync.sync-only-pinned-tabs" = true;
         ''
         else null;
+
+      pinIconIgnoredWarnings =
+        lib.concatLists (
+          lib.mapAttrsToList (
+            profileName: profile:
+              lib.mapAttrsToList (
+                pinName: pin:
+                  lib.optional ((pin.icon or null) != null) ''
+                    [Zen Browser] '${profileName}' / '${pinName}': `pins.*.icon` does nothing — tab icons are not declarative here; set them in Zen for now. Folders only: `folderIcon` with `isGroup`; workspaces: `spaces.*.icon`.
+                  ''
+              )
+              (profile.pins or {})
+          )
+          cfg.profiles
+        );
+
+      folderIconMisuseWarnings =
+        lib.concatLists (
+          lib.mapAttrsToList (
+            profileName: profile:
+              lib.mapAttrsToList (
+                pinName: pin:
+                  lib.optional ((pin.folderIcon or null) != null && !(pin.isGroup or false)) ''
+                    [Zen Browser] '${profileName}' / '${pinName}': `folderIcon` only applies when `isGroup = true`; ignored here.
+                  ''
+              )
+              (profile.pins or {})
+          )
+          cfg.profiles
+        );
     in
-      lib.filter (w: w != null) [
-        essentialPinsWarning
-      ];
+      lib.filter (w: w != null) ([essentialPinsWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
 
     assertions =
       [

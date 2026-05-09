@@ -173,6 +173,21 @@
   liveFolderRows =
     map liveFolderSessionFolder liveFolderEntries;
 
+  # SessionStore expects a matching `groups[]` tab-group entry so Zen can attach the DOM node
+  # before LiveFolders applies metadata (`ZenFolders.mjs` restore path).
+  liveFolderGroupRows =
+    map (lf: {
+      pinned = true;
+      splitView = false;
+      id = lf.id;
+      name = lf.title;
+      color = "zen-workspace-color";
+      collapsed = lf.collapsed;
+      saveOnWindowClose = true;
+      index = lf.position;
+    })
+      liveFolderEntries;
+
   jqZenSessionsLiveFoldersForce = optionalString profile.liveFoldersForce ''
     .folders = [.folders[] |
       if .isLiveFolder == true then
@@ -183,6 +198,7 @@
 in {
   inherit
     liveFolderRows
+    liveFolderGroupRows
     liveFoldersZenJson
     runLiveFoldersUpdate
     liveFoldersDeclaredIdsJson

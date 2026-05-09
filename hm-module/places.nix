@@ -464,18 +464,20 @@ in {
                   index = p.position;
                 })
                 groupPins;
+              pinGroupRows =
+                map (f: {
+                  pinned = true;
+                  splitView = false;
+                  id = f.id;
+                  name = f.name;
+                  color = "zen-workspace-color";
+                  collapsed = f.collapsed;
+                  saveOnWindowClose = true;
+                  index = f.index;
+                })
+                  folderData;
             in
-              map (f: {
-                pinned = true;
-                splitView = false;
-                id = f.id;
-                name = f.name;
-                color = "zen-workspace-color";
-                collapsed = f.collapsed;
-                saveOnWindowClose = true;
-                index = f.index;
-              })
-              folderData
+              pinGroupRows ++ zenLf.liveFolderGroupRows
           );
 
           spacesJsonFile = pkgs.writeText "zen-declared-spaces-${profileName}.json" spacesJson;

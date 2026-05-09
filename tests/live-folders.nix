@@ -77,6 +77,9 @@
       machine.succeed(
           "jq -e '[.folders[] | select(.id == \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\") | .name] | .[0] == \"NixOS Feed\"' /tmp/sessions-live.json"
       )
+      machine.succeed(
+          "jq -e '[.groups[] | select(.id == \"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\")] | length == 1' /tmp/sessions-live.json"
+      )
 
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-live-folders.jsonlz4 /tmp/live-out.json")
       machine.succeed("test $(jq '. | length' /tmp/live-out.json) -eq 1")

@@ -108,5 +108,8 @@
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-sessions.jsonlz4 /tmp/sess-force-out.json")
       machine.succeed("test $(jq '[.folders[] | select(.isLiveFolder == true)] | length' /tmp/sess-force-out.json) -eq 1")
       machine.succeed("jq -e '[.folders[] | select(.isLiveFolder == true)][0].id == \"keep-live-folder-id\"' /tmp/sess-force-out.json")
+      machine.succeed(
+          "jq -e '[.groups[] | select(.id == \"keep-live-folder-id\")] | length == 1' /tmp/sess-force-out.json"
+      )
     '';
 }

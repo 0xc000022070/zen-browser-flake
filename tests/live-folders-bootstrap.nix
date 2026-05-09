@@ -38,6 +38,9 @@
       machine.succeed(
           "jq -e '[.folders[] | select(.id == \"bootstrap-rss-id-001\")] | length == 1' /tmp/sess-bootstrap.json"
       )
+      machine.succeed(
+          "jq -e '[.groups[] | select(.id == \"bootstrap-rss-id-001\")] | length == 1' /tmp/sess-bootstrap.json"
+      )
 
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-live-folders.jsonlz4 /tmp/live-bootstrap.json")
       machine.succeed(

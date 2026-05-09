@@ -141,6 +141,18 @@ in {
           assertion = !(profile.sine.mods != [] && !profile.sine.enable);
           message = "Profile '${profileName}': sine.mods requires sine.enable to be true.";
         })
+        cfg.profiles)
+      ++ (lib.mapAttrsToList (profileName: profile: {
+          assertion = lib.all (lf:
+            lf.kind
+            != "rss"
+            || (
+              lf.feedUrl
+              != null
+              && lf.feedUrl != ""
+            )) (lib.attrValues profile.liveFolders);
+          message = "Profile '${profileName}': liveFolders RSS entries require `feedUrl`.";
+        })
         cfg.profiles);
   };
 }

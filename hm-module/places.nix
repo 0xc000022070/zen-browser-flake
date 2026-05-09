@@ -28,6 +28,7 @@ in {
         attrsOf (
           submodule (
             {...}: {
+              imports = [./live-folders/options.nix];
               options = {
                 spacesForce = mkOption {
                   type = bool;
@@ -294,11 +295,16 @@ in {
           != {}
           || profile.spacesForce
           || profile.pins != {}
-          || profile.pinsForce)
+          || profile.pinsForce
+          || profile.liveFolders != {}
+          || profile.liveFoldersForce)
         cfg.profiles;
     in
       mapAttrs' (
         profileName: profile: let
+          zenLf = import ./live-folders/artifacts.nix {
+            inherit lib pkgs profile profileName optionalString profilePath;
+          };
           mozlz4a = getExe pkgs.mozlz4a;
           jq = getExe pkgs.jq;
           sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
@@ -418,28 +424,32 @@ in {
                   index = p.position;
                 })
                 groupPins;
+              pinFolderRows =
+                map (f: {
+                  pinned = true;
+                  essential = false;
+                  splitViewGroup = false;
+                  id = f.id;
+                  name = f.name;
+                  collapsed = f.collapsed;
+                  saveOnWindowClose = true;
+                  parentId = f.parentId;
+                  prevSiblingInfo = {
+                    type = "start";
+                    id = null;
+                  };
+                  emptyTabIds = [];
+                  userIcon =
+                    if f.icon == null
+                    then ""
+                    else f.icon;
+                  workspaceId = f.workspaceId;
+                  index = f.index;
+                  isLiveFolder = false;
+                })
+                folderData;
             in
-              map (f: {
-                pinned = true;
-                splitViewGroup = false;
-                id = f.id;
-                name = f.name;
-                collapsed = f.collapsed;
-                saveOnWindowClose = true;
-                parentId = f.parentId;
-                prevSiblingInfo = {
-                  type = "start";
-                  id = null;
-                };
-                emptyTabIds = [];
-                userIcon =
-                  if f.icon == null
-                  then ""
-                  else f.icon;
-                workspaceId = f.workspaceId;
-                index = f.index;
-              })
-              folderData
+              pinFolderRows ++ zenLf.liveFolderRows
           );
 
           groupsJson = toJSON (
@@ -559,6 +569,7 @@ in {
             ${optionalString (!(profile.pinsForce && profile.pinsForceAction == "demote")) ''
               .tabs = (.tabs | sort_by(.index // 0)) |
             ''}
+            ${zenLf.jqZenSessionsLiveFoldersForce}
             .folders = (.folders | sort_by(.index // 0)) |
             .groups = (.groups | sort_by(.index // 0))
           '';
@@ -584,61 +595,115 @@ in {
 
               trap cleanup EXIT
 
+              if pgrep "zen" > /dev/null 2>&1; then
+                echo "zen-sessions: Zen Browser appears to be running."
+                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins/live-folders changes."
+                exit 1
+              fi
+
               if [ ! -f "$SESSIONS_FILE" ]; then
                 echo "zen-sessions: Sessions file not found at $SESSIONS_FILE"
                 echo "zen-sessions: Zen Browser will create it on first run"
-                exit 0
+              else
+                cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
+                  echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
+                  exit 1
+                }
+
+                ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
+                  echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
+                  restore_and_cleanup
+                  exit 1
+                }
+
+                ${jq} \
+                  --slurpfile declaredSpaces ${spacesJsonFile} \
+                  --slurpfile declaredPins ${pinsJsonFile} \
+                  --slurpfile declaredFolders ${foldersJsonFile} \
+                  --slurpfile declaredGroups ${groupsJsonFile} \
+                  ${optionalString profile.liveFoldersForce "--slurpfile declaredLiveFolderIds ${zenLf.liveFoldersIdsFile}"} \
+                  -f ${jqFilterFile} \
+                  "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
+                  echo "zen-sessions: Failed to apply modifications to sessions data"
+                  restore_and_cleanup
+                  exit 1
+                }
+
+                if [ ! -s "$SESSIONS_MODIFIED" ]; then
+                  echo "zen-sessions: Modified sessions file is empty, restoring backup"
+                  restore_and_cleanup
+                  exit 1
+                fi
+
+                ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
+                  echo "zen-sessions: Failed to recompress sessions file"
+                  restore_and_cleanup
+                  exit 1
+                }
+
+                rm -f "$BACKUP_FILE"
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running."
-                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
-                exit 1
-              fi
+              ${optionalString zenLf.runLiveFoldersUpdate ''
+                (
+                  set -e
+                  LIVE_FILE="${zenLf.liveFoldersFile}"
+                  LIVE_TMP="$(mktemp)"
+                  LIVE_MOD="$(mktemp)"
+                  LIVE_BACK="''${LIVE_FILE}.backup"
+                  trap 'rm -f "$LIVE_TMP" "$LIVE_MOD"' EXIT
 
-              cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
-                echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
-                exit 1
-              }
+                  if [ -f "$LIVE_FILE" ]; then
+                    cp "$LIVE_FILE" "$LIVE_BACK" || {
+                      echo "zen-live-folders: Failed to create backup of $LIVE_FILE"
+                      exit 1
+                    }
+                    ${mozlz4a} -d "$LIVE_FILE" "$LIVE_TMP" || {
+                      echo "zen-live-folders: Failed to decompress $LIVE_FILE"
+                      mv "$LIVE_BACK" "$LIVE_FILE"
+                      exit 1
+                    }
+                  else
+                    echo "[]" > "$LIVE_TMP"
+                  fi
 
-              ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
-                echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
-                restore_and_cleanup
-                exit 1
-              }
+                  ${jq} \
+                    --slurpfile declaredLiveFolders ${zenLf.liveFoldersDeclaredJsonFile} \
+                    -f ${zenLf.liveFoldersJqFilterFile} \
+                    "$LIVE_TMP" > "$LIVE_MOD" || {
+                    echo "zen-live-folders: Failed to merge live folder state"
+                    if [ -f "$LIVE_BACK" ]; then
+                      mv "$LIVE_BACK" "$LIVE_FILE"
+                    fi
+                    exit 1
+                  }
 
-              ${jq} \
-                --slurpfile declaredSpaces ${spacesJsonFile} \
-                --slurpfile declaredPins ${pinsJsonFile} \
-                --slurpfile declaredFolders ${foldersJsonFile} \
-                --slurpfile declaredGroups ${groupsJsonFile} \
-                -f ${jqFilterFile} \
-                "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
-                echo "zen-sessions: Failed to apply modifications to sessions data"
-                restore_and_cleanup
-                exit 1
-              }
+                  if [ ! -s "$LIVE_MOD" ]; then
+                    echo "zen-live-folders: Modified live folders file is empty, restoring backup"
+                    if [ -f "$LIVE_BACK" ]; then
+                      mv "$LIVE_BACK" "$LIVE_FILE"
+                    fi
+                    exit 1
+                  fi
 
-              if [ ! -s "$SESSIONS_MODIFIED" ]; then
-                echo "zen-sessions: Modified sessions file is empty, restoring backup"
-                restore_and_cleanup
-                exit 1
-              fi
+                  ${mozlz4a} "$LIVE_MOD" "$LIVE_FILE" || {
+                    echo "zen-live-folders: Failed to recompress $LIVE_FILE"
+                    if [ -f "$LIVE_BACK" ]; then
+                      mv "$LIVE_BACK" "$LIVE_FILE"
+                    fi
+                    exit 1
+                  }
 
-              ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
-                echo "zen-sessions: Failed to recompress sessions file"
-                restore_and_cleanup
-                exit 1
-              }
-
-              rm -f "$BACKUP_FILE"
+                  rm -f "$LIVE_BACK"
+                )
+              ''}
             '';
         in
           nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
             ''
               ${updateScript}
               if [[ "$?" -eq 0 ]]; then
-                $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"
+                $VERBOSE_ECHO "zen-sessions: Updated zen session files for profile '${profileName}'"
               else
                 YELLOW="\033[1;33m"
                 NC="\033[0m"

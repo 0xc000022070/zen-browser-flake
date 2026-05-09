@@ -62,6 +62,8 @@
 
   suites = {
     "enable-beta-via-module" = ./enable-beta.nix;
+    "live-folders" = ./live-folders.nix;
+    "live-folders-force" = ./live-folders-force.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
     "default-browser" = ./default-browser.nix;

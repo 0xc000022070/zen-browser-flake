@@ -15,6 +15,9 @@
 #   5. home-manager switch / rebuild. Zen must stay closed during activation.
 #
 # Notes:
+#   - If ``zen-sessions.jsonlz4`` did not exist yet, older HM wrote only ``zen-live-folders.jsonlz4``; Zen then
+#     emptied that file on launch (no matching ``folders[]`` rows). Current module creates a minimal session stub first.
+#     Still verify after rebuild: ``jq '.folders[] | select(.isLiveFolder == true)'`` on decompressed sessions matches each ``id``.
 #   - Sidebar strip below the separator lists normal *tabs* (including pages opened from a live folder).
 #     Only the folder row (eye icon) is `folders[]`; feed entries as tabs stay unpinned unless you pin them in Zen.
 #   - Use ``workspace`` when the folder belongs to a Zen space: same bare UUID as ``programs.zen-browser.profiles.*.spaces.*``;

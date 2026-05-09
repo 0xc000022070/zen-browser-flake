@@ -601,48 +601,56 @@ in {
                 exit 1
               fi
 
+              mkdir -p "$(dirname "$SESSIONS_FILE")"
+
               if [ ! -f "$SESSIONS_FILE" ]; then
-                echo "zen-sessions: Sessions file not found at $SESSIONS_FILE"
-                echo "zen-sessions: Zen Browser will create it on first run"
-              else
-                cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
-                  echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
+                echo "zen-sessions: No zen-sessions.jsonlz4 yet — writing minimal stub so declarative merge runs."
+                echo "zen-sessions: (Otherwise zen-live-folders could be written without matching folders[] rows; Zen clears that file on startup.)"
+                printf '%s' '{"spaces":[],"tabs":[],"folders":[],"groups":[],"lastCollected":0,"splitViewData":[]}' > "$SESSIONS_TMP"
+                ${mozlz4a} "$SESSIONS_TMP" "$SESSIONS_FILE" || {
+                  echo "zen-sessions: Failed to compress minimal sessions stub"
+                  rm -f "$SESSIONS_FILE"
                   exit 1
                 }
-
-                ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
-                  echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
-                  restore_and_cleanup
-                  exit 1
-                }
-
-                ${jq} \
-                  --slurpfile declaredSpaces ${spacesJsonFile} \
-                  --slurpfile declaredPins ${pinsJsonFile} \
-                  --slurpfile declaredFolders ${foldersJsonFile} \
-                  --slurpfile declaredGroups ${groupsJsonFile} \
-                  ${optionalString profile.liveFoldersForce "--slurpfile declaredLiveFolderIds ${zenLf.liveFoldersIdsFile}"} \
-                  -f ${jqFilterFile} \
-                  "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
-                  echo "zen-sessions: Failed to apply modifications to sessions data"
-                  restore_and_cleanup
-                  exit 1
-                }
-
-                if [ ! -s "$SESSIONS_MODIFIED" ]; then
-                  echo "zen-sessions: Modified sessions file is empty, restoring backup"
-                  restore_and_cleanup
-                  exit 1
-                fi
-
-                ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
-                  echo "zen-sessions: Failed to recompress sessions file"
-                  restore_and_cleanup
-                  exit 1
-                }
-
-                rm -f "$BACKUP_FILE"
               fi
+
+              cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
+                echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"
+                exit 1
+              }
+
+              ${mozlz4a} -d "$SESSIONS_FILE" "$SESSIONS_TMP" || {
+                echo "zen-sessions: Failed to decompress $SESSIONS_FILE"
+                restore_and_cleanup
+                exit 1
+              }
+
+              ${jq} \
+                --slurpfile declaredSpaces ${spacesJsonFile} \
+                --slurpfile declaredPins ${pinsJsonFile} \
+                --slurpfile declaredFolders ${foldersJsonFile} \
+                --slurpfile declaredGroups ${groupsJsonFile} \
+                ${optionalString profile.liveFoldersForce "--slurpfile declaredLiveFolderIds ${zenLf.liveFoldersIdsFile}"} \
+                -f ${jqFilterFile} \
+                "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
+                echo "zen-sessions: Failed to apply modifications to sessions data"
+                restore_and_cleanup
+                exit 1
+              }
+
+              if [ ! -s "$SESSIONS_MODIFIED" ]; then
+                echo "zen-sessions: Modified sessions file is empty, restoring backup"
+                restore_and_cleanup
+                exit 1
+              fi
+
+              ${mozlz4a} "$SESSIONS_MODIFIED" "$SESSIONS_FILE" || {
+                echo "zen-sessions: Failed to recompress sessions file"
+                restore_and_cleanup
+                exit 1
+              }
+
+              rm -f "$BACKUP_FILE"
 
               ${optionalString zenLf.runLiveFoldersUpdate ''
                 (

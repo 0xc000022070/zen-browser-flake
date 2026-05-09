@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>programs.zen-browser options</title>
+    <link rel="icon" type="image/svg+xml" href="https://zen-browser.app/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f4f5f7;
+        --fg: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --accent: #0d9488;
+        --mono: ui-monospace, Menlo, Consolas, monospace;
+        --sans: system-ui, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1115;
+          --fg: #e8edf3;
+          --muted: #94a3b8;
+          --border: #2a3040;
+          --accent: #5eead4;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 15px/1.45 var(--sans);
+        background: var(--bg);
+        color: var(--fg);
+      }
+      .wrap {
+        max-width: 48rem;
+        margin: 0 auto;
+        padding: 1.25rem 1rem 2rem;
+      }
+      h1 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+      .lede {
+        margin: 0 0 1rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      #q {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        font: inherit;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      #q:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        align-items: baseline;
+        margin: 0.4rem 0 0.75rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .row strong {
+        color: var(--fg);
+      }
+      kbd {
+        font: 0.7rem var(--mono);
+        padding: 0.1rem 0.35rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+      }
+      details {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        background: var(--bg);
+      }
+      summary {
+        list-style: none;
+        padding: 0.6rem 0.75rem;
+        cursor: pointer;
+        display: grid;
+        gap: 0.35rem;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      .name {
+        font: 0.78rem/1.3 var(--mono);
+        font-weight: 600;
+        word-break: break-word;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+      .type {
+        font: 0.65rem var(--mono);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        background: rgba(13, 148, 136, 0.12);
+        color: var(--accent);
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .ro {
+        font: 0.55rem var(--sans);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+      .blurb {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .body {
+        padding: 0 0.75rem 0.75rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.82rem;
+      }
+      .path {
+        font: 0.72rem var(--mono);
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+        word-break: break-all;
+      }
+      .lbl {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        margin-top: 0.5rem;
+      }
+      pre {
+        margin: 0.2rem 0 0;
+        padding: 0.45rem 0.5rem;
+        border-radius: 6px;
+        background: rgba(15, 23, 42, 0.05);
+        font: 0.72rem/1.4 var(--mono);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 2rem 0;
+      }
+      footer {
+        margin-top: 2rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      footer code {
+        font-size: 0.68rem;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 id="doc-title">programs.zen-browser</h1>
+      <p class="lede" id="lede">Loading…</p>
+      <label class="sr" for="q">Search</label>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search…" />
+      <div class="row">
+        <span id="stats" aria-live="polite"></span>
+        <span><kbd>/</kbd> focus</span>
+      </div>
+      <main id="main"></main>
+      <footer>
+        Generated from
+        <a href="https://github.com/0xc000022070/zen-browser-flake">0xc000022070/zen-browser-flake</a>.
+      </footer>
+    </div>
+    <script>
+      (function () {
+        function esc(s) {
+          var d = document.createElement("div");
+          d.textContent = s;
+          return d.innerHTML;
+        }
+        function norm(s) {
+          return String(s || "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+        function toks(q) {
+          return norm(q)
+            .split(" ")
+            .filter(Boolean);
+        }
+        function match(o, t) {
+          var hay = norm(
+            [o.name, o.path, o.label, o.type, o.description].filter(Boolean).join(" "),
+          );
+          return t.every(function (x) {
+            return hay.indexOf(x) !== -1;
+          });
+        }
+        function render(opts, q) {
+          var main = document.getElementById("main");
+          var t = toks(q);
+          var list =
+            t.length === 0 ? opts.slice() : opts.filter(function (o) {
+              return match(o, t);
+            });
+          document.getElementById("stats").innerHTML =
+            t.length === 0
+              ? "<strong>" + list.length + "</strong> options"
+              : "<strong>" + list.length + "</strong> / " + opts.length;
+          if (list.length === 0) {
+            main.innerHTML = '<p class="empty">No matches.</p>';
+            return;
+          }
+          var frag = document.createDocumentFragment();
+          for (var i = 0; i < list.length; i++) {
+            var o = list[i];
+            var det = document.createElement("details");
+            var sum = document.createElement("summary");
+            var name = document.createElement("div");
+            name.className = "name";
+            name.textContent = o.name;
+            var chips = document.createElement("div");
+            chips.className = "chips";
+            var typ = document.createElement("span");
+            typ.className = "type";
+            typ.textContent = o.type || "";
+            typ.title = o.type || "";
+            chips.appendChild(typ);
+            if (o.readOnly) {
+              var ro = document.createElement("span");
+              ro.className = "ro";
+              ro.textContent = "read-only";
+              chips.appendChild(ro);
+            }
+            sum.appendChild(name);
+            sum.appendChild(chips);
+            if (o.description) {
+              var b = document.createElement("p");
+              b.className = "blurb";
+              b.textContent = o.description;
+              sum.appendChild(b);
+            }
+            var body = document.createElement("div");
+            body.className = "body";
+            if (o.path) {
+              var p = document.createElement("div");
+              p.className = "path";
+              p.textContent = "path: " + o.path;
+              body.appendChild(p);
+            }
+            function block(title, html, preText) {
+              var lbl = document.createElement("div");
+              lbl.className = "lbl";
+              lbl.textContent = title;
+              body.appendChild(lbl);
+              var inner = document.createElement("div");
+              if (preText !== undefined) {
+                var pre = document.createElement("pre");
+                pre.textContent = preText;
+                inner.appendChild(pre);
+              } else {
+                inner.innerHTML = html;
+              }
+              body.appendChild(inner);
+            }
+            if (o.description) {
+              block("Description", esc(o.description).replace(/\n/g, "<br />"));
+            }
+            if (Object.prototype.hasOwnProperty.call(o, "default")) {
+              block("Default", null, String(o.default));
+            }
+            if (Object.prototype.hasOwnProperty.call(o, "example")) {
+              block("Example", null, String(o.example));
+            }
+            det.appendChild(sum);
+            det.appendChild(body);
+            frag.appendChild(det);
+          }
+          main.innerHTML = "";
+          main.appendChild(frag);
+        }
+        function run(opts) {
+          var input = document.getElementById("q");
+          function go() {
+            render(opts, input.value);
+          }
+          input.addEventListener("input", go);
+          window.addEventListener("keydown", function (ev) {
+            if (ev.key === "/" && document.activeElement !== input) {
+              ev.preventDefault();
+              input.focus();
+            }
+          });
+          go();
+          input.focus({ preventScroll: true });
+        }
+        fetch("./options.json", { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error(r.statusText);
+            return r.json();
+          })
+          .then(function (data) {
+            var meta = data.meta || {};
+            var opts = Array.isArray(data.options) ? data.options : [];
+            document.getElementById("doc-title").textContent =
+              meta.optionRoot || "programs.zen-browser";
+            var parts = [];
+            if (typeof meta.note === "string") parts.push(meta.note);
+            document.getElementById("lede").textContent =
+              parts.join(" ") || "Home Manager options for this flake.";
+            run(opts);
+          })
+          .catch(function (e) {
+            document.getElementById("main").innerHTML =
+              '<p class="empty">Could not load options.</p>';
+            document.getElementById("lede").textContent = String(e);
+          });
+      })();
+    </script>
+  </body>
+</html>

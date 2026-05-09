@@ -1,0 +1,8 @@
+{
+	"$schema": "https://unpkg.com/wrangler/config-schema.json",
+	"name": "zen-browser-flake",
+	"compatibility_date": "2026-05-09",
+	"assets": {
+		"directory": "./docs"
+	}
+}

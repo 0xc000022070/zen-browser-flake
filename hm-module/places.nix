@@ -570,8 +570,8 @@ in {
               .tabs = (.tabs | sort_by(.index // 0)) |
             ''}
             ${zenLf.jqZenSessionsLiveFoldersForce}
-            .folders = (.folders | sort_by(.index // 0)) |
-            .groups = (.groups | sort_by(.index // 0))
+            .folders = [.folders | sort_by(.index // 0) | to_entries[] | .value * {index: .key}] |
+            .groups = [.groups | sort_by(.index // 0) | to_entries[] | .value * {index: .key}]
           '';
 
           updateScript =

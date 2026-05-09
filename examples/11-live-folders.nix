@@ -15,6 +15,10 @@
 #   5. home-manager switch / rebuild. Zen must stay closed during activation.
 #
 # Notes:
+#   - Sidebar strip below the separator lists normal *tabs* (including pages opened from a live folder).
+#     Only the folder row (eye icon) is `folders[]`; feed entries as tabs stay unpinned unless you pin them in Zen.
+#   - Use ``workspace`` when the folder belongs to a Zen space: same bare UUID as ``programs.zen-browser.profiles.*.spaces.*``;
+#     the module writes ``workspaceId`` as ``'{uuid}'`` like pin folders.
 #   - Undeclared live-folder ids already on disk are kept unless liveFoldersForce = true (then removed
 #     from zen-live-folders.jsonlz4 and undeclared isLiveFolder rows from zen-sessions folders).
 #   - Declared ids merge over provider fields and preserve lastFetched / dismissedItems / tabsState when possible.

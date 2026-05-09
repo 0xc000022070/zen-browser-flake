@@ -38,7 +38,8 @@ in {
                 type = nullOr str;
                 default = null;
                 description = ''
-                  Workspace id string as stored by Zen on the folder element, or null for default.
+                  Workspace id (same bare string as ``spaces.*.id`` / session dumps), or null for default.
+                  The module writes ``workspaceId`` as ``'{uuid}'`` in the session file, matching pin folders.
                 '';
               };
               position = mkOption {
@@ -63,7 +64,9 @@ in {
               folderParentId = mkOption {
                 type = nullOr str;
                 default = null;
-                description = "Optional parent folder id string as in session ``folders[].parentId``.";
+                description = ''
+                  Optional parent folder id (bare string as in Zen); encoded as ``'{id}'`` on disk like group folders.
+                '';
               };
               feedUrl = mkOption {
                 type = nullOr str;

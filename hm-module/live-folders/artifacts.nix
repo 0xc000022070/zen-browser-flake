@@ -20,7 +20,6 @@
     name = lf.title;
     collapsed = lf.collapsed;
     saveOnWindowClose = true;
-    parentId = lf.folderParentId;
     prevSiblingInfo = {
       type = "start";
       id = null;
@@ -30,7 +29,14 @@
       if lf.folderIcon == null
       then ""
       else lf.folderIcon;
-    workspaceId = lf.workspace;
+    workspaceId =
+      if lf.workspace == null
+      then null
+      else "{${lf.workspace}}";
+    parentId =
+      if lf.folderParentId == null
+      then null
+      else "{${lf.folderParentId}}";
     index = lf.position;
     isLiveFolder = true;
   };

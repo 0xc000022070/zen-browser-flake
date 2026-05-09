@@ -103,6 +103,21 @@ in {
         ''
         else null;
 
+      liveFoldersWorkspaceWarning = let
+        multiSpace = profile: (builtins.length (builtins.attrNames (profile.spaces or {}))) > 1;
+        liveFolderMissingWorkspace = profile:
+          profile.liveFolders != {}
+          && lib.any (lf: lf.workspace == null) (lib.attrValues profile.liveFolders);
+        hasIssue = lib.any (
+          profile: multiSpace profile && liveFolderMissingWorkspace profile
+        ) (lib.attrValues cfg.profiles);
+      in
+        if hasIssue
+        then ''
+          [Zen Browser] liveFolders: with multiple ``spaces``, set ``workspace`` on each live folder (bare space UUID), or Zen leaves ``workspaceId`` unset and folders may not appear in any workspace strip.
+        ''
+        else null;
+
       pinIconIgnoredWarnings = lib.concatLists (
         lib.mapAttrsToList (
           profileName: profile:
@@ -135,7 +150,7 @@ in {
         cfg.profiles
       );
     in
-      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
+      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning liveFoldersWorkspaceWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
 
     assertions =
       [

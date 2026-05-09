@@ -39,8 +39,11 @@ in {
                 type = nullOr str;
                 default = null;
                 description = ''
-                  Workspace id (same bare string as ``spaces.*.id`` / session dumps), or null for default.
-                  The module writes ``workspaceId`` as ``'{uuid}'`` in the session file, matching pin folders.
+                  Which Zen space owns this folder (bare UUID, same string as ``spaces.*.id``).
+                  Required for the folder to show in that space’s sidebar when you use multiple spaces.
+                  If you declare exactly one ``spaces`` entry, null attaches live folders to that space automatically.
+                  Otherwise set this (copy from ``jq '.spaces[].uuid'`` on decompressed ``zen-sessions.jsonlz4``, strip braces).
+                  Encoded as ``'{uuid}'`` in the session file like pin folders.
                 '';
               };
               position = mkOption {

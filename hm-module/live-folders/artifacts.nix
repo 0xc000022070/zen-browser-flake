@@ -14,6 +14,19 @@
 
   liveFoldersFetchIntervalMs = 1800000;
 
+  singleDeclaredSpaceId =
+    let
+      names = builtins.attrNames profile.spaces;
+    in
+      if builtins.length names != 1
+      then null
+      else (builtins.getAttr (builtins.elemAt names 0) profile.spaces).id;
+
+  resolvedWorkspace = lf:
+    if lf.workspace != null
+    then lf.workspace
+    else singleDeclaredSpaceId;
+
   liveFolderEntries =
     mapAttrsToList (
       attrName: lf: let
@@ -48,9 +61,12 @@
       then ""
       else lf.folderIcon;
     workspaceId =
-      if lf.workspace == null
-      then null
-      else "{${lf.workspace}}";
+      let
+        w = resolvedWorkspace lf;
+      in
+        if w == null
+        then null
+        else "{${w}}";
     parentId =
       if lf.folderParentId == null
       then null

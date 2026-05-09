@@ -12,6 +12,9 @@
 # Ids: omit ``id`` — the module generates a stable ``<digits>-<digits>`` id (Zen-shaped). Set ``id`` only to
 # adopt an existing folder from your profile (exact string from a session dump).
 #
+# Workspace: with several Zen spaces, set ``workspace`` per live folder (bare UUID = ``spaces.<name>.id``), or the
+# folder row has no ``workspaceId`` and Zen may not show it. With exactly one ``spaces`` entry, null uses that space.
+#
 # Notes:
 #   - If ``zen-sessions.jsonlz4`` did not exist yet, the module creates a minimal stub before merge so both files stay aligned.
 #   - Sidebar strip below the separator lists normal *tabs* (including pages opened from a live folder).

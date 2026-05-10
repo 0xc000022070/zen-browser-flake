@@ -64,6 +64,7 @@
     "enable-beta-via-module" = ./enable-beta.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
+    "joined-tabs" = ./joined-tabs.nix;
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;
   };

@@ -262,6 +262,40 @@ in {
                   );
                   default = {};
                 };
+                joinedTabs = mkOption {
+                  type = attrsOf (
+                    submodule (
+                      {name, ...}: {
+                        options = {
+                          name = mkOption {
+                            type = str;
+                            description = "Joined tab group name.";
+                            default = "";
+                          };
+                          id = mkOption {
+                            type = str;
+                            description = "Stable split-view group ID.";
+                            default = name;
+                          };
+                          gridType = mkOption {
+                            type = enum [
+                              "vsep"
+                              "hsep"
+                            ];
+                            description = "Zen split-view grid type.";
+                            default = "vsep";
+                          };
+                          tabs = mkOption {
+                            type = listOf str;
+                            description = "Ordered tab IDs in this joined tab group.";
+                            default = [];
+                          };
+                        };
+                      }
+                    )
+                  );
+                  default = {};
+                };
               };
             }
           )
@@ -279,7 +313,9 @@ in {
       inherit
         (lib)
         filterAttrs
+        flatten
         getExe
+        hasPrefix
         mapAttrs'
         mapAttrsToList
         nameValuePair
@@ -294,7 +330,8 @@ in {
           != {}
           || profile.spacesForce
           || profile.pins != {}
-          || profile.pinsForce)
+          || profile.pinsForce
+          || profile.joinedTabs != {})
         cfg.profiles;
     in
       mapAttrs' (
@@ -302,6 +339,10 @@ in {
           mozlz4a = getExe pkgs.mozlz4a;
           jq = getExe pkgs.jq;
           sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
+          wrapTabId = id:
+            if hasPrefix "{" id
+            then id
+            else "{${id}}";
 
           spacesJson = toJSON (mapAttrsToList (
               _: s: {
@@ -346,6 +387,7 @@ in {
           pinsJson = toJSON (
             let
               nonGroupPins = filterAttrs (_: p: !p.isGroup) profile.pins;
+              joinedTabIds = flatten (mapAttrsToList (_: g: map wrapTabId g.tabs) profile.joinedTabs);
             in
               mapAttrsToList (
                 _: p:
@@ -379,6 +421,9 @@ in {
                         then "{${p.id}}"
                         else "{${p.folderParentId}}"
                       else null;
+                  }
+                  // optionalAttrs (builtins.elem "{${p.id}}" joinedTabIds) {
+                    id = "{${p.id}}";
                   }
                   // optionalAttrs p.editedTitle {
                     zenStaticLabel = p.title;
@@ -454,35 +499,85 @@ in {
                   index = p.position;
                 })
                 groupPins;
+              joinedTabData =
+                mapAttrsToList (_: g: {
+                  inherit (g) id name;
+                })
+                profile.joinedTabs;
             in
-              map (f: {
-                pinned = true;
-                splitView = false;
-                id = f.id;
-                name = f.name;
-                color = "zen-workspace-color";
-                collapsed = f.collapsed;
-                saveOnWindowClose = true;
-                index = f.index;
-              })
-              folderData
+              (map (f: {
+                  pinned = true;
+                  splitView = false;
+                  id = f.id;
+                  name = f.name;
+                  color = "zen-workspace-color";
+                  collapsed = f.collapsed;
+                  saveOnWindowClose = true;
+                  index = f.index;
+                })
+                folderData)
+              ++ (map (g: {
+                  pinned = true;
+                  essential = false;
+                  splitView = true;
+                  id = g.id;
+                  name = g.name;
+                  color = "blue";
+                  collapsed = false;
+                  saveOnWindowClose = true;
+                })
+                joinedTabData)
+          );
+
+          joinedTabsJson = toJSON (
+            mapAttrsToList (
+              _: g: let
+                tabs = map wrapTabId g.tabs;
+                direction =
+                  if g.gridType == "hsep"
+                  then "column"
+                  else "row";
+                sizeInParent =
+                  if tabs == []
+                  then 100
+                  else 100 / (builtins.length tabs);
+              in {
+                groupId = g.id;
+                inherit (g) gridType;
+                inherit tabs;
+                layoutTree = {
+                  type = "splitter";
+                  inherit direction;
+                  children =
+                    map (tabId: {
+                      type = "leaf";
+                      inherit tabId sizeInParent;
+                    })
+                    tabs;
+                };
+              }
+            )
+            profile.joinedTabs
           );
 
           spacesJsonFile = pkgs.writeText "zen-declared-spaces-${profileName}.json" spacesJson;
           pinsJsonFile = pkgs.writeText "zen-declared-pins-${profileName}.json" pinsJson;
           foldersJsonFile = pkgs.writeText "zen-declared-folders-${profileName}.json" foldersJson;
           groupsJsonFile = pkgs.writeText "zen-declared-groups-${profileName}.json" groupsJson;
+          joinedTabsJsonFile = pkgs.writeText "zen-declared-joined-tabs-${profileName}.json" joinedTabsJson;
 
           jqFilterFile = pkgs.writeText "zen-sessions-filter-${profileName}.jq" ''
             ($declaredSpaces[0]) as $spaces |
             ($declaredPins[0]) as $pins |
             ($declaredFolders[0]) as $folders |
             ($declaredGroups[0]) as $groups |
+            ($declaredJoinedTabs[0]) as $joinedTabs |
 
             .spaces = (.spaces // []) |
             .tabs = (.tabs // []) |
             .folders = (.folders // []) |
             .groups = (.groups // []) |
+            .splitViewData = (.splitViewData // []) |
 
             ([$spaces[].uuid]) as $dsUuids |
             ([.spaces[].uuid]) as $esUuids |
@@ -503,7 +598,7 @@ in {
               . as $e |
               ($pins | map(select(.zenSyncId == $e.zenSyncId)) | .[0] // null) as $o |
               if $o != null then
-                $e * {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index, entries: $o.entries, groupId: $o.groupId, zenStaticLabel: $o.zenStaticLabel}
+                $e * {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index, entries: $o.entries, groupId: $o.groupId, zenStaticLabel: $o.zenStaticLabel} * (if $o.id != null then {id: $o.id} else {} end)
               else . end
             ] |
             .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)]
@@ -552,9 +647,24 @@ in {
             .groups = [.groups[] |
               . as $e |
               ($groups | map(select(.id == $e.id)) | .[0] // null) as $o |
-              if $o != null then ($e * $o) else . end
+              if $o != null then (($e * $o) | if $o.splitView == true then del(.index) else . end) else . end
             ] |
             .groups += [$groups[] | select(.id as $id | $egIds | index($id) | not)] |
+
+            ([$joinedTabs[].groupId]) as $djIds |
+            ([.splitViewData[].groupId]) as $ejIds |
+
+            .splitViewData = [.splitViewData[] |
+              . as $e |
+              ($joinedTabs | map(select(.groupId == $e.groupId)) | .[0] // null) as $o |
+              if $o != null then ($e * $o) else . end
+            ] |
+            .splitViewData += [$joinedTabs[] | select(.groupId as $id | $ejIds | index($id) | not)] |
+            .tabs = [.tabs[] |
+              . as $tab |
+              ($joinedTabs | map(select(.tabs | index($tab.id // $tab.zenSyncId // ""))) | .[0] // null) as $joinedTab |
+              if $joinedTab != null then ($tab * {groupId: $joinedTab.groupId}) else . end
+            ] |
 
             ${optionalString (!(profile.pinsForce && profile.pinsForceAction == "demote")) ''
               .tabs = (.tabs | sort_by(.index // 0)) |
@@ -612,6 +722,7 @@ in {
                 --slurpfile declaredPins ${pinsJsonFile} \
                 --slurpfile declaredFolders ${foldersJsonFile} \
                 --slurpfile declaredGroups ${groupsJsonFile} \
+                --slurpfile declaredJoinedTabs ${joinedTabsJsonFile} \
                 -f ${jqFilterFile} \
                 "$SESSIONS_TMP" > "$SESSIONS_MODIFIED" || {
                 echo "zen-sessions: Failed to apply modifications to sessions data"

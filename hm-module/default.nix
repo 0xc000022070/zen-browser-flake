@@ -141,6 +141,15 @@ in {
           assertion = !(profile.sine.mods != [] && !profile.sine.enable);
           message = "Profile '${profileName}': sine.mods requires sine.enable to be true.";
         })
-        cfg.profiles);
+        cfg.profiles)
+      ++ (lib.flatten (lib.mapAttrsToList (
+          profileName: profile:
+            lib.mapAttrsToList (groupName: group: {
+              assertion = builtins.length group.tabs >= 2;
+              message = "Profile '${profileName}' joinedTabs '${groupName}': at least two tabs are required.";
+            })
+            (profile.joinedTabs or {})
+        )
+        cfg.profiles));
   };
 }

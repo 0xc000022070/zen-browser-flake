@@ -68,6 +68,7 @@
     "live-folders-auto-id" = ./live-folders-auto-id.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
+    "pins-force-demote-drop-folder-tab" = ./pins-force-demote-drop-folder-tab.nix;
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;
   };

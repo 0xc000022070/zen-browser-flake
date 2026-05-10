@@ -168,11 +168,10 @@ in {
                     Used only if `pinsForce` is true.
 
                     - `remove`: delete undeclared pinned or essential tabs from the session.
-                    - `demote`: clear pin/essential state and pin-folder membership for **non-folder**
-                      orphan pinned tabs (`groupId` null or still listed in declared ``folders``), then
-                      place those at the top of the normal strip (after declared pins). Pinned tabs whose
-                      ``groupId`` is **not** any declared folder id (removed pin group or live folder)
-                      are **dropped** from the session instead of becoming normal tabs.
+                    - `demote`: clear pin/essential state and pin-folder membership, then place those
+                      tabs at the top of the normal strip (after declared pins), preserving their
+                      previous relative order. Tab `index` fields are rewritten to match this order so
+                      Zen does not reorder by stale indices.
                   '';
                 };
                 pins = mkOption {
@@ -542,14 +541,12 @@ in {
             ${optionalString (profile.pinsForce && profile.pinsForceAction == "demote") ''
               | .tabs = (
                   .tabs as $allTabsIn |
-                  ([$folders[].id]) as $managedFolderIds |
                   ($allTabsIn | to_entries) as $ent |
                   ($ent | group_by(.value.zenWorkspace // "") | map(sort_by(.key))
                   | map(
                       . as $ws |
                       ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | ($dpIds + $lfTabIds) | index($id) != null)))) as $declaredEnt |
-                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | ($dpIds + $lfTabIds) | index($id) == null)))) as $orphanPinnedAll |
-                      ($orphanPinnedAll | map(select((.value.groupId == null) or (.value.groupId as $g | $managedFolderIds | index($g) != null)))) as $orphanEnt |
+                      ($ws | map(select((.value.pinned == true or .value.zenEssential == true) and (.value.zenSyncId as $id | ($dpIds + $lfTabIds) | index($id) == null)))) as $orphanEnt |
                       ($ws | map(select((.value.pinned != true) and (.value.zenEssential != true)))) as $normalEnt |
                       (($declaredEnt | sort_by(.value.index // 0)) | map(.value)) as $decl |
                       (($orphanEnt | sort_by(.key)) | map(.value | . * {pinned: false, zenEssential: false, groupId: null})) as $dem |

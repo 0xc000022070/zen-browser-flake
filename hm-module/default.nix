@@ -153,6 +153,14 @@ in {
                 assertion = builtins.length group.tabs <= 3;
                 message = "Profile '${profileName}' joinedTabs '${groupName}': at most three tabs are allowed.";
               }
+              {
+                assertion = group.sizes == [] || builtins.length group.sizes == builtins.length group.tabs;
+                message = "Profile '${profileName}' joinedTabs '${groupName}': sizes length (${toString (builtins.length group.sizes)}) must match tabs length (${toString (builtins.length group.tabs)}).";
+              }
+              {
+                assertion = group.sizes == [] || lib.foldl' (a: b: a + b) 0 group.sizes == 100;
+                message = "Profile '${profileName}' joinedTabs '${groupName}': sizes must sum to 100 (got ${toString (lib.foldl' (a: b: a + b) 0 group.sizes)}).";
+              }
             ])
             (profile.joinedTabs or {})
         )

@@ -65,6 +65,8 @@
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
     "joined-tabs" = ./joined-tabs.nix;
+    "joined-tabs-sizes" = ./joined-tabs-sizes.nix;
+    "joined-tabs-sizes-three-hsep" = ./joined-tabs-sizes-three-hsep.nix;
     "joined-tabs-with-folder" = ./joined-tabs-with-folder.nix;
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;

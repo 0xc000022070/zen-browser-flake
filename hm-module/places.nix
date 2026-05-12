@@ -300,6 +300,16 @@ in {
                             '';
                             default = [];
                           };
+                          sizes = mkOption {
+                            type = listOf ints.positive;
+                            description = ''
+                              Optional per-tab share of the split, in percent. When set, must have the
+                              same length as `tabs` and sum to 100. When empty (default), tabs are split
+                              equally.
+                            '';
+                            default = [];
+                            example = [70 30];
+                          };
                         };
                       }
                     )
@@ -546,10 +556,14 @@ in {
                   if g.gridType == "hsep"
                   then "column"
                   else "row";
-                sizeInParent =
+                equalSize =
                   if tabs == []
                   then 100
                   else 100.0 / (builtins.length tabs);
+                sizes =
+                  if g.sizes == []
+                  then map (_: equalSize) tabs
+                  else g.sizes;
               in {
                 groupId = g.id;
                 inherit (g) gridType;
@@ -558,11 +572,12 @@ in {
                   type = "splitter";
                   inherit direction;
                   children =
-                    map (tabId: {
+                    lib.zipListsWith (tabId: sizeInParent: {
                       type = "leaf";
                       inherit tabId sizeInParent;
                     })
-                    tabs;
+                    tabs
+                    sizes;
                 };
               }
             )

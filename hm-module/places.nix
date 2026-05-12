@@ -264,10 +264,10 @@ in {
                 };
                 joinedTabs = mkOption {
                   description = ''
-                    Split-view groups. Pin IDs listed in any `tabs` array are written to the session
-                    without folder `groupId` (even if those pins use `folderParentId`) so the
-                    split-view `groupId` can apply; the folder row still exists if declared. Zen does
-                    not represent the same tab as both a folder child and a joined split.
+                    Split-view groups (two or three tabs per group). Pin IDs listed in any `tabs` array
+                    are written to the session without folder `groupId` (even if those pins use
+                    `folderParentId`) so the split-view `groupId` can apply; the folder row still exists if
+                    declared. Zen does not represent the same tab as both a folder child and a joined split.
                   '';
                   type = attrsOf (
                     submodule (
@@ -294,8 +294,9 @@ in {
                           tabs = mkOption {
                             type = listOf str;
                             description = ''
-                              Ordered pin UUIDs in this group. Each tab must still be a declared pin;
-                              folder membership is not applied in the session for these IDs.
+                              Ordered pin UUIDs in this group (two or three pins). Each tab must still be
+                              a declared pin; folder membership is not applied in the session for these
+                              IDs.
                             '';
                             default = [];
                           };
@@ -548,7 +549,7 @@ in {
                 sizeInParent =
                   if tabs == []
                   then 100
-                  else 100 / (builtins.length tabs);
+                  else 100.0 / (builtins.length tabs);
               in {
                 groupId = g.id;
                 inherit (g) gridType;

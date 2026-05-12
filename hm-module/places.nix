@@ -170,7 +170,9 @@ in {
                     - `demote`: clear pin/essential state and pin-folder membership, then place those
                       tabs at the top of the normal strip (after declared pins), preserving their
                       previous relative order. Tab `index` fields are rewritten to match this order so
-                      Zen does not reorder by stale indices.
+                      Zen does not reorder by stale indices. Pins listed in any `joinedTabs` group then
+                      get `index` restored from the declaration so split views (including under
+                      folders) keep the configured pin order.
                   '';
                 };
                 pins = mkOption {
@@ -694,6 +696,18 @@ in {
               ($joinedTabs | map(select(.tabs | index($tab.id // $tab.zenSyncId // ""))) | .[0] // null) as $joinedTab |
               if $joinedTab != null then ($tab * {groupId: $joinedTab.groupId}) else . end
             ] |
+            ${optionalString (profile.pinsForce && profile.pinsForceAction == "demote" && profile.joinedTabs != {}) ''
+              .tabs = (
+                  ([$joinedTabs[] | .tabs[]] | unique) as $joinedMemberIds |
+                  [.tabs[] |
+                    . as $t |
+                    ($pins | map(select(.zenSyncId == $t.zenSyncId)) | .[0] // null) as $p |
+                    if ($joinedMemberIds | contains([$t.zenSyncId])) and ($p != null)
+                    then ($t * {index: $p.index})
+                    else $t end
+                  ]
+                ) |
+            ''}
 
             ${optionalString (!(profile.pinsForce && profile.pinsForceAction == "demote")) ''
               .tabs = (.tabs | sort_by(.index // 0)) |

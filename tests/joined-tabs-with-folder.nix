@@ -34,13 +34,21 @@
             folderParentId = folder;
             position = 11;
           };
+          "Center" = {
+            id = "eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee";
+            url = "https://center.example";
+            title = "Center";
+            workspace = ws;
+            folderParentId = folder;
+            position = 12;
+          };
           "Right" = {
             id = "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb";
             url = "https://right.example";
             title = "Right";
             workspace = ws;
             folderParentId = folder;
-            position = 12;
+            position = 13;
           };
         };
 
@@ -49,6 +57,7 @@
           gridType = "vsep";
           tabs = [
             "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
+            "eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee"
             "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb"
           ];
         };
@@ -84,9 +93,23 @@
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-sessions.jsonlz4 /tmp/sessions-folder.json")
       machine.succeed("jq -e '.folders | length == 1' /tmp/sessions-folder.json")
       machine.succeed("jq -e '.folders[0].id == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\"' /tmp/sessions-folder.json")
-      machine.succeed("jq -e '.tabs | length == 2' /tmp/sessions-folder.json")
-      machine.succeed("jq -e '[.tabs[].groupId] == [\"1778374511045-84\", \"1778374511045-84\"]' /tmp/sessions-folder.json")
+      machine.succeed("jq -e '.tabs | length == 3' /tmp/sessions-folder.json")
+      machine.succeed(
+        "jq -e '[.tabs[].groupId] == [\"1778374511045-84\", \"1778374511045-84\", \"1778374511045-84\"]' /tmp/sessions-folder.json"
+      )
       machine.succeed("jq -e '.splitViewData | length == 1' /tmp/sessions-folder.json")
+      machine.succeed("jq -e '.splitViewData[0].groupId == \"1778374511045-84\"' /tmp/sessions-folder.json")
+      machine.succeed("jq -e '.splitViewData[0].gridType == \"vsep\"' /tmp/sessions-folder.json")
+      machine.succeed(
+        "jq -e '.splitViewData[0].tabs == [\"{aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa}\", \"{eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee}\", \"{bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb}\"]' /tmp/sessions-folder.json"
+      )
+      machine.succeed("jq -e '.splitViewData[0].layoutTree.direction == \"row\"' /tmp/sessions-folder.json")
+      machine.succeed(
+        "jq -e '[.splitViewData[0].layoutTree.children[].tabId] == [\"{aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa}\", \"{eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee}\", \"{bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb}\"]' /tmp/sessions-folder.json"
+      )
+      machine.succeed(
+        "jq -e '[.splitViewData[0].layoutTree.children[].sizeInParent] | length == 3 and (add > 99.9 and add < 100.1)' /tmp/sessions-folder.json"
+      )
       machine.succeed("jq -e '.groups | map(select(.splitView == true)) | length == 1' /tmp/sessions-folder.json")
     '';
 }

@@ -144,10 +144,16 @@ in {
         cfg.profiles)
       ++ (lib.flatten (lib.mapAttrsToList (
           profileName: profile:
-            lib.mapAttrsToList (groupName: group: {
-              assertion = builtins.length group.tabs >= 2;
-              message = "Profile '${profileName}' joinedTabs '${groupName}': at least two tabs are required.";
-            })
+            lib.mapAttrsToList (groupName: group: [
+              {
+                assertion = builtins.length group.tabs >= 2;
+                message = "Profile '${profileName}' joinedTabs '${groupName}': at least two tabs are required.";
+              }
+              {
+                assertion = builtins.length group.tabs <= 3;
+                message = "Profile '${profileName}' joinedTabs '${groupName}': at most three tabs are allowed.";
+              }
+            ])
             (profile.joinedTabs or {})
         )
         cfg.profiles));

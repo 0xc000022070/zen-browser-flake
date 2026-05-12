@@ -79,7 +79,44 @@
         "groups": [],
         "lastCollected": 0,
         "splitViewData": [],
-        "tabs": []
+        "tabs": [
+          {
+            "pinned": true,
+            "hidden": false,
+            "zenWorkspace": "{cccccccc-cccc-4ccc-cccc-cccccccccccc}",
+            "zenSyncId": "{aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa}",
+            "id": "{aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa}",
+            "userContextId": 0,
+            "zenEssential": false,
+            "index": 11,
+            "groupId": "stale-should-be-replaced",
+            "entries": [{"url": "https://left.example", "title": "Left", "charset": "UTF-8", "ID": 0, "persist": true}]
+          },
+          {
+            "pinned": true,
+            "hidden": false,
+            "zenWorkspace": "{cccccccc-cccc-4ccc-cccc-cccccccccccc}",
+            "zenSyncId": "{eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee}",
+            "id": "{eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee}",
+            "userContextId": 0,
+            "zenEssential": false,
+            "index": 12,
+            "groupId": "stale-should-be-replaced",
+            "entries": [{"url": "https://center.example", "title": "Center", "charset": "UTF-8", "ID": 0, "persist": true}]
+          },
+          {
+            "pinned": true,
+            "hidden": false,
+            "zenWorkspace": "{cccccccc-cccc-4ccc-cccc-cccccccccccc}",
+            "zenSyncId": "{bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb}",
+            "id": "{bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb}",
+            "userContextId": 0,
+            "zenEssential": false,
+            "index": 13,
+            "groupId": "stale-should-be-replaced",
+            "entries": [{"url": "https://right.example", "title": "Right", "charset": "UTF-8", "ID": 0, "persist": true}]
+          }
+        ]
       }
       EOF
       mozlz4a /tmp/sess-joined-folder.json /home/testuser/.config/zen/default/zen-sessions.jsonlz4

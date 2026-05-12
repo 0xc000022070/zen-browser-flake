@@ -267,8 +267,9 @@ in {
                     Split-view groups (two or three tabs per group). Pin IDs listed in any `tabs` array
                     get split-view `groupId` in the session (not the folder id) so the split can render;
                     folder membership still comes from each pin's `folderParentId` and the folder group pin.
-                    Folder children in a joined group omit top-level session `id` (Zen keeps it null there);
-                    joined pins not under a folder still get `id` set to match Zen's flat split layout.
+                    Folder children in a joined group use session `id` null in the declared pin JSON so the
+                    jq merge can clear any stale `id` on existing tabs; joined pins not under a folder use
+                    string `id` like Zen's flat split layout.
                   '';
                   type = attrsOf (
                     submodule (
@@ -297,8 +298,8 @@ in {
                             description = ''
                               Ordered pin UUIDs in this group (two or three pins). Each tab must still be
                               a declared pin. Session `groupId` is the joined group for these IDs; folder
-                              children still use `folderParentId` on the pin (session `id` stays unset for
-                              them so Zen accepts the layout).
+                              children still use `folderParentId` on the pin; session `id` is JSON null in
+                              the declaration so activation clears stale ids on existing sessions.
                             '';
                             default = [];
                           };
@@ -443,9 +444,11 @@ in {
                       then "{${p.folderParentId}}"
                       else null;
                   }
-                  // optionalAttrs (builtins.elem "{${p.id}}" joinedTabIds && isNull p.folderParentId) {
-                    id = "{${p.id}}";
-                  }
+                  // optionalAttrs (builtins.elem "{${p.id}}" joinedTabIds) (
+                    if isNull p.folderParentId
+                    then {id = "{${p.id}}";}
+                    else {id = null;}
+                  )
                   // optionalAttrs p.editedTitle {
                     zenStaticLabel = p.title;
                   }
@@ -624,7 +627,7 @@ in {
               . as $e |
               ($pins | map(select(.zenSyncId == $e.zenSyncId)) | .[0] // null) as $o |
               if $o != null then
-                $e * {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index, entries: $o.entries, groupId: $o.groupId, zenStaticLabel: $o.zenStaticLabel} * (if $o.id != null then {id: $o.id} else {} end)
+                $e * {pinned: $o.pinned, zenEssential: $o.zenEssential, zenWorkspace: $o.zenWorkspace, userContextId: $o.userContextId, index: $o.index, entries: $o.entries, groupId: $o.groupId, zenStaticLabel: $o.zenStaticLabel} * (if ($o | has("id")) then {id: $o.id} else {} end)
               else . end
             ] |
             .tabs += [$pins[] | select(.zenSyncId as $id | $etIds | index($id) | not)]

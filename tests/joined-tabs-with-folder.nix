@@ -97,6 +97,7 @@
       machine.succeed(
         "jq -e '[.tabs[].groupId] == [\"1778374511045-84\", \"1778374511045-84\", \"1778374511045-84\"]' /tmp/sessions-folder.json"
       )
+      machine.succeed("jq -e '[.tabs[].id] == [null, null, null]' /tmp/sessions-folder.json")
       machine.succeed("jq -e '.splitViewData | length == 1' /tmp/sessions-folder.json")
       machine.succeed("jq -e '.splitViewData[0].groupId == \"1778374511045-84\"' /tmp/sessions-folder.json")
       machine.succeed("jq -e '.splitViewData[0].gridType == \"vsep\"' /tmp/sessions-folder.json")

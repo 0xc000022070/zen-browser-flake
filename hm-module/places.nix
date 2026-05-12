@@ -263,13 +263,19 @@ in {
                   default = {};
                 };
                 joinedTabs = mkOption {
+                  description = ''
+                    Split-view groups. Pin IDs listed in any `tabs` array are written to the session
+                    without folder `groupId` (even if those pins use `folderParentId`) so the
+                    split-view `groupId` can apply; the folder row still exists if declared. Zen does
+                    not represent the same tab as both a folder child and a joined split.
+                  '';
                   type = attrsOf (
                     submodule (
                       {name, ...}: {
                         options = {
                           name = mkOption {
                             type = str;
-                            description = "Joined tab group name.";
+                            description = "Joined tab group name shown in Zen (empty string is valid).";
                             default = "";
                           };
                           id = mkOption {
@@ -287,7 +293,10 @@ in {
                           };
                           tabs = mkOption {
                             type = listOf str;
-                            description = "Ordered tab IDs in this joined tab group.";
+                            description = ''
+                              Ordered pin UUIDs in this group. Each tab must still be a declared pin;
+                              folder membership is not applied in the session for these IDs.
+                            '';
                             default = [];
                           };
                         };
@@ -415,11 +424,10 @@ in {
                     index = p.position;
                     lastAccessed = 0;
                     groupId =
-                      if p.isGroup || p.folderParentId != null
-                      then
-                        if p.isGroup
-                        then "{${p.id}}"
-                        else "{${p.folderParentId}}"
+                      if builtins.elem "{${p.id}}" joinedTabIds
+                      then null
+                      else if p.folderParentId != null
+                      then "{${p.folderParentId}}"
                       else null;
                   }
                   // optionalAttrs (builtins.elem "{${p.id}}" joinedTabIds) {

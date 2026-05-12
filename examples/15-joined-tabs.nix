@@ -24,6 +24,9 @@
         pins."Docs".id
         pins."Issues".id
       ];
+      # Optional: explicit per-tab share (percent of parent, must sum to 100).
+      # Defaults to equal-split when omitted.
+      # sizes = [70 30];
     };
   };
 }

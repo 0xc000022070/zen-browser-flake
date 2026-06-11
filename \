@@ -722,7 +722,7 @@ in {
                 exit 0
               fi
 
-              if pgrep -x "zen" > /dev/null 2>&1 || pgrep -x "zen-beta" > /dev/null 2>&1; then
+              if pgrep -x "zen" > /dev/null 2>&1 || pgrep -x "zen-beta" > /dev/null 2>&1 then
                 echo "zen-sessions: Zen Browser appears to be running."
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
                 exit 1

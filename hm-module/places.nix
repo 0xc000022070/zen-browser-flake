@@ -723,12 +723,9 @@ in {
               fi
 
               # TODO: verify if "MacOS/zen" correctly catches zen process
-              if pgrep -f "bin/zen " > /dev/null 2>&1 || \
-                  pgrep -f "bin/zen-beta" > /dev/null 2>&1 || \
-                  pgrep -f "lib/zen-bin" > /dev/null 2>&1 || \
-                  pgrep -f "MacOS/zen" > /dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running."
-                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
+              if pgrep -f "bin/zen |bin/zen-beta|lib/zen-bin|MacOS/zen|MacOS/zen-beta" > /dev/null 2>&1; then
+                echo "zen-sessions: Zen Browser appears to be running." >&2
+                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes." >&2
                 exit 1
               fi
 

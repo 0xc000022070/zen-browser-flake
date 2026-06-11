@@ -769,12 +769,7 @@ in {
               rm -f "$BACKUP_FILE"
             '';
         in
-          nameValuePair "zen-sessions-${profileName}" (
-            lib.hm.dag.entryAfter (
-              ["writeBoundary"]
-              (lib.optional (profile.mods != []) "zen-mods-${profileName}")
-              (lib.optional (profile.keyboardShortcuts != []) "zen-keyboard-shortcuts-${profileName}")
-            )
+          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
             ''
               ${updateScript}
               if [[ "$?" -eq 0 ]]; then
@@ -785,8 +780,7 @@ in {
                 echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
                 echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
               fi
-            ''
-          )
+            '')
       )
       profilesWithPlaces;
   };

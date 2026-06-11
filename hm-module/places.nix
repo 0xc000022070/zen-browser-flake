@@ -705,6 +705,8 @@ in {
               SESSIONS_MODIFIED="$(mktemp)"
               BACKUP_FILE="''${SESSIONS_FILE}.backup"
 
+              PGREP="${lib.getExe pkgs.procps}"
+
               cleanup() {
                 rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
               }
@@ -722,11 +724,15 @@ in {
                 exit 0
               fi
 
+              echo "zen-sessions: Starting zen process check"
+
               # TODO: verify if "MacOS/zen" correctly catches zen process
-              if pgrep -f "bin/zen " || pgrep -f "bin/zen-beta" || pgrep -f "lib/zen-bin" || pgrep -f "MacOS/zen" || pgrep -f "MacOS/zen-beta" > /dev/null 2>&1; then
+              if ( $PGREP -f "bin/zen " || $PGREP -f "bin/zen-beta" || $PGREP -f "lib/zen-bin" || $PGREP -f "MacOS/zen" || $PGREP -f "MacOS/zen-beta" ) > /dev/null 2>&1; then
                 echo "zen-sessions: Zen Browser appears to be running." >&2
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes." >&2
                 exit 1
+              else
+                echo "zen-sessions: No Zen process found.."
               fi
 
               cp "$SESSIONS_FILE" "$BACKUP_FILE" || {

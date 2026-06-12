@@ -705,8 +705,7 @@ in {
               SESSIONS_MODIFIED="$(mktemp)"
               BACKUP_FILE="''${SESSIONS_FILE}.backup"
 
-              PGREP="${lib.getExe pkgs.procps}"
-              REAL_USER=$(stat -c '%U' "${linuxConfigPath}")
+              PGREP="${lib.getExe' pkgs.procps "pgrep"}"
 
               cleanup() {
                 rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
@@ -727,7 +726,7 @@ in {
                 exit 0
               fi
 
-              if $PGREP -u "$REAL_USER" -f "(^|/|\.)zen(-|wrapp|$)" >/dev/null 2>&1; then
+              if $PGREP -u "${config.home.username}" -f "(^|/|\.)zen(-|wrapp|$)" >/dev/null 2>&1; then
                 echo "zen-sessions: Zen Browser appears to be running for user $REAL_USER." >&2
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes." >&2
                 exit 1

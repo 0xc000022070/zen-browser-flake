@@ -706,6 +706,7 @@ in {
               BACKUP_FILE="''${SESSIONS_FILE}.backup"
 
               PGREP="${lib.getExe pkgs.procps}"
+              REAL_USER=$(stat -c '%U' "${linuxConfigPath}")
 
               cleanup() {
                 rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
@@ -721,18 +722,15 @@ in {
               trap cleanup EXIT
 
               if [ ! -f "$SESSIONS_FILE" ]; then
+                echo "zen-sessions: Sessions file not found at $SESSIONS_FILE"
+                echo "zen-sessions: Zen Browser will create it on first run"
                 exit 0
               fi
 
-              echo "zen-sessions: Starting zen process check"
-
-              # TODO: verify if "MacOS/zen" correctly catches zen process
-              if ( $PGREP -f "bin/zen " || $PGREP -f "bin/zen-beta" || $PGREP -f "lib/zen-bin" || $PGREP -f "MacOS/zen" || $PGREP -f "MacOS/zen-beta" ) > /dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running." >&2
+              if $PGREP -u "$REAL_USER" -f "(^|/|\.)zen(-|wrapp|$)" >/dev/null 2>&1; then
+                echo "zen-sessions: Zen Browser appears to be running for user $REAL_USER." >&2
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes." >&2
                 exit 1
-              else
-                echo "zen-sessions: No Zen process found.."
               fi
 
               cp "$SESSIONS_FILE" "$BACKUP_FILE" || {

@@ -727,7 +727,7 @@ in {
               fi
 
               if $PGREP -u "${config.home.username}" -f "(^|/|\.)zen(-|wrapp|$)" >/dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running for user $REAL_USER." >&2
+                echo "zen-sessions: Zen Browser appears to be running for user ${config.home.username}." >&2
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes." >&2
                 exit 1
               fi

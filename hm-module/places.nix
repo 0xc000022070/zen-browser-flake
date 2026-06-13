@@ -705,6 +705,14 @@ in {
               SESSIONS_MODIFIED="$(mktemp)"
               BACKUP_FILE="''${SESSIONS_FILE}.backup"
 
+              # Fix "command not found error" by fetching pgrep on Linux,
+              # and falling back to host's pgrep on Darwin to avoid build errors.
+              PGREP="${
+                if pkgs.stdenv.isDarwin
+                then "pgrep"
+                else lib.getExe' pkgs.procps "pgrep"
+              }"
+
               cleanup() {
                 rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
               }
@@ -724,9 +732,10 @@ in {
                 exit 0
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running."
-                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
+              # TODO: verify if this check works on MacOS
+              if $PGREP -u "${config.home.username}" -fi "(/|\.)zen(-|$)" >/dev/null 2>&1 || $PGREP -u "${config.home.username}" -xi "zen" >/dev/null 2>&1; then
+                echo "zen-sessions: Zen Browser appears to be running for user ${config.home.username}." >&2
+                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes." >&2
                 exit 1
               fi
 
@@ -769,7 +778,8 @@ in {
               rm -f "$BACKUP_FILE"
             '';
         in
-          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
+          nameValuePair "zen-sessions-${profileName}" (
+            lib.hm.dag.entryAfter ["writeBoundary"]
             ''
               ${updateScript}
               if [[ "$?" -eq 0 ]]; then
@@ -780,7 +790,8 @@ in {
                 echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
                 echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
               fi
-            '')
+            ''
+          )
       )
       profilesWithPlaces;
   };

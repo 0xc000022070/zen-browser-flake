@@ -70,6 +70,7 @@
     "joined-tabs-with-folder" = ./joined-tabs-with-folder.nix;
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;
+    "env-vars" = ./env-vars.nix;
   };
 in
   pkgs.lib.mapAttrs (name: path: mkGenericTest name path) suites

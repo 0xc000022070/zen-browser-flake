@@ -18,6 +18,22 @@
   cfg = getAttrFromPath modulePath config;
 
   isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
+
+  envWrapperArgs = lib.concatStringsSep " " (
+    lib.mapAttrsToList (k: v: "--set ${lib.escapeShellArg k} ${lib.escapeShellArg v}") cfg.env
+  );
+
+  applyEnv = pkg:
+    if cfg.env == {} || !pkgs.stdenv.hostPlatform.isLinux
+    then pkg
+    else
+      pkg.overrideAttrs (old: {
+        preFixup =
+          (old.preFixup or "")
+          + ''
+            gappsWrapperArgs+=(${envWrapperArgs})
+          '';
+      });
 in {
   options = setAttrByPath modulePath {
     extraPrefsFiles = mkOption {
@@ -30,6 +46,22 @@ in {
       type = types.str;
       default = "";
       description = "Extra preferences to be included.";
+    };
+
+    env = mkOption {
+      type = types.attrsOf types.str;
+      default = {};
+      example = {
+        GTK_THEME = "Adwaita";
+      };
+      description = ''
+        Environment variables to set when launching Zen Browser. Each entry is
+        injected into the launcher with `makeWrapper --set`, so it applies
+        whether the browser is started from its desktop entry or the command
+        line.
+
+        Only supported on Linux.
+      '';
     };
 
     icon = mkOption {
@@ -66,13 +98,14 @@ in {
   config = mkIf cfg.enable {
     programs.zen-browser = {
       package = let
-        defaultPackage =
+        defaultPackage = applyEnv (
           if cfg.unwrappedPackage != null
           then cfg.unwrappedPackage
           else
             self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
               inherit (cfg) policies enablePrivateDesktopEntry;
-            };
+            }
+        );
 
         getPackage = sine:
           if sine

@@ -128,6 +128,10 @@ in {
           message = "The 'icon' option is only supported on Linux.";
         }
         {
+          assertion = cfg.env == {} || pkgs.stdenv.isLinux;
+          message = "The 'env' option is only supported on Linux.";
+        }
+        {
           assertion = !cfg.nixGL.enable || (config.lib ? nixGL && config.lib.nixGL ? wrap);
           message = "You don't meet the requirements to use the 'nixGL.enable' option. See https://github.com/nix-community/nixGL for details.";
         }

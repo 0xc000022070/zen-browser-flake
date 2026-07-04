@@ -27,6 +27,10 @@
       # Optional: explicit per-tab share (percent of parent, must sum to 100).
       # Defaults to equal-split when omitted.
       # sizes = [70 30];
+
+      # Optional: nest the split inside a declared folder pin (isGroup = true)
+      # so it renders as a folder child instead of flat pinned icons.
+      # folderParentId = pins."Some folder".id;
     };
   };
 }

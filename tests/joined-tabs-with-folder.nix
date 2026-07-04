@@ -55,6 +55,7 @@
         joinedTabs."Inside state" = {
           id = "1778374511045-84";
           gridType = "vsep";
+          folderParentId = folder;
           tabs = [
             "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
             "eeeeeeee-eeee-4eee-eeee-eeeeeeeeeeee"
@@ -91,11 +92,22 @@
       machine.wait_for_unit("home-manager-testuser.service")
 
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-sessions.jsonlz4 /tmp/sessions-folder.json")
-      machine.succeed("jq -e '.folders | length == 1' /tmp/sessions-folder.json")
-      machine.succeed("jq -e '.folders[0].id == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\"' /tmp/sessions-folder.json")
-      machine.succeed("jq -e '.tabs | length == 3' /tmp/sessions-folder.json")
+      machine.succeed("jq -e '.folders | length == 2' /tmp/sessions-folder.json")
       machine.succeed(
-        "jq -e '[.tabs[].groupId] == [\"1778374511045-84\", \"1778374511045-84\", \"1778374511045-84\"]' /tmp/sessions-folder.json"
+        "jq -e '.folders | map(select(.splitViewGroup == false)) | .[0].id == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\"' /tmp/sessions-folder.json"
+      )
+      machine.succeed(
+        "jq -e '.folders | map(select(.id == \"1778374511045-84\")) | .[0] | .splitViewGroup == true and .parentId == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\" and .pinned == true' /tmp/sessions-folder.json"
+      )
+      machine.succeed("jq -e '.tabs | length == 4' /tmp/sessions-folder.json")
+      machine.succeed(
+        "jq -e '[.tabs[].groupId] == [\"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\", \"1778374511045-84\", \"1778374511045-84\", \"1778374511045-84\"]' /tmp/sessions-folder.json"
+      )
+      machine.succeed(
+        "jq -e '.tabs[] | select(.zenIsEmpty == true) | .groupId == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\" and .id == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}-empty\"' /tmp/sessions-folder.json"
+      )
+      machine.succeed(
+        "jq -e '.folders | map(select(.splitViewGroup == false)) | .[0].emptyTabIds == [\"{dddddddd-dddd-4ddd-dddd-dddddddddddd}-empty\"]' /tmp/sessions-folder.json"
       )
       machine.succeed("jq -e '.splitViewData | length == 1' /tmp/sessions-folder.json")
       machine.succeed("jq -e '.splitViewData[0].groupId == \"1778374511045-84\"' /tmp/sessions-folder.json")

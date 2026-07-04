@@ -310,6 +310,17 @@ in {
                             default = [];
                             example = [70 30];
                           };
+                          folderParentId = mkOption {
+                            type = nullOr str;
+                            description = ''
+                              Pin UUID of a declared folder pin (`isGroup = true`). When set, the split
+                              group gets a `splitViewGroup` folder entry in the session store, so Zen
+                              nests it inside that folder and renders it as a folder child. Without it,
+                              the joined tabs render flat in the pinned section (Zen only nests entries
+                              present in the session `folders` array).
+                            '';
+                            default = null;
+                          };
                         };
                       }
                     )
@@ -404,12 +415,60 @@ in {
             )
             profile.spaces);
 
+          joinedTabIds = flatten (mapAttrsToList (_: g: map wrapTabId g.tabs) profile.joinedTabs);
+
+          # Zen only materializes a folder's tab-group element on restore when
+          # some tab references it via groupId. Folders whose only children are
+          # split groups (or nothing) need the same about:blank placeholder tab
+          # the browser itself creates in ZenFolders.createFolder.
+          folderHasDirectChild = fp:
+            lib.any (
+              p:
+                !p.isGroup
+                && p.folderParentId == fp.id
+                && !(builtins.elem "{${p.id}}" joinedTabIds)
+            ) (lib.attrValues profile.pins);
+
+          childlessGroupPins = filterAttrs (_: p: p.isGroup && !(folderHasDirectChild p)) profile.pins;
+
+          emptyTabEntries =
+            mapAttrsToList (_: fp: {
+              pinned = true;
+              hidden = false;
+              zenWorkspace =
+                if fp.workspace == null
+                then null
+                else "{${fp.workspace}}";
+              zenSyncId = "{${fp.id}}-empty";
+              id = "{${fp.id}}-empty";
+              zenEssential = false;
+              zenDefaultUserContextId = null;
+              zenPinnedIcon = null;
+              zenIsEmpty = true;
+              zenHasStaticIcon = false;
+              zenGlanceId = null;
+              zenIsGlance = false;
+              searchMode = null;
+              userContextId = 0;
+              attributes = {};
+              index = fp.position;
+              lastAccessed = 0;
+              groupId = "{${fp.id}}";
+              entries = [
+                {
+                  url = "about:blank";
+                  triggeringPrincipal_base64 = "{\"3\":{}}";
+                }
+              ];
+            })
+            childlessGroupPins;
+
           pinsJson = toJSON (
             let
               nonGroupPins = filterAttrs (_: p: !p.isGroup) profile.pins;
-              joinedTabIds = flatten (mapAttrsToList (_: g: map wrapTabId g.tabs) profile.joinedTabs);
             in
-              mapAttrsToList (
+              emptyTabEntries
+              ++ mapAttrsToList (
                 _: p:
                   {
                     pinned = true;
@@ -480,30 +539,52 @@ in {
                   collapsed = p.isFolderCollapsed or false;
                   icon = p.folderIcon;
                   index = p.position;
+                  emptyTabIds =
+                    if folderHasDirectChild p
+                    then []
+                    else ["{${p.id}}-empty"];
                 })
                 groupPins;
+              splitViewFolderData =
+                mapAttrsToList (_: g: {
+                  pinned = true;
+                  splitViewGroup = true;
+                  id = g.id;
+                  name = g.name;
+                  collapsed = false;
+                  saveOnWindowClose = true;
+                  parentId = "{${g.folderParentId}}";
+                  prevSiblingInfo = {
+                    type = "start";
+                    id = null;
+                  };
+                  emptyTabIds = [];
+                  workspaceId = null;
+                })
+                (filterAttrs (_: g: g.folderParentId != null) profile.joinedTabs);
             in
-              map (f: {
-                pinned = true;
-                splitViewGroup = false;
-                id = f.id;
-                name = f.name;
-                collapsed = f.collapsed;
-                saveOnWindowClose = true;
-                parentId = f.parentId;
-                prevSiblingInfo = {
-                  type = "start";
-                  id = null;
-                };
-                emptyTabIds = [];
-                userIcon =
-                  if f.icon == null
-                  then ""
-                  else f.icon;
-                workspaceId = f.workspaceId;
-                index = f.index;
-              })
-              folderData
+              (map (f: {
+                  pinned = true;
+                  splitViewGroup = false;
+                  id = f.id;
+                  name = f.name;
+                  collapsed = f.collapsed;
+                  saveOnWindowClose = true;
+                  parentId = f.parentId;
+                  prevSiblingInfo = {
+                    type = "start";
+                    id = null;
+                  };
+                  inherit (f) emptyTabIds;
+                  userIcon =
+                    if f.icon == null
+                    then ""
+                    else f.icon;
+                  workspaceId = f.workspaceId;
+                  index = f.index;
+                })
+                folderData)
+              ++ splitViewFolderData
           );
 
           groupsJson = toJSON (

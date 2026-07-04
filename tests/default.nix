@@ -68,6 +68,7 @@
     "joined-tabs-sizes" = ./joined-tabs-sizes.nix;
     "joined-tabs-sizes-three-hsep" = ./joined-tabs-sizes-three-hsep.nix;
     "joined-tabs-with-folder" = ./joined-tabs-with-folder.nix;
+    "live-folders" = ./live-folders.nix;
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;
     "env-vars" = ./env-vars.nix;

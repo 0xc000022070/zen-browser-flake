@@ -362,7 +362,8 @@ in {
           || profile.spacesForce
           || profile.pins != {}
           || profile.pinsForce
-          || profile.joinedTabs != {})
+          || profile.joinedTabs != {}
+          || profile.liveFolders != {})
         cfg.profiles;
     in
       mapAttrs' (
@@ -431,16 +432,32 @@ in {
 
           childlessGroupPins = filterAttrs (_: p: p.isGroup && !(folderHasDirectChild p)) profile.pins;
 
-          emptyTabEntries =
+          # Live folders never have declared children (the browser owns them),
+          # so every one gets a placeholder like childless group pins do.
+          placeholderSpecs =
             mapAttrsToList (_: fp: {
+              tabId = "{${fp.id}}-empty";
+              groupId = "{${fp.id}}";
+              inherit (fp) workspace position;
+            })
+            childlessGroupPins
+            ++ mapAttrsToList (_: lf: {
+              tabId = "${lf.id}-empty";
+              groupId = lf.id;
+              inherit (lf) workspace position;
+            })
+            profile.liveFolders;
+
+          emptyTabEntries =
+            map (spec: {
               pinned = true;
               hidden = false;
               zenWorkspace =
-                if fp.workspace == null
+                if spec.workspace == null
                 then null
-                else "{${fp.workspace}}";
-              zenSyncId = "{${fp.id}}-empty";
-              id = "{${fp.id}}-empty";
+                else "{${spec.workspace}}";
+              zenSyncId = spec.tabId;
+              id = spec.tabId;
               zenEssential = false;
               zenDefaultUserContextId = null;
               zenPinnedIcon = null;
@@ -451,9 +468,9 @@ in {
               searchMode = null;
               userContextId = 0;
               attributes = {};
-              index = fp.position;
+              index = spec.position;
               lastAccessed = 0;
-              groupId = "{${fp.id}}";
+              groupId = spec.groupId;
               entries = [
                 {
                   url = "about:blank";
@@ -461,7 +478,7 @@ in {
                 }
               ];
             })
-            childlessGroupPins;
+            placeholderSpecs;
 
           pinsJson = toJSON (
             let
@@ -562,6 +579,32 @@ in {
                   workspaceId = null;
                 })
                 (filterAttrs (_: g: g.folderParentId != null) profile.joinedTabs);
+              liveFolderData =
+                mapAttrsToList (_: lf: {
+                  pinned = true;
+                  splitViewGroup = false;
+                  id = lf.id;
+                  name = lf.title;
+                  collapsed = lf.collapsed;
+                  saveOnWindowClose = true;
+                  parentId = null;
+                  prevSiblingInfo = {
+                    type = "start";
+                    id = null;
+                  };
+                  emptyTabIds = ["${lf.id}-empty"];
+                  userIcon =
+                    if lf.folderIcon == null
+                    then ""
+                    else lf.folderIcon;
+                  workspaceId =
+                    if lf.workspace == null
+                    then null
+                    else "{${lf.workspace}}";
+                  index = lf.position;
+                  isLiveFolder = true;
+                })
+                profile.liveFolders;
             in
               (map (f: {
                   pinned = true;
@@ -585,6 +628,7 @@ in {
                 })
                 folderData)
               ++ splitViewFolderData
+              ++ liveFolderData
           );
 
           groupsJson = toJSON (
@@ -604,6 +648,18 @@ in {
                   inherit (g) id name;
                 })
                 profile.joinedTabs;
+              liveFolderGroupData =
+                mapAttrsToList (_: lf: {
+                  pinned = true;
+                  splitView = false;
+                  id = lf.id;
+                  name = lf.title;
+                  color = "zen-workspace-color";
+                  collapsed = lf.collapsed;
+                  saveOnWindowClose = true;
+                  index = lf.position;
+                })
+                profile.liveFolders;
             in
               (map (f: {
                   pinned = true;
@@ -627,6 +683,7 @@ in {
                   saveOnWindowClose = true;
                 })
                 joinedTabData)
+              ++ liveFolderGroupData
           );
 
           joinedTabsJson = toJSON (

@@ -57,6 +57,7 @@ in {
     })
     (import ./package.nix {inherit self name mkSinePack;})
     (import ./places.nix)
+    (import ./live-folders.nix)
     (import ./keyboard-shortcuts.nix)
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
@@ -84,6 +85,23 @@ in {
           Essentials may not display. Consider enabling window-sync, e.g. with:
             "zen.window-sync.enabled" = true;
             "zen.window-sync.sync-only-pinned-tabs" = true;
+        ''
+        else null;
+
+      liveFoldersWindowSyncWarning = let
+        hasIssue = lib.any (
+          profile:
+            ((profile.settings or {})."zen.window-sync.enabled" or true)
+            == false
+            && (profile.liveFolders or {}) != {}
+        ) (lib.attrValues cfg.profiles);
+      in
+        if hasIssue
+        then ''
+          [Zen Browser] You have liveFolders but window-sync is disabled. Zen restores live
+          folders through the synced window; without it the folder may not attach and Zen
+          can clear zen-live-folders.jsonlz4 on its next save. Consider:
+            "zen.window-sync.enabled" = true;
         ''
         else null;
 
@@ -119,7 +137,7 @@ in {
         cfg.profiles
       );
     in
-      lib.filter (w: w != null) ([essentialPinsWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
+      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
 
     assertions =
       [
@@ -175,6 +193,32 @@ in {
             ])
             (profile.joinedTabs or {})
         )
-        cfg.profiles));
+        cfg.profiles))
+      ++ (lib.flatten (lib.mapAttrsToList (
+          profileName: profile:
+            lib.mapAttrsToList (lfName: lf: [
+              {
+                assertion = lf.kind != "rss" || lf.feedUrl != null;
+                message = "Profile '${profileName}' liveFolders '${lfName}': feedUrl is required when kind = \"rss\".";
+              }
+              {
+                assertion = lf.kind == "rss" || lf.feedUrl == null;
+                message = "Profile '${profileName}' liveFolders '${lfName}': feedUrl only applies to kind = \"rss\".";
+              }
+              {
+                assertion = !(lib.any (g: g.id == lf.id) (lib.attrValues (profile.joinedTabs or {})));
+                message = "Profile '${profileName}' liveFolders '${lfName}': id collides with a joinedTabs id.";
+              }
+            ])
+            (profile.liveFolders or {})
+        )
+        cfg.profiles))
+      ++ (lib.mapAttrsToList (profileName: profile: let
+          ids = map (lf: lf.id) (lib.attrValues (profile.liveFolders or {}));
+        in {
+          assertion = builtins.length ids == builtins.length (lib.unique ids);
+          message = "Profile '${profileName}': liveFolders ids must be unique.";
+        })
+        cfg.profiles);
   };
 }

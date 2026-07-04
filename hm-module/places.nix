@@ -371,6 +371,10 @@ in {
           mozlz4a = getExe pkgs.mozlz4a;
           jq = getExe pkgs.jq;
           sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
+          runningGuard = import ./running-guard.nix {
+            profileDir = "${profilePath}/${profileName}";
+            tag = "zen-sessions";
+          };
           wrapTabId = id:
             if hasPrefix "{" id
             then id
@@ -862,11 +866,7 @@ in {
                 exit 0
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running."
-                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
-                exit 1
-              fi
+              ${runningGuard}
 
               cp "$SESSIONS_FILE" "$BACKUP_FILE" || {
                 echo "zen-sessions: Failed to create backup of $SESSIONS_FILE"

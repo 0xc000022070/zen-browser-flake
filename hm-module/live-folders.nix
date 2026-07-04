@@ -171,6 +171,10 @@ in {
           jq = getExe pkgs.jq;
           sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
           liveFoldersFile = "${profilePath}/${profileName}/zen-live-folders.jsonlz4";
+          runningGuard = import ./running-guard.nix {
+            profileDir = "${profilePath}/${profileName}";
+            tag = "zen-live-folders";
+          };
 
           # Only provider config is declared; the browser fills runtime defaults
           # (interval, lastFetched, options) on load.
@@ -254,11 +258,7 @@ in {
                 exit 0
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
-                echo "zen-live-folders: Zen Browser appears to be running."
-                echo "zen-live-folders: Close Zen Browser and rebuild to apply live folder changes."
-                exit 1
-              fi
+              ${runningGuard}
 
               if [ ! -f "$LIVE_FILE" ]; then
                 ${mozlz4a} ${liveFoldersJsonFile} "$LIVE_FILE" || {

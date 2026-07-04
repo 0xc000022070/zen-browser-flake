@@ -165,6 +165,13 @@ in {
                 assertion = group.sizes == [] || lib.foldl' (a: b: a + b) 0 group.sizes == 100;
                 message = "Profile '${profileName}' joinedTabs '${groupName}': sizes must sum to 100 (got ${toString (lib.foldl' (a: b: a + b) 0 group.sizes)}).";
               }
+              {
+                assertion =
+                  group.folderParentId
+                  == null
+                  || lib.any (p: p.isGroup && p.id == group.folderParentId) (lib.attrValues (profile.pins or {}));
+                message = "Profile '${profileName}' joinedTabs '${groupName}': folderParentId must match the id of a pin with isGroup = true.";
+              }
             ])
             (profile.joinedTabs or {})
         )

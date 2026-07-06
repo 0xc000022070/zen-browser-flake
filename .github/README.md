@@ -95,7 +95,7 @@ inputs.zen-browser.packages."${system}".twilight-official
 
 # you can even override the package policies
 inputs.zen-browser.packages."${system}".default.override {
-  policies = {
+  extraPolicies = {
       DisableAppUpdate = true;
       DisableTelemetry = true;
       # more and more

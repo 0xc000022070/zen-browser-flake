@@ -8,7 +8,7 @@
   home.packages = [
     (
       inputs.zen-browser.packages."${system}".default.override {
-        policies = {
+        extraPolicies = {
           DisableAppUpdate = true;
           DisableTelemetry = true;
         };

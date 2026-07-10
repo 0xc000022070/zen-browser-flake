@@ -254,9 +254,9 @@ in {
                 exit 0
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
-                echo "zen-live-folders: Zen Browser appears to be running."
-                echo "zen-live-folders: Close Zen Browser and rebuild to apply live folder changes."
+              if "${pkgs.lsof}/bin/lsof" "$LOCK_FILE" >/dev/null 2>&1; then
+                echo "zen-sessions: Zen Browser appears to be running."
+                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
                 exit 1
               fi
 

@@ -862,7 +862,7 @@ in {
                 exit 0
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
+              if "${pkgs.lsof}/bin/lsof" -- "${profilePath}/${profileName}/.parentlock" >/dev/null 2>&1; then
                 echo "zen-sessions: Zen Browser appears to be running."
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
                 exit 1

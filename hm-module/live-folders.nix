@@ -235,6 +235,7 @@ in {
               LIVE_TMP="$(mktemp)"
               LIVE_MODIFIED="$(mktemp)"
               BACKUP_FILE="''${LIVE_FILE}.backup"
+              LOCK_FILE="''${SESSIONS_FILE%/*}/.parentlock"
 
               cleanup() {
                 rm -f "$LIVE_TMP" "$LIVE_MODIFIED"
@@ -254,7 +255,7 @@ in {
                 exit 0
               fi
 
-              if "${pkgs.lsof}/bin/lsof" "$LOCK_FILE" >/dev/null 2>&1; then
+              if "${lib.getExe pkgs.lsof}" "$LOCK_FILE" >/dev/null 2>&1; then
                 echo "zen-sessions: Zen Browser appears to be running."
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
                 exit 1

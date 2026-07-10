@@ -842,6 +842,7 @@ in {
               SESSIONS_TMP="$(mktemp)"
               SESSIONS_MODIFIED="$(mktemp)"
               BACKUP_FILE="''${SESSIONS_FILE}.backup"
+              LOCK_FILE="''${SESSIONS_FILE%/*}/.parentlock"
 
               cleanup() {
                 rm -f "$SESSIONS_TMP" "$SESSIONS_MODIFIED"
@@ -862,7 +863,7 @@ in {
                 exit 0
               fi
 
-              if "${pkgs.lsof}/bin/lsof" -- "${profilePath}/${profileName}/.parentlock" >/dev/null 2>&1; then
+              if "${pkgs.lsof}/bin/lsof" "$LOCK_FILE" >/dev/null 2>&1; then
                 echo "zen-sessions: Zen Browser appears to be running."
                 echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
                 exit 1

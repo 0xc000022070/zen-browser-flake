@@ -256,8 +256,8 @@ in {
               fi
 
               if "${lib.getExe pkgs.lsof}" "$LOCK_FILE" >/dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running."
-                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
+                echo "zen-live-folders: Zen Browser appears to be running."
+                echo "zen-live-folders: Close Zen Browser and rebuild to apply live folder changes."
                 exit 1
               fi
 

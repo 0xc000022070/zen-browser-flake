@@ -235,6 +235,7 @@ in {
               LIVE_TMP="$(mktemp)"
               LIVE_MODIFIED="$(mktemp)"
               BACKUP_FILE="''${LIVE_FILE}.backup"
+              LOCK_FILE="''${SESSIONS_FILE%/*}/.parentlock"
 
               cleanup() {
                 rm -f "$LIVE_TMP" "$LIVE_MODIFIED"
@@ -254,7 +255,7 @@ in {
                 exit 0
               fi
 
-              if pgrep "zen" > /dev/null 2>&1; then
+              if "${lib.getExe pkgs.lsof}" "$LOCK_FILE" >/dev/null 2>&1; then
                 echo "zen-live-folders: Zen Browser appears to be running."
                 echo "zen-live-folders: Close Zen Browser and rebuild to apply live folder changes."
                 exit 1

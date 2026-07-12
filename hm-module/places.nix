@@ -864,9 +864,9 @@ in {
               fi
 
               if "${lib.getExe pkgs.lsof}" "$LOCK_FILE" >/dev/null 2>&1; then
-                echo "zen-sessions: Zen Browser appears to be running."
-                echo "zen-sessions: Close Zen Browser and rebuild to apply spaces/pins changes."
-                exit 1
+                echo "zen-sessions: Zen Browser appears to be running; skipping spaces/pins changes."
+                echo "zen-sessions: Close Zen Browser and rebuild to apply them."
+                exit 0
               fi
 
               cp "$SESSIONS_FILE" "$BACKUP_FILE" || {

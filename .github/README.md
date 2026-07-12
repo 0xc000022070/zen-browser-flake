@@ -194,7 +194,7 @@ If you only declare simple options like policies/extensions/bookmarks, rebuildin
 
 Spaces, pins, and containers are stored in `zen-sessions.jsonlz4` (Mozilla LZ4 compressed JSON). The activation script:
 
-1. Checks if Zen is running via `lsof path_to_your_profile/.parentlock`—exits with error if browser is open
+1. Checks if Zen is running via `lsof path_to_your_profile/.parentlock`—skips the update with a warning (activation still succeeds) if browser is open
 2. Decompresses zen-sessions.jsonlz4 from LZ4 to JSON
 3. Modifies it with jq to apply your declared config
 4. Recompresses back to LZ4

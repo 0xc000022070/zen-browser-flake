@@ -256,9 +256,9 @@ in {
               fi
 
               if "${lib.getExe pkgs.lsof}" "$LOCK_FILE" >/dev/null 2>&1; then
-                echo "zen-live-folders: Zen Browser appears to be running."
-                echo "zen-live-folders: Close Zen Browser and rebuild to apply live folder changes."
-                exit 1
+                echo "zen-live-folders: Zen Browser appears to be running; skipping live folder changes."
+                echo "zen-live-folders: Close Zen Browser and rebuild to apply them."
+                exit 0
               fi
 
               if [ ! -f "$LIVE_FILE" ]; then

@@ -135,7 +135,7 @@ See the `examples/` directory for standalone configuration examples:
 | [07-bookmarks.nix](../examples/07-bookmarks.nix)                                 | Bookmark organization                     |
 | [08-containers.nix](../examples/08-containers.nix)                               | Multi-container setup                     |
 | [09-spaces-themes.nix](../examples/09-spaces-themes.nix)                         | Spaces with themes                        |
-| [10-pinned-tabs.nix](../examples/10-pinned-tabs.nix)                             | Pinned tabs and folders                   |
+| [10-pinned-tabs.nix](../examples/10-pinned-tabs.nix)                             | Pinned tabs, folders, space-scoped pins   |
 | [11-keyboard-shortcuts.nix](../examples/11-keyboard-shortcuts.nix)               | Keyboard shortcut overrides               |
 | [12-userchrome-css.nix](../examples/12-userchrome-css.nix)                       | userChrome CSS customization              |
 | [13-complete-setup.nix](../examples/13-complete-setup.nix)                       | Full real-world configuration             |

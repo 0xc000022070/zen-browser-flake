@@ -10,6 +10,14 @@
         id = "c6de089c-410d-4206-961d-ab11f988d40a";
         position = 1000;
         icon = "🏠";
+
+        # Pins can be declared under their space instead of the flat
+        # `pins` + `workspace` pairing (see 10-pinned-tabs.nix).
+        pins."Email" = {
+          id = "5e8db6a4-92c7-4f31-8a60-1b9f3ce47d28";
+          url = "https://mail.protonmail.com";
+          position = 100;
+        };
       };
       "Work" = {
         id = "cdd10fab-4fc5-494b-9041-325e5759195b";

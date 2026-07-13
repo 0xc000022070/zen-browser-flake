@@ -81,6 +81,14 @@
           position = 2000;
           icon = "💼";
           container = 1;
+
+          # Space-scoped form: same options as `pins.*` minus `workspace`,
+          # which is derived from this space's id.
+          pins."Tickets" = {
+            id = "7f2c91de-3b58-4c2a-9e47-d31f08a6b5c2";
+            url = "https://linear.app/";
+            position = 102;
+          };
         };
       };
 

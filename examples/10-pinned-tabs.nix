@@ -1,5 +1,9 @@
 # Pinned tabs with groups, folders, and container assignment
-# Pins can be organized in folders and assigned to specific containers/spaces.
+# Two declaration forms, freely mixable:
+#   - flat `pins`, targeting a space via `workspace = <spaceId>`
+#   - `spaces.<name>.pins`, same options minus `workspace` (derived from
+#     the owning space's `id`); participates in `pinsForce` accounting
+#     like any other declared pin
 #
 # ⚠ Only if using pins or pinsForce: close Zen before home-manager switch
 # (activation script needs exclusive access to modify zen-sessions.jsonlz4)
@@ -11,11 +15,6 @@
         url = "https://mail.protonmail.com";
         position = 101;
         isEssential = true;
-      };
-      "GitHub" = {
-        id = "48e8a119-5a14-4826-9545-91c8e8dd3bf6";
-        url = "https://github.com";
-        position = 102;
       };
       "Dev Tools" = {
         id = "d85a9026-1458-4db6-b115-346746bcc692";
@@ -42,5 +41,17 @@
     pinsForce = true;
     pinsForceAction = "remove"; # omit or "demote" to keep undeclared pins as normal tabs
     inherit pins;
+
+    # Space-scoped form: pins declared under the space that owns them.
+    spaces."Work" = {
+      id = "cdd10fab-4fc5-494b-9041-325e5759195b";
+      position = 1000;
+
+      pins."GitHub" = {
+        id = "48e8a119-5a14-4826-9545-91c8e8dd3bf6";
+        url = "https://github.com";
+        position = 102;
+      };
+    };
   };
 }

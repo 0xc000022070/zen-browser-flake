@@ -56,8 +56,11 @@ in {
       };
     })
     (import ./package.nix {inherit self name mkSinePack;})
-    (import ./places.nix)
-    (import ./live-folders.nix)
+    (import ./session/store.nix)
+    (import ./session/spaces.nix)
+    (import ./session/pins.nix)
+    (import ./session/joined-tabs.nix)
+    (import ./session/live-folders.nix)
     (import ./keyboard-shortcuts.nix)
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})

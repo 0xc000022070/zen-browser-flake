@@ -64,6 +64,7 @@
     "enable-beta-via-module" = ./enable-beta.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
+    "space-scoped-pins" = ./space-scoped-pins.nix;
     "joined-tabs" = ./joined-tabs.nix;
     "joined-tabs-sizes" = ./joined-tabs-sizes.nix;
     "joined-tabs-sizes-three-hsep" = ./joined-tabs-sizes-three-hsep.nix;

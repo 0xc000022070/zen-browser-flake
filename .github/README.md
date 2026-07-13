@@ -7,13 +7,13 @@ This is a nix flake for the Zen browser.
 - Linux and macOS support
 - Available for _x86_64_ and _aarch64_
 - Support for _twilight_ and _beta_
-- [Policies can be modified via Home Manager and unwrapped package override](#policies)
+- [Policies can be modified via Home Manager and unwrapped package override](../examples/02-policies-configuration.nix)
 - Fast & Automatic updates via GitHub Actions
 - Browser update checks are disabled by default
 - The default twilight version is reliable and reproducible
-- [Declarative \[Work\]Spaces (including themes, icons, containers)](#spaces)
-- [Declarative keyboard shortcuts with version protection](#keyboard-shortcuts)
-- [Declarative mods installation from Zen theme store](#mods)
+- [Declarative \[Work\]Spaces (including themes, icons, containers)](../examples/09-spaces-themes.nix)
+- [Declarative keyboard shortcuts with version protection](../examples/11-keyboard-shortcuts.nix)
+- [Declarative mods installation from Zen theme store](../examples/05-mods-installation.nix)
 
 _A flake for Zen Browser that lets you fine-tune more than other flakes._
 
@@ -140,7 +140,9 @@ See the `examples/` directory for standalone configuration examples:
 | [12-userchrome-css.nix](../examples/12-userchrome-css.nix)                       | userChrome CSS customization              |
 | [13-complete-setup.nix](../examples/13-complete-setup.nix)                       | Full real-world configuration             |
 | [14-native-messaging.nix](../examples/14-native-messaging.nix)                   | Native messaging hosts (1Password, etc.)  |
-
+| [15-joined-tabs.nix](../examples/15-joined-tabs.nix) | Joined tabs configuration  |                                          |
+| [16-environment-variables](../examples/16-environment-variables.nix) | Environment variables (themes, etc.)                  |
+| [17-live-folders](../examples/17-live-folders.nix) | Live folders (Issues, etc)  |                                           |
 ## Home Manager Reference
 
 This module is based on Home Manager's
@@ -170,7 +172,7 @@ Three distinct configuration layers, stored differently:
 
 Profiles support many sub-options. See examples directory for:
 
-- **Extensions**: [04-extensions.nix](../examples/04-extensions.nix), [04b-extensions-unfree.nix](../examples/04b-extensions-unfree.nix) (rycee's NUR)
+- **Extensions**: [04-extensions.nix](../examples/04-extensions.nix), [04b-extensions-rycee.nix](../examples/04b-extensions-rycee.nix)
 - **Mods**: [05-mods-installation.nix](../examples/05-mods-installation.nix) (Zen theme store)
 - **Search**: [06-search-engines.nix](../examples/06-search-engines.nix) (custom search shortcuts)
 - **Bookmarks**: [07-bookmarks.nix](../examples/07-bookmarks.nix)

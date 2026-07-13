@@ -1,3 +1,6 @@
+# Space-scoped pins (`spaces.*.pins`) desugar into the flat `pins` option
+# with `workspace` preset, so they inherit every pin behavior (placeholders,
+# folders, pinsForce accounting) for free.
 {lib, ...}: let
   inherit (lib) isPath mkOption setAttrByPath types;
 
@@ -5,6 +8,11 @@
     "programs"
     "zen-browser"
   ];
+
+  pinModule = import ../lib/pin-options.nix {
+    inherit lib;
+    includeWorkspace = false;
+  };
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
@@ -50,6 +58,14 @@ in {
                             type = nullOr ints.unsigned;
                             description = "Container ID to be used in space";
                             default = null;
+                          };
+                          pins = mkOption {
+                            type = attrsOf (submodule pinModule);
+                            description = ''
+                              Pins scoped to this space. Same options as `pins.*` except
+                              `workspace`, which is set to this space's `id` automatically.
+                            '';
+                            default = {};
                           };
                           theme.type = mkOption {
                             type = nullOr str;
@@ -137,7 +153,7 @@ in {
 
               config = let
                 inherit (builtins) isNull;
-                inherit (lib) mapAttrsToList;
+                inherit (lib) flatten listToAttrs mapAttrsToList nameValuePair;
               in {
                 sessionStore.spaces =
                   mapAttrsToList (
@@ -179,6 +195,16 @@ in {
                     }
                   )
                   config.spaces;
+
+                pins = listToAttrs (flatten (mapAttrsToList (
+                    spaceName: s:
+                      mapAttrsToList (
+                        pinName: p:
+                          nameValuePair "spaces/${spaceName}/${pinName}" (p // {workspace = s.id;})
+                      )
+                      s.pins
+                  )
+                  config.spaces));
               };
             }
           )

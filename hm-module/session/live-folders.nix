@@ -1,16 +1,12 @@
-# Declarative Zen live folders (RSS / GitHub PRs / GitHub issues).
-#
-# Owns the `liveFolders` options and the zen-live-folders.jsonlz4 writer.
-# The matching zen-sessions.jsonlz4 rows (folder row with isLiveFolder,
-# groups row, placeholder empty tab) are produced by places.nix, which owns
-# everything session-store side; both files must share the folder id.
+# Writes zen-live-folders.jsonlz4 and contributes the matching
+# zen-sessions.jsonlz4 rows; the two files join on the folder id.
 {
   config,
   pkgs,
   lib,
   ...
 }: let
-  inherit (lib) getAttrFromPath isPath mkIf mkOption setAttrByPath types;
+  inherit (lib) getAttrFromPath mkIf mkOption setAttrByPath types;
 
   modulePath = [
     "programs"
@@ -27,13 +23,16 @@
     then "${darwinConfigPath}/Profiles"
     else linuxConfigPath
   )}";
+
+  mkJsonlz4Updater = import ../lib/state-writer.nix {inherit pkgs lib;};
+  rows = import ../lib/session-rows.nix {inherit lib;};
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
       type = with types;
         attrsOf (
           submodule (
-            {...}: {
+            {config, ...}: {
               options = {
                 liveFolders = mkOption {
                   description = ''
@@ -89,7 +88,7 @@ in {
                             type = nullOr (either str path);
                             description = "Folder icon (sessions `userIcon`). Emoji, `chrome://…`, or path (`file://…`).";
                             apply = v:
-                              if isPath v
+                              if lib.isPath v
                               then "file://${v}"
                               else v;
                             default = null;
@@ -152,6 +151,60 @@ in {
                   default = {};
                 };
               };
+
+              config = let
+                inherit (lib) mapAttrsToList;
+              in {
+                # Live folders never have declared children (the browser owns
+                # them), so every one gets a placeholder like childless group pins.
+                sessionStore.tabs = mapAttrsToList (_: lf:
+                  rows.mkEmptyTabRow {
+                    tabId = "${lf.id}-empty";
+                    groupId = lf.id;
+                    inherit (lf) workspace position;
+                  })
+                config.liveFolders;
+
+                sessionStore.folders =
+                  mapAttrsToList (_: lf: {
+                    pinned = true;
+                    splitViewGroup = false;
+                    id = lf.id;
+                    name = lf.title;
+                    collapsed = lf.collapsed;
+                    saveOnWindowClose = true;
+                    parentId = null;
+                    prevSiblingInfo = {
+                      type = "start";
+                      id = null;
+                    };
+                    emptyTabIds = ["${lf.id}-empty"];
+                    userIcon =
+                      if lf.folderIcon == null
+                      then ""
+                      else lf.folderIcon;
+                    workspaceId =
+                      if lf.workspace == null
+                      then null
+                      else "{${lf.workspace}}";
+                    index = lf.position;
+                    isLiveFolder = true;
+                  })
+                  config.liveFolders;
+
+                sessionStore.groups =
+                  mapAttrsToList (_: lf: {
+                    pinned = true;
+                    splitView = false;
+                    id = lf.id;
+                    name = lf.title;
+                    color = "zen-workspace-color";
+                    collapsed = lf.collapsed;
+                    saveOnWindowClose = true;
+                    index = lf.position;
+                  })
+                  config.liveFolders;
+              };
             }
           )
         );
@@ -167,8 +220,6 @@ in {
     in
       mapAttrs' (
         profileName: profile: let
-          mozlz4a = getExe pkgs.mozlz4a;
-          jq = getExe pkgs.jq;
           sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
           liveFoldersFile = "${profilePath}/${profileName}/zen-live-folders.jsonlz4";
 
@@ -227,82 +278,33 @@ in {
             ] + [$decl[] | select(.id as $id | $eIds | index($id) | not)]
           '';
 
-          updateScript =
-            pkgs.writeShellScript "zen-live-folders-update-${profileName}"
-            ''
-              SESSIONS_FILE="${sessionsFile}"
-              LIVE_FILE="${liveFoldersFile}"
-              LIVE_TMP="$(mktemp)"
-              LIVE_MODIFIED="$(mktemp)"
-              BACKUP_FILE="''${LIVE_FILE}.backup"
-              LOCK_FILE="''${SESSIONS_FILE%/*}/.parentlock"
-
-              cleanup() {
-                rm -f "$LIVE_TMP" "$LIVE_MODIFIED"
-              }
-
-              restore_and_cleanup() {
-                if [ -f "$BACKUP_FILE" ]; then
-                  mv "$BACKUP_FILE" "$LIVE_FILE"
-                fi
-                cleanup
-              }
-
-              trap cleanup EXIT
-
-              if [ ! -f "$SESSIONS_FILE" ]; then
+          updateScript = mkJsonlz4Updater {
+            name = "zen-live-folders-update-${profileName}";
+            logPrefix = "zen-live-folders";
+            subject = "live folders";
+            skipSubject = "live folder";
+            stateFile = liveFoldersFile;
+            lockFile = "${profilePath}/${profileName}/.parentlock";
+            slurpfiles = {
+              declaredLiveFolders = liveFoldersJsonFile;
+            };
+            inherit jqFilterFile;
+            preChecks = ''
+              if [ ! -f "${sessionsFile}" ]; then
                 echo "zen-live-folders: Sessions file not found; skipping (live folders need their session folder rows)"
                 exit 0
               fi
-
-              if "${lib.getExe pkgs.lsof}" "$LOCK_FILE" >/dev/null 2>&1; then
-                echo "zen-live-folders: Zen Browser appears to be running; skipping live folder changes."
-                echo "zen-live-folders: Close Zen Browser and rebuild to apply them."
-                exit 0
-              fi
-
-              if [ ! -f "$LIVE_FILE" ]; then
-                ${mozlz4a} ${liveFoldersJsonFile} "$LIVE_FILE" || {
-                  echo "zen-live-folders: Failed to create $LIVE_FILE"
+            '';
+            postLockChecks = ''
+              if [ ! -f "$STATE_FILE" ]; then
+                ${getExe pkgs.mozlz4a} ${liveFoldersJsonFile} "$STATE_FILE" || {
+                  echo "zen-live-folders: Failed to create $STATE_FILE"
                   exit 1
                 }
                 exit 0
               fi
-
-              cp "$LIVE_FILE" "$BACKUP_FILE" || {
-                echo "zen-live-folders: Failed to create backup of $LIVE_FILE"
-                exit 1
-              }
-
-              ${mozlz4a} -d "$LIVE_FILE" "$LIVE_TMP" || {
-                echo "zen-live-folders: Failed to decompress $LIVE_FILE"
-                restore_and_cleanup
-                exit 1
-              }
-
-              ${jq} \
-                --slurpfile declaredLiveFolders ${liveFoldersJsonFile} \
-                -f ${jqFilterFile} \
-                "$LIVE_TMP" > "$LIVE_MODIFIED" || {
-                echo "zen-live-folders: Failed to apply modifications to live folders data"
-                restore_and_cleanup
-                exit 1
-              }
-
-              if [ ! -s "$LIVE_MODIFIED" ]; then
-                echo "zen-live-folders: Modified live folders file is empty, restoring backup"
-                restore_and_cleanup
-                exit 1
-              fi
-
-              ${mozlz4a} "$LIVE_MODIFIED" "$LIVE_FILE" || {
-                echo "zen-live-folders: Failed to recompress live folders file"
-                restore_and_cleanup
-                exit 1
-              }
-
-              rm -f "$BACKUP_FILE"
             '';
+          };
         in
           nameValuePair "zen-live-folders-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary" "zen-sessions-${profileName}"]
             ''

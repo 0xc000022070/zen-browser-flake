@@ -62,11 +62,6 @@ in {
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
     (import ./default-browser.nix {inherit name;})
-    (lib.mkRemovedOptionModule [
-      "programs"
-      "zen-browser"
-      "suppressXdgMigrationWarning"
-    ] "The XDG migration stage has ended.")
   ];
 
   config = mkIf cfg.enable {

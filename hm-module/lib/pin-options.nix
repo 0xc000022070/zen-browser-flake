@@ -1,11 +1,20 @@
 # Pin submodule shared by `pins` and the space-scoped `spaces.*.pins`.
 # Space-scoped pins exclude `workspace`: it is derived from the owning
-# space during desugaring (session/spaces.nix).
+# space during desugaring (session/spaces.nix). Child pins (`pins.*.pins`)
+# exclude both `workspace` and `folderParentId`: they are inherited from
+# the owning folder pin during resolution (lib/resolve-pins.nix).
 {
   lib,
   includeWorkspace ? true,
+  includeFolderParent ? true,
 }: let
   inherit (lib) isPath mkOption types;
+
+  childPinModule = import ./pin-options.nix {
+    inherit lib;
+    includeWorkspace = false;
+    includeFolderParent = false;
+  };
 in
   {name, ...}: {
     options = with types;
@@ -78,6 +87,19 @@ in
             else v;
           default = null;
         };
+        pins = mkOption {
+          type = attrsOf (submodule childPinModule);
+          # shallow: the type is recursive; documenting sub-options would never terminate.
+          visible = "shallow";
+          default = {};
+          description = ''
+            Child pins nested under this pin, making it a folder (`isGroup` is implied).
+            Same options as `pins.*` except `workspace` and `folderParentId`, which are
+            inherited from this pin. Nest further for folders inside folders.
+          '';
+        };
+      }
+      // lib.optionalAttrs includeFolderParent {
         folderParentId = mkOption {
           type = nullOr str;
           default = null;

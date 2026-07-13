@@ -45,6 +45,19 @@
                 url = "https://search.nixos.org/packages";
                 position = 201;
               };
+
+              # Embedded folder: isGroup implied, children inherit
+              # workspace + folderParentId.
+              "Tools" = {
+                id = "bbbb0001-0000-4000-8000-00000000000c";
+                position = 300;
+
+                pins."Hydra" = {
+                  id = "bbbb0002-0000-4000-8000-00000000000d";
+                  url = "https://hydra.nixos.org";
+                  position = 301;
+                };
+              };
             };
           };
         };
@@ -114,8 +127,17 @@
         "jq -e '.tabs[] | select(.zenSyncId == \"{92931d60-fd40-4707-9512-a57b1a6a3919}\") | .zenWorkspace == \"{aaaa0002-0000-4000-8000-00000000000b}\"' /tmp/sessions.json"
       )
 
+      # Embedded folder: child tab carries the folder's groupId and the space's
+      # workspace; the folder row lands in the space with no placeholder tab
+      machine.succeed(
+        "jq -e '.tabs[] | select(.zenSyncId == \"{bbbb0002-0000-4000-8000-00000000000d}\") | .groupId == \"{bbbb0001-0000-4000-8000-00000000000c}\" and .zenWorkspace == \"{aaaa0002-0000-4000-8000-00000000000b}\"' /tmp/sessions.json"
+      )
+      machine.succeed(
+        "jq -e '.folders[] | select(.id == \"{bbbb0001-0000-4000-8000-00000000000c}\") | .workspaceId == \"{aaaa0002-0000-4000-8000-00000000000b}\" and .emptyTabIds == []' /tmp/sessions.json"
+      )
+
       # pinsForce=remove counts nested pins as declared: they survive, the orphan does not
-      machine.succeed("jq -e '[.tabs[] | select(.pinned == true)] | length == 4' /tmp/sessions.json")
+      machine.succeed("jq -e '[.tabs[] | select(.pinned == true)] | length == 5' /tmp/sessions.json")
       machine.succeed(
         "jq -e '[.tabs[] | select(.zenSyncId == \"{deadbeef-0000-4000-8000-000000000000}\")] | length == 0' /tmp/sessions.json"
       )

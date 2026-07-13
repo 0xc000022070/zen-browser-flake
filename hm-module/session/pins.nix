@@ -7,6 +7,7 @@
   ];
 
   pinModule = import ../lib/pin-options.nix {inherit lib;};
+  resolvePins = import ../lib/resolve-pins.nix {inherit lib;};
   rows = import ../lib/session-rows.nix {inherit lib;};
 in {
   options = setAttrByPath modulePath {
@@ -44,6 +45,16 @@ in {
                   type = attrsOf (submodule pinModule);
                   default = {};
                 };
+                pinsResolved = mkOption {
+                  type = lazyAttrsOf raw;
+                  internal = true;
+                  readOnly = true;
+                  description = ''
+                    Flat view of `pins` with nested child pins (`pins.*.pins`) resolved:
+                    `folderParentId` and `workspace` inherited from the owning folder pin,
+                    `isGroup` implied by children. Consumers read this, never `pins`.
+                  '';
+                };
               };
 
               config = let
@@ -52,8 +63,8 @@ in {
 
                 joinedTabIds = config.sessionStore.joinedTabIds;
 
-                nonGroupPins = filterAttrs (_: p: !p.isGroup) config.pins;
-                groupPins = filterAttrs (_: p: p.isGroup) config.pins;
+                nonGroupPins = filterAttrs (_: p: !p.isGroup) config.pinsResolved;
+                groupPins = filterAttrs (_: p: p.isGroup) config.pinsResolved;
 
                 # A pin owned by a split group carries the group's groupId, not the
                 # folder's, so it doesn't keep the folder alive on restore — such
@@ -64,10 +75,13 @@ in {
                       !p.isGroup
                       && p.folderParentId == fp.id
                       && !(elem "{${p.id}}" joinedTabIds)
-                  ) (attrValues config.pins);
+                  ) (attrValues config.pinsResolved);
 
-                childlessGroupPins = filterAttrs (_: p: p.isGroup && !(folderHasDirectChild p)) config.pins;
+                childlessGroupPins = filterAttrs (_: p: p.isGroup && !(folderHasDirectChild p)) config.pinsResolved;
+                maxSubfolders = (config.settings or {})."zen.folders.max-subfolders" or 5;
               in {
+                pinsResolved = resolvePins maxSubfolders config.pins;
+
                 sessionStore.tabs =
                   mapAttrsToList (_: fp:
                     rows.mkEmptyTabRow {

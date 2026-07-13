@@ -219,19 +219,44 @@ in {
                 assertion = lf.kind == "rss" || lf.feedUrl == null;
                 message = "Profile '${profileName}' liveFolders '${lfName}': feedUrl only applies to kind = \"rss\".";
               }
-              {
-                assertion = !(lib.any (g: g.id == lf.id) (lib.attrValues (profile.joinedTabs or {})));
-                message = "Profile '${profileName}' liveFolders '${lfName}': id collides with a joinedTabs id.";
-              }
             ])
             (profile.liveFolders or {})
         )
         cfg.profiles))
       ++ (lib.mapAttrsToList (profileName: profile: let
-          ids = map (lf: lf.id) (lib.attrValues (profile.liveFolders or {}));
+          # Spaces, pins, joinedTabs and liveFolders all become rows keyed by
+          # id in zen-sessions.jsonlz4, so they share one id namespace: the
+          # upsert merges entries sharing an id into the first declaration and
+          # silently drops the rest.
+          declared =
+            lib.mapAttrsToList (n: v: {
+              inherit (v) id;
+              name = "pins.'${n}'";
+            }) (profile.pinsResolved or {})
+            ++ lib.mapAttrsToList (n: v: {
+              inherit (v) id;
+              name = "spaces.'${n}'";
+            }) (profile.spaces or {})
+            ++ lib.mapAttrsToList (n: v: {
+              inherit (v) id;
+              name = "joinedTabs.'${n}'";
+            }) (profile.joinedTabs or {})
+            ++ lib.mapAttrsToList (n: v: {
+              inherit (v) id;
+              name = "liveFolders.'${n}'";
+            }) (profile.liveFolders or {});
+          byId = lib.foldl' (acc: d: acc // {${d.id} = (acc.${d.id} or []) ++ [d.name];}) {} declared;
+          collisions = lib.filterAttrs (_: names: builtins.length names > 1) byId;
         in {
-          assertion = builtins.length ids == builtins.length (lib.unique ids);
-          message = "Profile '${profileName}': liveFolders ids must be unique.";
+          assertion = collisions == {};
+          message = "Profile '${profileName}': duplicate ids — entries sharing an id merge into the first declaration and the rest are silently dropped. Reused: ${
+            lib.concatStringsSep "; " (
+              lib.mapAttrsToList (
+                id: names: "'${id}' by ${lib.concatStringsSep ", " names}"
+              )
+              collisions
+            )
+          }";
         })
         cfg.profiles)
       ++ (lib.flatten (lib.mapAttrsToList (

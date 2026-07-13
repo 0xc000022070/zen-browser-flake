@@ -78,8 +78,9 @@ in {
                   ) (attrValues config.pinsResolved);
 
                 childlessGroupPins = filterAttrs (_: p: p.isGroup && !(folderHasDirectChild p)) config.pinsResolved;
+                maxSubfolders = (config.settings or {})."zen.folders.max-subfolders" or 5;
               in {
-                pinsResolved = resolvePins config.pins;
+                pinsResolved = resolvePins maxSubfolders config.pins;
 
                 sessionStore.tabs =
                   mapAttrsToList (_: fp:

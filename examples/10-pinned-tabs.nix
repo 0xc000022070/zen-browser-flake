@@ -4,6 +4,12 @@
 #   - `spaces.<name>.pins`, same options minus `workspace` (derived from
 #     the owning space's `id`); participates in `pinsForce` accounting
 #     like any other declared pin
+# Folders, two forms, freely mixable:
+#   - embedded: nest children under the folder pin's `pins` — `isGroup` is
+#     implied, children inherit `workspace` and `folderParentId`, nesting
+#     can go deeper
+#   - flat: declare the folder with `isGroup = true` and point siblings at
+#     it via `folderParentId = pins."<folder>".id`
 #
 # ⚠ Only if using pins or pinsForce: close Zen before home-manager switch
 # (activation script needs exclusive access to modify zen-sessions.jsonlz4)
@@ -16,25 +22,33 @@
         position = 101;
         isEssential = true;
       };
+
+      # Embedded form: children live inside the folder pin.
       "Dev Tools" = {
         id = "d85a9026-1458-4db6-b115-346746bcc692";
-        isGroup = true;
         isFolderCollapsed = false;
         editedTitle = true;
         position = 200;
         folderIcon = "chrome://browser/skin/zen-icons/selectable/eye.svg";
+
+        pins."NixOS Packages" = {
+          id = "f8dd784e-11d7-430a-8f57-7b05ecdb4c77";
+          url = "https://search.nixos.org/packages";
+          position = 201;
+        };
       };
-      "NixOS Packages" = {
-        id = "f8dd784e-11d7-430a-8f57-7b05ecdb4c77";
-        url = "https://search.nixos.org/packages";
-        folderParentId = pins."Dev Tools".id;
-        position = 201;
+
+      # Flat form: same result, folder and child are siblings.
+      "Reference" = {
+        id = "6b8f0d24-93a1-4c5e-b7d2-08e4f61a9c35";
+        isGroup = true;
+        position = 300;
       };
       "NixOS Options" = {
         id = "92931d60-fd40-4707-9512-a57b1a6a3919";
         url = "https://search.nixos.org/options";
-        folderParentId = pins."Dev Tools".id;
-        position = 202;
+        folderParentId = pins."Reference".id;
+        position = 301;
       };
     };
   in {

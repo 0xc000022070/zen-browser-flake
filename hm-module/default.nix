@@ -74,7 +74,7 @@ in {
           profile:
             ((profile.settings or {})."zen.window-sync.enabled" or true)
             == false
-            && lib.any (p: p.isEssential or false) (lib.attrValues (profile.pins or {}))
+            && lib.any (p: p.isEssential or false) (lib.attrValues (profile.pinsResolved or {}))
         ) (lib.attrValues cfg.profiles);
       in
         if hasIssue
@@ -113,7 +113,23 @@ in {
                     [Zen Browser] '${profileName}' / '${pinName}': `pins.*.icon` does nothing — tab icons are not declarative here; set them in Zen for now. Folders only: `folderIcon` with `isGroup`; workspaces: `spaces.*.icon`.
                   ''
               )
-              (profile.pins or {})
+              (profile.pinsResolved or {})
+            )
+        )
+        cfg.profiles
+      );
+
+      urlOnFolderWarnings = lib.concatLists (
+        lib.mapAttrsToList (
+          profileName: profile:
+            lib.concatLists (
+              lib.mapAttrsToList (
+                pinName: pin:
+                  lib.optional (pin.isGroup && (pin.url or null) != null) ''
+                    [Zen Browser] '${profileName}' / '${pinName}': `url` does nothing on a folder pin — folders have no page. Note that nesting child pins under a pin makes it a folder (`isGroup` is implied).
+                  ''
+              )
+              (profile.pinsResolved or {})
             )
         )
         cfg.profiles
@@ -129,13 +145,13 @@ in {
                     [Zen Browser] '${profileName}' / '${pinName}': `folderIcon` only applies when `isGroup = true`; ignored here.
                   ''
               )
-              (profile.pins or {})
+              (profile.pinsResolved or {})
             )
         )
         cfg.profiles
       );
     in
-      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ folderIconMisuseWarnings);
+      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings);
 
     assertions =
       [
@@ -185,7 +201,7 @@ in {
                 assertion =
                   group.folderParentId
                   == null
-                  || lib.any (p: p.isGroup && p.id == group.folderParentId) (lib.attrValues (profile.pins or {}));
+                  || lib.any (p: p.isGroup && p.id == group.folderParentId) (lib.attrValues (profile.pinsResolved or {}));
                 message = "Profile '${profileName}' joinedTabs '${groupName}': folderParentId must match the id of a pin with isGroup = true.";
               }
             ])
@@ -217,6 +233,15 @@ in {
           assertion = builtins.length ids == builtins.length (lib.unique ids);
           message = "Profile '${profileName}': liveFolders ids must be unique.";
         })
-        cfg.profiles);
+        cfg.profiles)
+      ++ (lib.flatten (lib.mapAttrsToList (
+          profileName: profile:
+            lib.mapAttrsToList (pinName: pin: {
+              assertion = !(pin.isEssential && pin.folderParentId != null);
+              message = "Profile '${profileName}' pins '${pinName}': essential pins live in the essentials strip and cannot be inside a folder (isEssential = true with a folder parent).";
+            })
+            (profile.pinsResolved or {})
+        )
+        cfg.profiles));
   };
 }

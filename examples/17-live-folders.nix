@@ -41,5 +41,18 @@
         github.authorMe = true;
       };
     };
+
+    # Space-scoped form: same options as liveFolders.* except workspace,
+    # which is set to the owning space's id automatically.
+    spaces."Work" = {
+      id = "8a2c47f0-1d9e-4b36-a5c8-f70e92b4d615";
+
+      liveFolders."Team PRs" = {
+        id = "e5b81c39-7f42-4d0a-96e3-2a8c50d17b64";
+        kind = "github:pull-requests";
+        position = 403;
+        github.reviewRequested = true;
+      };
+    };
   };
 }

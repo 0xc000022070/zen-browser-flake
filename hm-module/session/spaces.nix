@@ -1,6 +1,7 @@
-# Space-scoped pins (`spaces.*.pins`) desugar into the flat `pins` option
-# with `workspace` preset, so they inherit every pin behavior (placeholders,
-# folders, pinsForce accounting) for free.
+# Space-scoped pins (`spaces.*.pins`) and live folders (`spaces.*.liveFolders`)
+# desugar into the flat `pins` / `liveFolders` options with `workspace` preset,
+# so they inherit every producer behavior (placeholders, folders, pinsForce
+# accounting, the zen-live-folders writer) for free.
 {lib, ...}: let
   inherit (lib) isPath mkOption setAttrByPath types;
 
@@ -10,6 +11,11 @@
   ];
 
   pinModule = import ../lib/pin-options.nix {
+    inherit lib;
+    includeWorkspace = false;
+  };
+
+  liveFolderModule = import ../lib/live-folder-options.nix {
     inherit lib;
     includeWorkspace = false;
   };
@@ -64,6 +70,14 @@ in {
                             description = ''
                               Pins scoped to this space. Same options as `pins.*` except
                               `workspace`, which is set to this space's `id` automatically.
+                            '';
+                            default = {};
+                          };
+                          liveFolders = mkOption {
+                            type = attrsOf (submodule liveFolderModule);
+                            description = ''
+                              Live folders scoped to this space. Same options as `liveFolders.*`
+                              except `workspace`, which is set to this space's `id` automatically.
                             '';
                             default = {};
                           };
@@ -203,6 +217,16 @@ in {
                           nameValuePair "spaces/${spaceName}/${pinName}" (p // {workspace = s.id;})
                       )
                       s.pins
+                  )
+                  config.spaces));
+
+                liveFolders = listToAttrs (flatten (mapAttrsToList (
+                    spaceName: s:
+                      mapAttrsToList (
+                        lfName: lf:
+                          nameValuePair "spaces/${spaceName}/${lfName}" (lf // {workspace = s.id;})
+                      )
+                      s.liveFolders
                   )
                   config.spaces));
               };

@@ -140,7 +140,9 @@ See the `examples/` directory for standalone configuration examples:
 | [12-userchrome-css.nix](../examples/12-userchrome-css.nix)                       | userChrome CSS customization              |
 | [13-complete-setup.nix](../examples/13-complete-setup.nix)                       | Full real-world configuration             |
 | [14-native-messaging.nix](../examples/14-native-messaging.nix)                   | Native messaging hosts (1Password, etc.)  |
-
+| [15-joined-tabs.nix](../examples/15-joined-tabs.nix) | Joined tabs configuration  |                                          |
+| [16-environment-variables](../examples/16-environment-variables.nix) | Environment variables (themes, etc.)                  |
+| [17-live-folders](../examples/17-live-folders.nix) | Live folders (Issues, etc)  |                                           |
 ## Home Manager Reference
 
 This module is based on Home Manager's

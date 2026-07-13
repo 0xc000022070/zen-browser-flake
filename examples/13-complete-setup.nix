@@ -2,7 +2,11 @@
 # This example shows a fully configured Zen Browser with spaces, containers, pins, and shortcuts.
 # ⚠ Close Zen before home-manager switch
 # (uses spacesForce, pinsForce, pinsForceAction, keyboardShortcuts—these modify state files)
-{inputs, ...}: {
+{
+  inputs,
+  pkgs,
+  ...
+}: {
   imports = [inputs.zen-browser.homeModules.beta];
 
   programs.zen-browser = {
@@ -13,6 +17,14 @@
       DisableAppUpdate = true;
       DisableTelemetry = true;
       DisablePocket = true;
+    };
+
+    nativeMessagingHosts = [
+      pkgs.firefoxpwa
+      # ... more ...
+    ];
+    env = {
+      GTK_THEME = "Adwaita";
     };
 
     profiles.default = {
@@ -97,6 +109,48 @@
           disabled = true;
         }
       ];
+
+      userChrome = ''
+        #navigator-toolbox {
+          background-color: #2b2b2b;
+        }
+
+        #TabsToolbar {
+          min-height: 28px;
+        }
+
+        .tab-icon-image {
+          width: 16px;
+          height: 16px;
+        }
+      '';
+      liveFolders = {
+        "Prisma blog" = {
+          id = "0f3f2f66-64bc-4a43-8f86-01c2a134c4f4";
+          kind = "rss";
+          feedUrl = "https://www.prisma.io/blog/rss.xml";
+          folderIcon = "https://www.prisma.io/favicon.ico";
+          position = 400;
+          maxItems = 5;
+        };
+
+        "Pull requests" = {
+          id = "b7a3d5c1-9e2f-4a68-b0d4-6f1c8e5a2d93";
+          kind = "github:pull-requests";
+          position = 401;
+          github = {
+            assignedMe = true; # default
+            reviewRequested = true;
+          };
+        };
+
+        "My issues" = {
+          id = "3c9e1f7a-5b24-4d80-9a6c-e2f4b8d10c57";
+          kind = "github:issues";
+          position = 402;
+          github.authorMe = true;
+        };
+      };
     };
   };
 }

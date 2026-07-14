@@ -75,6 +75,26 @@ in {
               config = mkIf config.presets.catppuccin.enable {
                 userChrome = mkDefault ''@import "catppuccin/userChrome.css";'';
                 userContent = mkDefault ''@import "catppuccin/userContent.css";'';
+
+                # Upstream gates every flavor behind prefers-color-scheme
+                # (Latte light, the rest dark); if the chrome scheme does not
+                # match the flavor the theme never applies. Zen's own dark
+                # mode (zen.view.window.scheme) does not flip that media
+                # query, so align the Firefox-level scheme too.
+                settings = let
+                  dark = config.presets.catppuccin.flavor != "Latte";
+                in {
+                  "ui.systemUsesDarkTheme" = mkDefault (
+                    if dark
+                    then 1
+                    else 0
+                  );
+                  "zen.view.window.scheme" = mkDefault (
+                    if dark
+                    then 0
+                    else 1
+                  );
+                };
               };
             }
           )

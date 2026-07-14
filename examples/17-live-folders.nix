@@ -5,17 +5,24 @@
 # (provider config). The module writes both; runtime state the browser tracks
 # (lastFetched, dismissed items, discovered repos) survives re-activation.
 #
+# Every live folder belongs to exactly one space, so `workspace` is required
+# at profile level. Without declared spaces, copy Zen's auto-created space id
+# from the `zen.workspaces.active` pref in about:config, minus the braces.
+#
 # GitHub kinds reuse the browser's logged-in github.com session — no token.
 # Keep "zen.window-sync.enabled" = true (the default) or Zen may drop the
 # entries on restore.
 {
-  programs.zen-browser.profiles.default = {
+  programs.zen-browser.profiles.default = let
+    workSpaceId = "8a2c47f0-1d9e-4b36-a5c8-f70e92b4d615";
+  in {
     liveFolders = {
       "Prisma blog" = {
         id = "0f3f2f66-64bc-4a43-8f86-01c2a134c4f4";
         kind = "rss";
         feedUrl = "https://www.prisma.io/blog/rss.xml";
         folderIcon = "https://www.prisma.io/favicon.ico";
+        workspace = workSpaceId;
         position = 400;
         maxItems = 5;
         # timeRange = 86400000;   # only items from the last 24 h; 0 (default) keeps all
@@ -25,6 +32,7 @@
       "Pull requests" = {
         id = "b7a3d5c1-9e2f-4a68-b0d4-6f1c8e5a2d93";
         kind = "github:pull-requests";
+        workspace = workSpaceId;
         position = 401;
         github = {
           assignedMe = true; # default
@@ -37,6 +45,7 @@
       "My issues" = {
         id = "3c9e1f7a-5b24-4d80-9a6c-e2f4b8d10c57";
         kind = "github:issues";
+        workspace = workSpaceId;
         position = 402;
         github.authorMe = true;
       };
@@ -45,7 +54,7 @@
     # Space-scoped form: same options as liveFolders.* except workspace,
     # which is set to the owning space's id automatically.
     spaces."Work" = {
-      id = "8a2c47f0-1d9e-4b36-a5c8-f70e92b4d615";
+      id = workSpaceId;
 
       liveFolders."Team PRs" = {
         id = "e5b81c39-7f42-4d0a-96e3-2a8c50d17b64";

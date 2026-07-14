@@ -2,6 +2,9 @@
 
 This is a nix flake for the Zen browser.
 
+<img width="3200" height="1800" alt="image" src="https://github.com/user-attachments/assets/df4d258d-e6f7-45d2-8ecf-00c0d15e1698" />
+
+
 ## Features
 
 - Linux and macOS support

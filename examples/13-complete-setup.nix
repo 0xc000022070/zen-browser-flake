@@ -118,7 +118,17 @@
         }
       ];
 
+      presets.catppuccin = {
+        enable = true;
+        flavor = "Mocha";
+        accent = "Mauve";
+      };
+
+      # Declaring userChrome overrides the preset's default import, so re-add
+      # it on top to keep the theme (userContent stays preset-managed here).
       userChrome = ''
+        @import "catppuccin/userChrome.css";
+
         #navigator-toolbox {
           background-color: #2b2b2b;
         }

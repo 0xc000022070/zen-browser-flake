@@ -71,6 +71,10 @@
         "rev": "d3914368981fe71d0829f03dbc7990338d9f5a6d",
         "hash": "sha256-XHbbRYWyZ9clIsllEq3fs4vUiGjHdku3yLVkX6Xt5Hg="
       }
+    },
+    "catppuccin": {
+      "rev": "c855685442c6040c4dda9c8d3ddc7b708de1cbaa",
+      "hash": "sha256-5A57Lyctq497SSph7B+ucuEyF1gGVTsuI3zuBItGfg4="
     }
   },
   "metadata_for": {

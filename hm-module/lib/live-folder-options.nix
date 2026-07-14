@@ -107,7 +107,12 @@ in
         workspace = mkOption {
           type = nullOr str;
           default = null;
-          description = "Workspace ID owning the folder (bare UUID, as in `spaces.*.id`).";
+          description = ''
+            REQUIRED. Workspace ID owning the folder (bare UUID, as in
+            `spaces.*.id`); Zen folders belong to exactly one space. Without
+            declared spaces, copy Zen's auto-created space id from the
+            `zen.workspaces.active` pref in `about:config`, minus the braces.
+          '';
         };
       };
   }

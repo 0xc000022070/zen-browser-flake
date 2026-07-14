@@ -132,12 +132,14 @@
           height: 16px;
         }
       '';
+      # workspace is required: every live folder belongs to exactly one space.
       liveFolders = {
         "Prisma blog" = {
           id = "0f3f2f66-64bc-4a43-8f86-01c2a134c4f4";
           kind = "rss";
           feedUrl = "https://www.prisma.io/blog/rss.xml";
           folderIcon = "https://www.prisma.io/favicon.ico";
+          workspace = "c6de089c-410d-4206-961d-ab11f988d40a"; # General
           position = 400;
           maxItems = 5;
         };
@@ -145,6 +147,7 @@
         "Pull requests" = {
           id = "b7a3d5c1-9e2f-4a68-b0d4-6f1c8e5a2d93";
           kind = "github:pull-requests";
+          workspace = "cdd10fab-4fc5-494b-9041-325e5759195b"; # Work
           position = 401;
           github = {
             assignedMe = true; # default
@@ -155,6 +158,7 @@
         "My issues" = {
           id = "3c9e1f7a-5b24-4d80-9a6c-e2f4b8d10c57";
           kind = "github:issues";
+          workspace = "cdd10fab-4fc5-494b-9041-325e5759195b"; # Work
           position = 402;
           github.authorMe = true;
         };

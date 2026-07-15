@@ -20,15 +20,6 @@
 
   cfg = getAttrFromPath modulePath config;
 
-  linuxConfigPath = "${config.xdg.configHome}/zen";
-  darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
-
-  profilePath = "${(
-    if pkgs.stdenv.isDarwin
-    then "${darwinConfigPath}/Profiles"
-    else linuxConfigPath
-  )}";
-
   mkJsonlz4Updater = import ../lib/state-writer.nix {inherit pkgs lib;};
 
   mkRowsOption = collection:
@@ -89,7 +80,7 @@ in {
     in
       mapAttrs' (
         profileName: profile: let
-          sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
+          sessionsFile = "${cfg.profilesPath}/${profile.path}/zen-sessions.jsonlz4";
 
           spacesJsonFile = pkgs.writeText "zen-declared-spaces-${profileName}.json" (toJSON profile.sessionStore.spaces);
           pinsJsonFile = pkgs.writeText "zen-declared-pins-${profileName}.json" (toJSON profile.sessionStore.tabs);
@@ -210,7 +201,7 @@ in {
             subject = "sessions";
             skipSubject = "spaces/pins";
             stateFile = sessionsFile;
-            lockFile = "${profilePath}/${profileName}/.parentlock";
+            lockFile = "${cfg.profilesPath}/${profile.path}/.parentlock";
             slurpfiles = {
               declaredSpaces = spacesJsonFile;
               declaredPins = pinsJsonFile;

@@ -14,15 +14,6 @@
   cfg = getAttrFromPath modulePath config;
 
   isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
-
-  linuxConfigPath = "${config.xdg.configHome}/zen";
-  darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
-
-  profilePath = "${(
-    if pkgs.stdenv.isDarwin
-    then "${darwinConfigPath}/Profiles"
-    else linuxConfigPath
-  )}";
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
@@ -64,24 +55,24 @@ in {
           '';
       in
         lib.concatMapAttrs (
-          profileName: profile:
+          _: profile:
             if profile.sine.enable
             then {
-              "${profilePath}/${profileName}/chrome/JS" = {
+              "${cfg.profilesPath}/${profile.path}/chrome/JS" = {
                 source = sinePack.manager + "/src";
                 recursive = true;
                 force = true;
               };
-              "${profilePath}/${profileName}/chrome/JS/locales" = {
+              "${cfg.profilesPath}/${profile.path}/chrome/JS/locales" = {
                 source = sinePack.manager + "/locales";
                 recursive = true;
                 force = true;
               };
-              "${profilePath}/${profileName}/chrome/JS/engine.json" = {
+              "${cfg.profilesPath}/${profile.path}/chrome/JS/engine.json" = {
                 source = engineVersionFile;
                 force = true;
               };
-              "${profilePath}/${profileName}/chrome/utils" = {
+              "${cfg.profilesPath}/${profile.path}/chrome/utils" = {
                 source = sinePack.bootloader + "/profile/utils";
                 recursive = true;
                 force = true;
@@ -108,14 +99,14 @@ in {
       mapAttrs'
       (
         profileName: profile: let
-          modsFilePath = "${profilePath}/${profileName}/chrome/sine-mods/mods.json";
+          modsFilePath = "${cfg.profilesPath}/${profile.path}/chrome/sine-mods/mods.json";
 
           updateSineModsScript =
             pkgs.writeShellScript "zen-sine-mods-update-${profileName}"
             ''
               MODS_FILE="${modsFilePath}"
               SINE_MODS="${lib.concatStringsSep " " profile.sine.mods}"
-              BASE_DIR="${profilePath}/${profileName}"
+              BASE_DIR="${cfg.profilesPath}/${profile.path}"
               MANAGED_FILE="$BASE_DIR/zen-sine-mods-nix-managed.json"
 
               mkdir -p "$BASE_DIR/chrome/sine-mods"

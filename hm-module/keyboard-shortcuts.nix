@@ -12,15 +12,6 @@
   ];
 
   cfg = getAttrFromPath modulePath config;
-
-  linuxConfigPath = "${config.xdg.configHome}/zen";
-  darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
-
-  profilePath = "${(
-    if pkgs.stdenv.isDarwin
-    then "${darwinConfigPath}/Profiles"
-    else linuxConfigPath
-  )}";
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
@@ -134,8 +125,8 @@ in {
       mapAttrs'
       (
         profileName: profile: let
-          shortcutsFilePath = "${profilePath}/${profileName}/zen-keyboard-shortcuts.json";
-          prefsFile = "${profilePath}/${profileName}/prefs.js";
+          shortcutsFilePath = "${cfg.profilesPath}/${profile.path}/zen-keyboard-shortcuts.json";
+          prefsFile = "${cfg.profilesPath}/${profile.path}/prefs.js";
 
           shortcutToJson = shortcut: {
             inherit (shortcut) id;

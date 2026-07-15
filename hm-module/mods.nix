@@ -12,15 +12,6 @@
   ];
 
   cfg = getAttrFromPath modulePath config;
-
-  linuxConfigPath = "${config.xdg.configHome}/zen";
-  darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
-
-  profilePath = "${(
-    if pkgs.stdenv.isDarwin
-    then "${darwinConfigPath}/Profiles"
-    else linuxConfigPath
-  )}";
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
@@ -58,14 +49,14 @@ in {
       mapAttrs'
       (
         profileName: profile: let
-          themesFilePath = "${profilePath}/${profileName}/zen-themes.json";
+          themesFilePath = "${cfg.profilesPath}/${profile.path}/zen-themes.json";
 
           updateModsScript =
             pkgs.writeShellScript "zen-mods-update-${profileName}"
             ''
                         THEMES_FILE="${themesFilePath}"
                         MODS="${lib.concatStringsSep " " profile.mods}"
-                        BASE_DIR="${profilePath}/${profileName}"
+                        BASE_DIR="${cfg.profilesPath}/${profile.path}"
                         MANAGED_FILE="$BASE_DIR/zen-mods-nix-managed.json"
 
                         if [ ! -f "$THEMES_FILE" ]; then

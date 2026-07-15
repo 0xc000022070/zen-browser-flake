@@ -19,6 +19,11 @@
     inherit lib;
     includeWorkspace = false;
   };
+
+  routeModule = import ../lib/route-options.nix {
+    inherit lib;
+    includeOpenIn = false;
+  };
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {
@@ -78,6 +83,15 @@ in {
                             description = ''
                               Live folders scoped to this space. Same options as `liveFolders.*`
                               except `workspace`, which is set to this space's `id` automatically.
+                            '';
+                            default = {};
+                          };
+                          routes = mkOption {
+                            type = attrsOf (submodule routeModule);
+                            description = ''
+                              Space-routing rules scoped to this space. Same options as
+                              `spaceRouting.routes.*` except `openIn`, which is set to this
+                              space's `id` automatically.
                             '';
                             default = {};
                           };
@@ -227,6 +241,22 @@ in {
                           nameValuePair "spaces/${spaceName}/${lfName}" (lf // {workspace = s.id;})
                       )
                       s.liveFolders
+                  )
+                  config.spaces));
+
+                # Namespace the route id so identically-named rules in different
+                # spaces don't collide on upsert into zen-space-routing.jsonlz4.
+                spaceRouting.routes = listToAttrs (flatten (mapAttrsToList (
+                    spaceName: s:
+                      mapAttrsToList (
+                        rName: r:
+                          nameValuePair "spaces/${spaceName}/${rName}" (r
+                            // {
+                              openIn = s.id;
+                              id = "spaces/${spaceName}/${rName}";
+                            })
+                      )
+                      s.routes
                   )
                   config.spaces));
               };

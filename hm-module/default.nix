@@ -61,6 +61,7 @@ in {
     (import ./session/pins.nix)
     (import ./session/joined-tabs.nix)
     (import ./session/live-folders.nix)
+    (import ./session/space-routing.nix)
     (import ./keyboard-shortcuts.nix)
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
@@ -272,6 +273,15 @@ in {
               message = "Profile '${profileName}' pins '${pinName}': essential pins live in the essentials strip and cannot be inside a folder (isEssential = true with a folder parent).";
             })
             (profile.pinsResolved or {})
+        )
+        cfg.profiles))
+      ++ (lib.flatten (lib.mapAttrsToList (
+          profileName: profile:
+            lib.mapAttrsToList (routeName: route: {
+              assertion = route.reference != "";
+              message = "Profile '${profileName}' spaceRouting route '${routeName}': reference must be non-empty — empty routes never match and Zen strips them on next save.";
+            })
+            (profile.spaceRouting.routes or {})
         )
         cfg.profiles));
   };

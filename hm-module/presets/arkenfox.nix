@@ -38,12 +38,12 @@
       if m != null
       then [(lib.nameValuePair (builtins.elemAt m 0) (builtins.fromJSON (builtins.elemAt m 1)))]
       else if builtins.match prefLine line != null
-      then throw "presets.arkenfox: unparseable user_pref line in zen/user.js: ${line}"
+      then throw "presets.arkenfox: unparseable user_pref line in user.js: ${line}"
       else [];
   in
     builtins.listToAttrs (lib.concatMap toPref (lib.splitString "\n" (builtins.readFile file)));
 
-  arkenfoxPrefs = parseUserJs "${arkenfox}/zen/user.js";
+  arkenfoxPrefs = parseUserJs "${arkenfox}/user.js";
 in {
   options = setAttrByPath modulePath {
     profiles = mkOption {

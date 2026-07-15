@@ -66,6 +66,7 @@ in {
     (import ./sine.nix {inherit mkSinePack;})
     (import ./default-browser.nix {inherit name;})
     (import ./presets/catppuccin.nix {inherit self;})
+    (import ./presets/betterfox.nix {inherit self;})
   ];
 
   config = mkIf cfg.enable {

@@ -75,6 +75,10 @@
     "catppuccin": {
       "rev": "c855685442c6040c4dda9c8d3ddc7b708de1cbaa",
       "hash": "sha256-5A57Lyctq497SSph7B+ucuEyF1gGVTsuI3zuBItGfg4="
+    },
+    "betterfox": {
+      "rev": "8e415d1633f10fe0192d9c938e4ca2628eeec9f9",
+      "hash": "sha256-nLkaxpbAMifWxx/RJvuaDpjndzKFPTvAO8o9gR47HtU="
     }
   },
   "metadata_for": {

@@ -15,15 +15,6 @@
 
   cfg = getAttrFromPath modulePath config;
 
-  linuxConfigPath = "${config.xdg.configHome}/zen";
-  darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
-
-  profilePath = "${(
-    if pkgs.stdenv.isDarwin
-    then "${darwinConfigPath}/Profiles"
-    else linuxConfigPath
-  )}";
-
   mkJsonlz4Updater = import ../lib/state-writer.nix {inherit pkgs lib;};
   rows = import ../lib/session-rows.nix {inherit lib;};
   liveFolderModule = import ../lib/live-folder-options.nix {inherit lib;};
@@ -117,8 +108,8 @@ in {
     in
       mapAttrs' (
         profileName: profile: let
-          sessionsFile = "${profilePath}/${profileName}/zen-sessions.jsonlz4";
-          liveFoldersFile = "${profilePath}/${profileName}/zen-live-folders.jsonlz4";
+          sessionsFile = "${cfg.profilesPath}/${profile.path}/zen-sessions.jsonlz4";
+          liveFoldersFile = "${cfg.profilesPath}/${profile.path}/zen-live-folders.jsonlz4";
 
           # Only provider config is declared; the browser fills runtime defaults
           # (interval, lastFetched, options) on load.
@@ -181,7 +172,7 @@ in {
             subject = "live folders";
             skipSubject = "live folder";
             stateFile = liveFoldersFile;
-            lockFile = "${profilePath}/${profileName}/.parentlock";
+            lockFile = "${cfg.profilesPath}/${profile.path}/.parentlock";
             slurpfiles = {
               declaredLiveFolders = liveFoldersJsonFile;
             };

@@ -52,7 +52,7 @@
     };
 
     apps = forAllSystems (pkgs: let
-      root = toString ./.;
+      root = self.outPath;
       gen = ./tooling/gen-options.sh;
     in {
       docs-options = {

@@ -79,6 +79,10 @@
     "betterfox": {
       "rev": "8e415d1633f10fe0192d9c938e4ca2628eeec9f9",
       "hash": "sha256-nLkaxpbAMifWxx/RJvuaDpjndzKFPTvAO8o9gR47HtU="
+    },
+    "arkenfox": {
+      "rev": "8fe9905c35a1025d1e6df69479f7625585fd956d",
+      "hash": "sha256-+76DopMmUBZ5wJi2/BMCjC/nY2C8vXypX8JmBYEDycc="
     }
   },
   "metadata_for": {

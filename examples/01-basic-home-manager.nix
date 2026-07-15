@@ -28,5 +28,8 @@
     # privacy/telemetry/performance prefs applied as mkDefault settings —
     # any profile `settings` entry wins.
     profiles.default.presets.betterfox.enable = true;
+
+    # arkenfox for Zen (arkenfox/user.js)
+    profiles.default.presets.arkenfox.enable = true;
   };
 }

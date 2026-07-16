@@ -95,6 +95,14 @@ in {
                     else 1
                   );
                 };
+
+                # The chrome/catppuccin symlink and userChrome imports are
+                # home.file-managed and vanish on rebuild; only these two
+                # prefs get baked into prefs.js and need cleanup on disable.
+                presets.managedPrefNames = [
+                  "ui.systemUsesDarkTheme"
+                  "zen.view.window.scheme"
+                ];
               };
             }
           )

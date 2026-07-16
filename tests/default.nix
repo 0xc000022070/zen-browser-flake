@@ -74,6 +74,7 @@
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;
     "env-vars" = ./env-vars.nix;
+    "preset-cleanup" = ./preset-cleanup.nix;
   };
 in
   pkgs.lib.mapAttrs (name: path: mkGenericTest name path) suites

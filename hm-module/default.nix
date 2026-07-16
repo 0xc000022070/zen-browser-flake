@@ -69,6 +69,7 @@ in {
     (import ./presets/catppuccin.nix {inherit self;})
     (import ./presets/betterfox.nix {inherit self;})
     (import ./presets/arkenfox.nix {inherit self;})
+    (import ./presets/cleanup.nix)
   ];
 
   config = mkIf cfg.enable {

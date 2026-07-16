@@ -58,12 +58,14 @@ in {
                   description = ''
                     Enable the Arkenfox preset (arkenfox/users.js `zen/user.js`):
                     Every pref is applied with `mkDefault`, so any `settings` entry on the profile overrides the preset.
+                    Disabling the preset resets the prefs it left in prefs.js.
                   '';
                 };
               };
 
               config = mkIf config.presets.arkenfox.enable {
                 settings = lib.mapAttrs (_: mkDefault) arkenfoxPrefs;
+                presets.managedPrefNames = builtins.attrNames arkenfoxPrefs;
               };
             }
           )

@@ -56,7 +56,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit (lib) filterAttrs genAttrs mapAttrs' nameValuePair unique;
     in
       mapAttrs'
@@ -85,14 +85,21 @@ in {
             lockFile = "${profileDir}/.parentlock";
           };
         in
-          nameValuePair "zen-preset-prefs-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
-            ${cleanupScript}
-            if [[ "$?" -eq 0 ]]; then
-              $VERBOSE_ECHO "zen-preset-prefs: Updated managed preset prefs for profile '${profileName}'"
-            else
-              echo "zen-preset-prefs: Failed to clean up preset prefs for profile '${profileName}'!" >&2
-            fi
-          '')
+          nameValuePair profileName [
+            {
+              priority = 40;
+              requiresLock = true;
+              skipSubject = "preset prefs";
+              text = ''
+                ${cleanupScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-preset-prefs: Updated managed preset prefs for profile '${profileName}'"
+                else
+                  echo "zen-preset-prefs: Failed to clean up preset prefs for profile '${profileName}'!" >&2
+                fi
+              '';
+            }
+          ]
       )
       cfg.profiles;
   };

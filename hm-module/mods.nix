@@ -33,7 +33,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit
         (lib)
         filterAttrs
@@ -146,14 +146,18 @@ in {
                         fi
             '';
         in
-          nameValuePair "zen-mods-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
-            ${updateModsScript}
-            if [[ "$?" -eq 0 ]]; then
-              $VERBOSE_ECHO "zen-mods: Updated mods for profile '${profileName}'"
-            else
-              echo "zen-mods: Failed to update mods for profile '${profileName}'!" >&2
-            fi
-          '')
+          nameValuePair profileName [
+            {
+              text = ''
+                ${updateModsScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-mods: Updated mods for profile '${profileName}'"
+                else
+                  echo "zen-mods: Failed to update mods for profile '${profileName}'!" >&2
+                fi
+              '';
+            }
+          ]
       )
       profilesWithMods;
   };

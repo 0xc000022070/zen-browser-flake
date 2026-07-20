@@ -107,7 +107,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit (builtins) toJSON;
       inherit
         (lib)
@@ -229,14 +229,18 @@ in {
             fi
           '';
         in
-          nameValuePair "zen-keyboard-shortcuts-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"] ''
-            ${updateScript}
-            if [[ "$?" -eq 0 ]]; then
-              $VERBOSE_ECHO "zen-keyboard-shortcuts: Updated keyboard shortcuts for profile '${profileName}'"
-            else
-              echo "zen-keyboard-shortcuts: Failed to update keyboard shortcuts for profile '${profileName}'!" >&2
-            fi
-          '')
+          nameValuePair profileName [
+            {
+              text = ''
+                ${updateScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-keyboard-shortcuts: Updated keyboard shortcuts for profile '${profileName}'"
+                else
+                  echo "zen-keyboard-shortcuts: Failed to update keyboard shortcuts for profile '${profileName}'!" >&2
+                fi
+              '';
+            }
+          ]
       )
       profilesWithShortcuts;
   };

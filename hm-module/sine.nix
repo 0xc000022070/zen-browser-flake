@@ -83,7 +83,7 @@ in {
         cfg.profiles
       else {};
 
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit
         (lib)
         filterAttrs
@@ -246,15 +246,18 @@ in {
               fi
             '';
         in
-          nameValuePair "zen-sine-mods-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
-            ''
-              ${updateSineModsScript}
-              if [[ "$?" -eq 0 ]]; then
-                $VERBOSE_ECHO "zen-sine-mods: Updated sine mods for profile '${profileName}'"
-              else
-                echo "zen-sine-mods: Failed to update sine mods for profile '${profileName}'!" >&2
-              fi
-            '')
+          nameValuePair profileName [
+            {
+              text = ''
+                ${updateSineModsScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-sine-mods: Updated sine mods for profile '${profileName}'"
+                else
+                  echo "zen-sine-mods: Failed to update sine mods for profile '${profileName}'!" >&2
+                fi
+              '';
+            }
+          ]
       )
       profilesWithSineMods;
   };

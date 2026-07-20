@@ -60,7 +60,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit (builtins) toJSON;
       inherit (lib) attrValues boolToString filterAttrs getExe mapAttrs' nameValuePair;
 
@@ -140,18 +140,24 @@ in {
             '';
           };
         in
-          nameValuePair "zen-space-routing-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
-            ''
-              ${updateScript}
-              if [[ "$?" -eq 0 ]]; then
-                $VERBOSE_ECHO "zen-space-routing: Updated space routing for profile '${profileName}'"
-              else
-                YELLOW="\033[1;33m"
-                NC="\033[0m"
-                echo -e "zen-space-routing:''${YELLOW} Failed to update zen-space-routing.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
-                echo -e "zen-space-routing:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
-              fi
-            '')
+          nameValuePair profileName [
+            {
+              priority = 30;
+              requiresLock = true;
+              skipSubject = "space routing";
+              text = ''
+                ${updateScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-space-routing: Updated space routing for profile '${profileName}'"
+                else
+                  YELLOW="\033[1;33m"
+                  NC="\033[0m"
+                  echo -e "zen-space-routing:''${YELLOW} Failed to update zen-space-routing.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
+                  echo -e "zen-space-routing:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
+                fi
+              '';
+            }
+          ]
       )
       profilesWithRouting;
   };

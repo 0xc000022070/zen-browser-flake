@@ -61,7 +61,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit (builtins) toJSON;
       inherit (lib) filterAttrs mapAttrs' nameValuePair optionalString;
 
@@ -219,18 +219,24 @@ in {
             '';
           };
         in
-          nameValuePair "zen-sessions-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary"]
-            ''
-              ${updateScript}
-              if [[ "$?" -eq 0 ]]; then
-                $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"
-              else
-                YELLOW="\033[1;33m"
-                NC="\033[0m"
-                echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
-                echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
-              fi
-            '')
+          nameValuePair profileName [
+            {
+              priority = 10;
+              requiresLock = true;
+              skipSubject = "spaces/pins";
+              text = ''
+                ${updateScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-sessions: Updated spaces/pins for profile '${profileName}'"
+                else
+                  YELLOW="\033[1;33m"
+                  NC="\033[0m"
+                  echo -e "zen-sessions:''${YELLOW} Failed to update zen-sessions.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
+                  echo -e "zen-sessions:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
+                fi
+              '';
+            }
+          ]
       )
       profilesWithSessionData;
   };

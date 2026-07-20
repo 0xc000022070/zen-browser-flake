@@ -100,7 +100,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.activation = let
+    programs.zen-browser.activationFragments = let
       inherit (builtins) toJSON;
       inherit (lib) filterAttrs getExe mapAttrs' mapAttrsToList nameValuePair optionalAttrs;
 
@@ -194,18 +194,25 @@ in {
             '';
           };
         in
-          nameValuePair "zen-live-folders-${profileName}" (lib.hm.dag.entryAfter ["writeBoundary" "zen-sessions-${profileName}"]
-            ''
-              ${updateScript}
-              if [[ "$?" -eq 0 ]]; then
-                $VERBOSE_ECHO "zen-live-folders: Updated live folders for profile '${profileName}'"
-              else
-                YELLOW="\033[1;33m"
-                NC="\033[0m"
-                echo -e "zen-live-folders:''${YELLOW} Failed to update zen-live-folders.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
-                echo -e "zen-live-folders:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
-              fi
-            '')
+          nameValuePair profileName [
+            {
+              # After zen-sessions: live folders need their session folder rows.
+              priority = 20;
+              requiresLock = true;
+              skipSubject = "live folders";
+              text = ''
+                ${updateScript}
+                if [[ "$?" -eq 0 ]]; then
+                  $VERBOSE_ECHO "zen-live-folders: Updated live folders for profile '${profileName}'"
+                else
+                  YELLOW="\033[1;33m"
+                  NC="\033[0m"
+                  echo -e "zen-live-folders:''${YELLOW} Failed to update zen-live-folders.jsonlz4 for Zen browser \"${profileName}\" profile.''${NC}"
+                  echo -e "zen-live-folders:''${YELLOW} If Zen Browser was open, close it and rebuild to apply changes.''${NC}"
+                fi
+              '';
+            }
+          ]
       )
       profilesWithLiveFolders;
   };

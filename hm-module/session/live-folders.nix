@@ -68,9 +68,11 @@ in {
                     };
                     emptyTabIds = ["${lf.id}-empty"];
                     userIcon =
-                      if lf.folderIcon == null
-                      then ""
-                      else lf.folderIcon;
+                      if lf.folderIcon != null
+                      then lf.folderIcon
+                      else if lib.hasPrefix "github:" lf.kind
+                      then "chrome://browser/skin/zen-icons/selectable/logo-github.svg"
+                      else "";
                     workspaceId =
                       if lf.workspace == null
                       then null

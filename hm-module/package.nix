@@ -127,7 +127,7 @@ in {
           else defaultPackage;
 
         wrappedPackage =
-          (pkgs.wrapFirefox (getPackage isSineEnabled) {
+          ((pkgs.wrapFirefox.override {ffmpeg_7 = pkgs.ffmpeg_8;}) (getPackage isSineEnabled) {
             icon =
               if cfg.icon != null
               then cfg.icon

@@ -1,0 +1,10 @@
+diff --git a/src/commands/build.ts b/src/commands/build.ts
+index 30e712a..1fa1b58 100644
+--- a/src/commands/build.ts
++++ b/src/commands/build.ts
+@@ -30 +30 @@ const applyConfig = async (os: string) => {
+-  let changeset
++  let changeset = process.env.SURFER_CHANGESET || ''
+@@ -32 +32 @@ const applyConfig = async (os: string) => {
+-  try {
++  if (!changeset) try {

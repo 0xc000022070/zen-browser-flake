@@ -61,6 +61,22 @@
       }
     }
   },
+  "source": {
+    "beta": {
+      "version": "1.21.9b",
+      "rev": "fb2a85908268d25b2d62fd60c0c86891ef910a4b",
+      "hash": "sha256-Tfp+aAl9G53x6v82Bnts3mMafGDYCbLtlpFPV0Xb79Q=",
+      "firefoxVersion": "153.0",
+      "firefoxHash": "sha256-vFEPdMjExpLTHlWa61hQhJ0TvJghSsgeAE9m+BmlVSI=",
+      "cargoHash": "sha256-DZMwxeulQiIiSATU0MoyqiUMA0USZq6umhkr67hZH1Q=",
+      "surfer": {
+        "version": "1.14.6",
+        "rev": "39157caa384f9cc1e22e2aa1041ed374e2958781",
+        "hash": "sha256-V6PTy6gEqtA9nxzrj7nv5S9+UdZ4yTwmVhCkyZnBdd0=",
+        "npmDepsHash": "sha256-S7GjJLeHZjRpOD+99F7CCHFdqlNLrbS9g5KkhVxAbzI="
+      }
+    }
+  },
   "addons": {
     "sine": {
       "manager": {

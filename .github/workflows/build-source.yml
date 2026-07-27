@@ -1,0 +1,36 @@
+name: Build Zen from source
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Build
+        run: |
+          nix build -L .#beta-source
+          nix path-info -S ./result
+          readlink -f ./result > result-path.txt
+
+      - name: Create portable Nix cache
+        run: |
+          mkdir -p zen-cache
+          nix copy \
+            --to "file://$PWD/zen-cache?compression=zstd&compression-level=9" \
+            ./result
+
+          tar --zstd -cf zen-browser-cache.tar.zst \
+            zen-cache result-path.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zen-browser-source-x86_64-linux
+          path: zen-browser-cache.tar.zst
+          compression-level: 0
+          retention-days: 3

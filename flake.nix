@@ -27,13 +27,20 @@
 
     formatter = forAllSystems (pkgs: pkgs.alejandra);
 
-    checks =
-      nixpkgs.lib.genAttrs linuxSystems
-      (system:
-        import ./tests {
-          inherit self home-manager;
-          nixpkgs = nixpkgs.legacyPackages.${system};
-        });
+    checks = nixpkgs.lib.genAttrs supportedSystems (
+      system:
+        if nixpkgs.lib.elem system linuxSystems
+        then
+          import ./tests {
+            inherit self home-manager;
+            nixpkgs = nixpkgs.legacyPackages.${system};
+          }
+        else
+          import ./tests/darwin.nix {
+            inherit self home-manager;
+            pkgs = nixpkgs.legacyPackages.${system};
+          }
+    );
 
     homeModules = {
       beta = import ./hm-module {

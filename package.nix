@@ -3,6 +3,7 @@
   variant,
   icon ? null,
   policies ? {},
+  extraPolicies ? {},
   enablePrivateDesktopEntry ? false,
   lib,
   stdenv,
@@ -51,11 +52,19 @@
 
   firefoxPolicies =
     (config.firefox.policies or {})
-    // policies;
+    // policies
+    // extraPolicies;
 
   policiesJson = writeText "firefox-policies.json" (builtins.toJSON {policies = firefoxPolicies;});
 
   pname = "zen-${name}-bin-unwrapped";
+
+  checkedPname = assert lib.assertMsg (
+    !stdenv.hostPlatform.isDarwin || (policies == {} && extraPolicies == {})
+  ) ''
+    Direct policy overrides mutate the signed Zen application bundle on Darwin.
+    Use programs.zen-browser.policies through the Home Manager module instead.
+  ''; pname;
 
   desktopIconName =
     if name == "beta"
@@ -67,17 +76,6 @@
 
     mkdir -p "$out/Applications" "$out/bin"
     cp -r *.app "$out/Applications/${applicationName}.app"
-    ln -s zen "$out/Applications/${applicationName}.app/Contents/MacOS/${binaryName}"
-
-    # Install policies.json for macOS
-    mkdir -p "$out/Applications/${applicationName}.app/Contents/Resources/distribution"
-    ln -s ${policiesJson} "$out/Applications/${applicationName}.app/Contents/Resources/distribution/policies.json"
-
-    # Re-sign with correct identifier to maintain AdGuard compatibility
-    # AdGuard uses code signing identifier (not CFBundleIdentifier) to recognize apps
-    /usr/bin/codesign --force --deep --sign - \
-      --identifier "app.zen-browser.zen" \
-      "$out/Applications/${applicationName}.app"
 
     # Use symlink path to avoid installs.ini accumulation on Nix rebuilds
     # The symlink is created by home-manager and remains stable across rebuilds
@@ -121,7 +119,7 @@
   '';
 in
   stdenv.mkDerivation {
-    inherit pname;
+    pname = checkedPname;
     inherit (variant) version;
 
     src =
@@ -230,13 +228,15 @@ in
     # Firefox uses "relrhack" to manually process relocations from a fixed offset
     patchelfFlags = ["--no-clobber-old-sections"];
 
-    preFixup = ''
+    preFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
       gappsWrapperArgs+=(
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ffmpeg_8]}"
         --add-flags "--name=''${MOZ_APP_LAUNCHER:-${binaryName}}"
         --add-flags "--class=''${MOZ_APP_LAUNCHER:-${binaryName}}"
       )
     '';
+
+    dontFixup = stdenv.hostPlatform.isDarwin;
 
     installPhase =
       if stdenv.hostPlatform.isDarwin

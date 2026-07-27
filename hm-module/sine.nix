@@ -26,7 +26,7 @@ in {
                   enable = mkOption {
                     type = bool;
                     default = false;
-                    description = "Enable sine option. When enabled, mods option is not allowed.";
+                    description = "Enable sine option. When enabled, mods option is not allowed. Linux only.";
                   };
                   mods = mkOption {
                     type = listOf str;

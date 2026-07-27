@@ -1,3 +1,9 @@
+# Every wrapFirefox feature is delivered by writing inside the application
+# directory. On Darwin that breaks the upstream signature, and with it 1Password,
+# iCloud Passwords, Touch ID and Gatekeeper, so `darwin.packageMode = "signed"`
+# installs the .app untouched and routes what it can outside of it: policies
+# through targets.darwin.defaults, native messaging hosts through
+# mozilla.firefoxNativeMessagingHosts. The rest is rejected in default.nix.
 {
   self,
   name,
@@ -17,6 +23,10 @@
 
   cfg = getAttrFromPath modulePath config;
 
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  isLinux = pkgs.stdenv.hostPlatform.isLinux;
+  isSignedDarwin = isDarwin && cfg.darwin.packageMode == "signed";
+
   isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
 
   envWrapperArgs = lib.concatStringsSep " " (
@@ -24,7 +34,7 @@
   );
 
   applyEnv = pkg:
-    if cfg.env == {} || !pkgs.stdenv.hostPlatform.isLinux
+    if cfg.env == {} || !isLinux
     then pkg
     else
       pkg.overrideAttrs (old: {
@@ -34,8 +44,29 @@
             gappsWrapperArgs+=(${envWrapperArgs})
           '';
       });
+
+  prepareDarwinWrapper = pkg:
+    if !isDarwin || !(pkg ? applicationName && pkg ? binaryName)
+    then pkg
+    else
+      pkg.overrideAttrs (old: {
+        postInstall =
+          (old.postInstall or "")
+          + ''
+            wrapperBinary="$out/Applications/${pkg.applicationName}.app/Contents/MacOS/${pkg.binaryName}"
+            if [[ ! -e "$wrapperBinary" && ! -L "$wrapperBinary" ]]; then
+              ln -s zen "$wrapperBinary"
+            fi
+          '';
+      });
 in {
   options = setAttrByPath modulePath {
+    darwin.packageMode = mkOption {
+      type = types.enum ["signed" "wrapped"];
+      default = "signed";
+      description = "`signed` installs the upstream .app untouched, `wrapped` enables wrapFirefox features and drops the signature.";
+    };
+
     extraPrefsFiles = mkOption {
       type = types.listOf types.str;
       default = [];
@@ -87,24 +118,27 @@ in {
       default = null;
       description = ''
         An unwrapped Firefox-based browser derivation to use as the base instead of
-        the flake's built-in variants (beta, twilight, etc.). When set, this package
-        is wrapped with the same settings (policies, extraPrefs, etc.) and used as
-        the program. Useful to use a different Zen build, another Firefox-based
-        browser, or a custom unwrapped derivation.
+        the flake's built-in variants (beta, twilight, etc.). On Darwin in `signed`
+        mode it is installed unchanged. Otherwise it is wrapped with the configured
+        wrapper features.
       '';
     };
   };
 
   config = mkIf cfg.enable {
+    mozilla.firefoxNativeMessagingHosts = mkIf isDarwin cfg.nativeMessagingHosts;
+
     programs.zen-browser = {
       package = let
-        defaultPackage = applyEnv (
+        basePackage = applyEnv (
           if cfg.unwrappedPackage != null
           then cfg.unwrappedPackage
-          else
+          else if isLinux
+          then
             self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
-              inherit (cfg) policies enablePrivateDesktopEntry;
+              inherit (cfg) enablePrivateDesktopEntry;
             }
+          else self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped"
         );
 
         getPackage = sine:
@@ -112,7 +146,7 @@ in {
           then let
             sinePack = mkSinePack {};
           in
-            defaultPackage.overrideAttrs (oldAttrs: {
+            basePackage.overrideAttrs (oldAttrs: {
               postInstall =
                 (oldAttrs.postInstall or "")
                 + ''
@@ -124,10 +158,10 @@ in {
                   done
                 '';
             })
-          else defaultPackage;
+          else basePackage;
 
         wrappedPackage =
-          ((pkgs.wrapFirefox.override {ffmpeg_7 = pkgs.ffmpeg_8;}) (getPackage isSineEnabled) {
+          ((pkgs.wrapFirefox.override {ffmpeg_7 = pkgs.ffmpeg_8;}) (prepareDarwinWrapper (getPackage isSineEnabled)) {
             icon =
               if cfg.icon != null
               then cfg.icon
@@ -135,13 +169,19 @@ in {
               then "zen-browser"
               else "zen-${name}";
           }).override {
-            inherit (cfg) extraPrefs extraPrefsFiles nativeMessagingHosts;
+            inherit (cfg) extraPrefs extraPrefsFiles;
+            nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
           };
+
+        selectedPackage =
+          if isSignedDarwin
+          then basePackage
+          else wrappedPackage;
       in
         mkDefault (
           if cfg.nixGL.enable
-          then config.lib.nixGL.wrap wrappedPackage
-          else wrappedPackage
+          then config.lib.nixGL.wrap selectedPackage
+          else selectedPackage
         );
 
       policies = {

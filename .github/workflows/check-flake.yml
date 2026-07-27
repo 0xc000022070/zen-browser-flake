@@ -30,3 +30,40 @@ jobs:
 
       - name: Check flake
         run: nix flake check --debug
+
+  flake-check-darwin:
+    name: Check flake (aarch64-darwin)
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Check flake
+        run: nix flake check --debug
+
+      # /usr/bin/codesign is not reachable from a sandboxed derivation, so the
+      # signature is verified here instead of in checks.aarch64-darwin.signed.
+      - name: Verify upstream code signature
+        run: |
+          pkg="$(nix build --no-link --print-out-paths .#beta-unwrapped)"
+          app="$pkg/Applications/$(nix eval --raw .#beta-unwrapped.applicationName).app"
+
+          /usr/bin/codesign --verify --deep --strict "$app"
+
+          # --verify also passes on an ad-hoc re-sign, so assert the chain itself.
+          info="$(/usr/bin/codesign --display --verbose=4 "$app" 2>&1)"
+          echo "$info"
+
+          grep -q '^Authority=Developer ID Application:' <<<"$info"
+          grep -q '^TeamIdentifier=[A-Z0-9]\{10\}$' <<<"$info"
+
+          if grep -q 'Signature=adhoc' <<<"$info"; then
+            echo "bundle is ad-hoc signed: the upstream signature was replaced" >&2
+            exit 1
+          fi

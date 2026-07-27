@@ -159,7 +159,25 @@ in {
     in
       lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings);
 
-    assertions =
+    assertions = let
+      isSignedDarwin = pkgs.stdenv.isDarwin && cfg.darwin.packageMode == "signed";
+
+      # Only deliverable by writing inside the .app, which signed mode refuses.
+      signedDarwinAssertions =
+        lib.mapAttrsToList (option: used: {
+          assertion = !(isSignedDarwin && used);
+          message = ''
+            ${option} is unsupported with programs.zen-browser.darwin.packageMode = "signed",
+            because it can only be applied by modifying the Zen application bundle.
+            Set darwin.packageMode = "wrapped" to enable it, at the cost of the upstream signature.
+          '';
+        }) {
+          "programs.zen-browser.enableGnomeExtensions" = cfg.enableGnomeExtensions;
+          "programs.zen-browser.extraPrefs" = cfg.extraPrefs != "";
+          "programs.zen-browser.extraPrefsFiles" = cfg.extraPrefsFiles != [];
+          "programs.zen-browser.pkcs11Modules" = cfg.pkcs11Modules != [];
+        };
+    in
       [
         {
           assertion = cfg.icon == null || pkgs.stdenv.isLinux;
@@ -174,6 +192,13 @@ in {
           message = "You don't meet the requirements to use the 'nixGL.enable' option. See https://github.com/nix-community/nixGL for details.";
         }
       ]
+      ++ signedDarwinAssertions
+      ++ (lib.mapAttrsToList (profileName: profile: {
+          # Both modes: the bootloader injection only knows $out/lib/zen-bin-*.
+          assertion = !(pkgs.stdenv.isDarwin && profile.sine.enable);
+          message = "Profile '${profileName}': sine.enable is not supported on macOS. Sine installs a bootloader inside the Zen application, which would break the upstream code signature and is not implemented for the macOS app layout.";
+        })
+        cfg.profiles)
       ++ (lib.mapAttrsToList (profileName: profile: {
           assertion = !(profile.sine.enable && profile.mods != []);
           message = "Profile '${profileName}': sine.enable and mods options are mutually exclusive. When sine.enable is true, mods must be empty.";

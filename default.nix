@@ -2,6 +2,8 @@
   pkgs ? import <nixpkgs> {},
   system ? pkgs.stdenv.hostPlatform.system,
 }: let
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+
   mkZen = name: entry: let
     variant = (builtins.fromJSON (builtins.readFile ./sources.json)).variants.${entry}.${system};
   in
@@ -13,13 +15,24 @@ in rec {
   twilight-unwrapped = mkZen "twilight" "twilight";
   twilight-official-unwrapped = mkZen "twilight" "twilight-official";
 
-  beta = pkgs.wrapFirefox beta-unwrapped {
-    icon = "zen-browser";
-  };
-  twilight = pkgs.wrapFirefox twilight-unwrapped {};
-  twilight-official = pkgs.wrapFirefox twilight-official-unwrapped {
-    icon = "zen-twilight";
-  };
+  beta =
+    if isDarwin
+    then beta-unwrapped
+    else
+      pkgs.wrapFirefox beta-unwrapped {
+        icon = "zen-browser";
+      };
+  twilight =
+    if isDarwin
+    then twilight-unwrapped
+    else pkgs.wrapFirefox twilight-unwrapped {};
+  twilight-official =
+    if isDarwin
+    then twilight-official-unwrapped
+    else
+      pkgs.wrapFirefox twilight-official-unwrapped {
+        icon = "zen-twilight";
+      };
 
   default = beta;
 }

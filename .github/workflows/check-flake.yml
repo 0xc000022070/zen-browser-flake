@@ -30,3 +30,20 @@ jobs:
 
       - name: Check flake
         run: nix flake check --debug
+
+  flake-check-darwin:
+    # The darwin checks shell out to /usr/bin/codesign, so they only run here.
+    name: Check flake (aarch64-darwin)
+    runs-on: macos-26
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Check flake
+        run: nix flake check --debug

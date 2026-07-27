@@ -9,6 +9,26 @@
       "wappalyzer@crunchlabz.com" = "wappalyzer";
       "{85860b32-02a8-431a-b2b1-40fbd64c9c69}" = "github-file-icons";
     };
+
+    # Per-extension config via browser.storage.managed, for extensions that
+    # read it — uBlock Origin does (`toOverwrite`, >= 1.33), ClearURLs does not.
+    # Unlike profiles.<name>.extensions.settings (04b) it leaves the extension's
+    # own storage alone, but it is a lock rather than a seed: re-asserted on
+    # every start, so dashboard edits revert. Takes effect one restart late,
+    # uBO caches managed storage on purpose (uAssets discussion 16939).
+    "3rdparty".Extensions."uBlock0@raymondhill.net".toOverwrite = {
+      # Entries matching `scheme://` are also subscribed as external lists.
+      filterLists = [
+        "user-filters"
+        "ublock-filters"
+        "ublock-badware"
+        "ublock-privacy"
+        "ublock-unbreak"
+        "adguard-spyware-url"
+      ];
+      filters = ["||ads.example.org^"]; # dashboard: My filters
+      trustedSiteDirectives = ["example.org"]; # dashboard: Trusted sites
+    };
   };
 }
 # Learn more:

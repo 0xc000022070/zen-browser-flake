@@ -131,8 +131,8 @@ See the `examples/` directory for standalone configuration examples:
 | [02a-policies-preferences.nix](../examples/02a-policies-preferences.nix)         | Locked preferences (policies.Preferences) |
 | [02b-settings-preferences.nix](../examples/02b-settings-preferences.nix)         | User settings (profiles.\*.settings)      |
 | [03-policies-package-override.nix](../examples/03-policies-package-override.nix) | Package-level policy override             |
-| [04-extensions.nix](../examples/04-extensions.nix)                               | Firefox addons                            |
-| [04b-extensions-rycee.nix](../examples/04b-extensions-rycee.nix)                 | Firefox addons via rycee.nix              |
+| [04-extensions.nix](../examples/04-extensions.nix)                               | Firefox addons, managed storage config    |
+| [04b-extensions-rycee.nix](../examples/04b-extensions-rycee.nix)                 | Firefox addons via rycee.nix, ext storage |
 | [05-mods-installation.nix](../examples/05-mods-installation.nix)                 | Zen theme store mods                      |
 | [06-search-engines.nix](../examples/06-search-engines.nix)                       | Custom search engines                     |
 | [07-bookmarks.nix](../examples/07-bookmarks.nix)                                 | Bookmark organization                     |

@@ -37,6 +37,8 @@
   darwinConfigPath = "${config.home.homeDirectory}/Library/Application Support/Zen";
 
   mkFirefoxModule = import "${home-manager.outPath}/modules/programs/firefox/mkFirefoxModule.nix";
+
+  toWidgetId = import ./lib/widget-id.nix {inherit lib;};
 in {
   imports = [
     (mkFirefoxModule {
@@ -64,6 +66,7 @@ in {
     (import ./session/live-folders.nix)
     (import ./session/space-routing.nix)
     (import ./keyboard-shortcuts.nix)
+    (import ./extension-buttons.nix)
     (import ./mods.nix)
     (import ./sine.nix {inherit mkSinePack;})
     (import ./default-browser.nix {inherit name;})
@@ -156,8 +159,24 @@ in {
         )
         cfg.profiles
       );
+      hiddenPanelButtonWarnings = lib.concatLists (
+        lib.mapAttrsToList (
+          profileName: profile:
+            lib.optional (
+              ((profile.extensionButtons or {})."unified-extensions-area" or [])
+              != []
+              && !((profile.settings or {}) ? "zen.theme.hide-unified-extensions-button")
+            ) ''
+              [Zen Browser] '${profileName}': buttons declared in 'unified-extensions-area' sit behind the
+              extensions (puzzle) button, which Zen hides by default. Set it explicitly, e.g.:
+                "zen.theme.hide-unified-extensions-button" = false;
+              (true keeps it hidden and silences this warning.)
+            ''
+        )
+        cfg.profiles
+      );
     in
-      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings);
+      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings ++ hiddenPanelButtonWarnings);
 
     assertions = let
       isSignedDarwin = pkgs.stdenv.hostPlatform.isDarwin && cfg.darwin.packageMode == "signed";
@@ -316,6 +335,37 @@ in {
             })
             (profile.spaceRouting.routes or {})
         )
-        cfg.profiles));
+        cfg.profiles))
+      ++ (lib.mapAttrsToList (profileName: profile: let
+          byWidget =
+            lib.foldl' (
+              acc: entry:
+                acc
+                // {
+                  ${entry.widget} = (acc.${entry.widget} or []) ++ [entry.area];
+                }
+            ) {}
+            (lib.flatten (lib.mapAttrsToList (
+                area: ids:
+                  map (id: {
+                    inherit area;
+                    widget = toWidgetId id;
+                  })
+                  ids
+              )
+              (profile.extensionButtons or {})));
+          collisions = lib.filterAttrs (_: areas: builtins.length areas > 1) byWidget;
+        in {
+          assertion = collisions == {};
+          message = "Profile '${profileName}': extensionButtons places the same button in several areas: ${
+            lib.concatStringsSep "; " (
+              lib.mapAttrsToList (
+                widget: areas: "'${widget}' in ${lib.concatStringsSep ", " areas}"
+              )
+              collisions
+            )
+          }";
+        })
+        cfg.profiles);
   };
 }

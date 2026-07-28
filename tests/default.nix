@@ -21,36 +21,38 @@
     pkgs.testers.nixosTest {
       inherit name;
       nodes.machine = {
-        imports = [
-          {
-            imports = [home-manager.nixosModules.home-manager];
+        imports =
+          [
+            {
+              imports = [home-manager.nixosModules.home-manager];
 
-            environment.systemPackages = with pkgs; [
-              jq
-              mozlz4a
-              xorg-server
-            ];
+              environment.systemPackages = with pkgs; [
+                jq
+                mozlz4a
+                xorg-server
+              ];
 
-            users.users.testuser = {
-              isNormalUser = true;
-              home = "/home/testuser";
-              createHome = true;
-              group = "users";
-              uid = 1000;
-            };
-
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-
-              users.testuser = {
-                imports = [suite.homeModule];
-
-                home.stateVersion = "26.05";
+              users.users.testuser = {
+                isNormalUser = true;
+                home = "/home/testuser";
+                createHome = true;
+                group = "users";
+                uid = 1000;
               };
-            };
-          }
-        ];
+
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+
+                users.testuser = {
+                  imports = [suite.homeModule];
+
+                  home.stateVersion = "26.05";
+                };
+              };
+            }
+          ]
+          ++ (suite.machineModules or []);
       };
 
       testScript = ''
@@ -75,6 +77,7 @@
     "private-desktop-entry" = ./private-desktop-entry.nix;
     "env-vars" = ./env-vars.nix;
     "preset-cleanup" = ./preset-cleanup.nix;
+    "system-certificates" = ./system-certificates.nix;
   };
 in
   pkgs.lib.mapAttrs (name: path: mkGenericTest name path) suites

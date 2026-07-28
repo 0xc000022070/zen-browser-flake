@@ -5,6 +5,7 @@
 {
   inputs,
   system,
+  pkgs,
   ...
 }: {
   home.packages = [
@@ -13,6 +14,14 @@
         extraPolicies = {
           DisableAppUpdate = true;
           DisableTelemetry = true;
+
+          # The package already registers "System Trust" so `security.pki.*`
+          # reaches Zen. Merging is per top-level key, so redefining
+          # SecurityDevices drops it unless repeated here.
+          SecurityDevices = {
+            "System Trust" = "${pkgs.p11-kit}/lib/pkcs11/p11-kit-trust.so";
+            "OpenSC" = "${pkgs.opensc}/lib/opensc-pkcs11.so";
+          };
         };
       }
     )

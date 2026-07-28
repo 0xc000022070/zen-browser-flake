@@ -17,6 +17,7 @@ This is a nix flake for the Zen browser.
 - [Declarative \[Work\]Spaces (including themes, icons, containers)](../examples/09-spaces-themes.nix)
 - [Declarative keyboard shortcuts with version protection](../examples/11-keyboard-shortcuts.nix)
 - [Declarative mods installation from Zen theme store](../examples/05-mods-installation.nix)
+- [Declarative extension buttons pinned to the toolbar](../examples/19-extension-buttons.nix)
 
 _A flake for Zen Browser that lets you fine-tune more than other flakes._
 
@@ -147,6 +148,7 @@ See the `examples/` directory for standalone configuration examples:
 | [16-environment-variables](../examples/16-environment-variables.nix) | Environment variables (themes, etc.)                  |
 | [17-live-folders](../examples/17-live-folders.nix) | Live folders (Issues, etc)  |                                           |
 | [18-space-routing](../examples/18-space-routing.nix) | Space routing  |                                           |
+| [19-extension-buttons](../examples/19-extension-buttons.nix) | Extension buttons pinned to the toolbar  |                                           |
 ## Home Manager Reference
 
 This module is based on Home Manager's
@@ -176,7 +178,7 @@ Three distinct configuration layers, stored differently:
 
 Profiles support many sub-options. See examples directory for:
 
-- **Extensions**: [04-extensions.nix](../examples/04-extensions.nix), [04b-extensions-rycee.nix](../examples/04b-extensions-rycee.nix)
+- **Extensions**: [04-extensions.nix](../examples/04-extensions.nix), [04b-extensions-rycee.nix](../examples/04b-extensions-rycee.nix), [19-extension-buttons.nix](../examples/19-extension-buttons.nix)
 - **Mods**: [05-mods-installation.nix](../examples/05-mods-installation.nix) (Zen theme store)
 - **Search**: [06-search-engines.nix](../examples/06-search-engines.nix) (custom search shortcuts)
 - **Bookmarks**: [07-bookmarks.nix](../examples/07-bookmarks.nix)
@@ -195,6 +197,7 @@ Profiles support many sub-options. See examples directory for:
 > - Any `pins` (with or without `pinsForce`)
 > - Any `containers` (with or without `containersForce`)
 > - Any `keyboardShortcuts`
+> - Any `extensionButtons`
 
 If you only declare simple options like policies/extensions/bookmarks, rebuilding while Zen is open is ok, and closure won't be required.
 

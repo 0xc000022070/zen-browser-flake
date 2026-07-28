@@ -75,6 +75,7 @@
     "private-desktop-entry" = ./private-desktop-entry.nix;
     "env-vars" = ./env-vars.nix;
     "preset-cleanup" = ./preset-cleanup.nix;
+    "extension-buttons" = ./extension-buttons.nix;
   };
 in
   pkgs.lib.mapAttrs (name: path: mkGenericTest name path) suites

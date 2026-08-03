@@ -209,6 +209,11 @@ in {
           message = "Profile '${profileName}': sine.mods requires sine.enable to be true.";
         })
         cfg.profiles)
+      ++ (lib.mapAttrsToList (profileName: profile: {
+          assertion = !(profile.sine.enable && (cfg.extraPrefs != "" || cfg.extraPrefsFiles != []));
+          message = "Profile '${profileName}': sine.enable is mutually exclusive with extraPrefs and extraPrefsFiles. Both claim general.config.filename in the application directory and sine's bootloader wins, so the extra prefs would be dropped without notice. Put them in profiles.${profileName}.settings instead.";
+        })
+        cfg.profiles)
       ++ (lib.flatten (lib.mapAttrsToList (
           profileName: profile:
             lib.mapAttrsToList (groupName: group: [

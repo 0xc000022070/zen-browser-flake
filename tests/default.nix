@@ -73,6 +73,7 @@
     "space-routing" = ./space-routing.nix;
     "default-browser" = ./default-browser.nix;
     "private-desktop-entry" = ./private-desktop-entry.nix;
+    "policies" = ./policies.nix;
     "env-vars" = ./env-vars.nix;
     "preset-cleanup" = ./preset-cleanup.nix;
   };

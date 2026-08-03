@@ -133,10 +133,14 @@ in {
         basePackage = applyEnv (
           if cfg.unwrappedPackage != null
           then cfg.unwrappedPackage
+          # Policies belong to the unwrapped derivation: wrapFirefox writes its
+          # own distribution/policies.json, but the launcher execs through to
+          # the unwrapped binary and Gecko reads the file next to
+          # /proc/self/exe, so the wrapper's copy is never loaded.
           else if isLinux
           then
             self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped".override {
-              inherit (cfg) enablePrivateDesktopEntry;
+              inherit (cfg) policies enablePrivateDesktopEntry;
             }
           else self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped"
         );

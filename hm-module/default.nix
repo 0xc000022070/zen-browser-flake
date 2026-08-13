@@ -160,7 +160,7 @@ in {
       lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings);
 
     assertions = let
-      isSignedDarwin = pkgs.stdenv.isDarwin && cfg.darwin.packageMode == "signed";
+      isSignedDarwin = pkgs.stdenv.hostPlatform.isDarwin && cfg.darwin.packageMode == "signed";
 
       # Only deliverable by writing inside the .app, which signed mode refuses.
       signedDarwinAssertions =
@@ -180,11 +180,11 @@ in {
     in
       [
         {
-          assertion = cfg.icon == null || pkgs.stdenv.isLinux;
+          assertion = cfg.icon == null || pkgs.stdenv.hostPlatform.isLinux;
           message = "The 'icon' option is only supported on Linux.";
         }
         {
-          assertion = cfg.env == {} || pkgs.stdenv.isLinux;
+          assertion = cfg.env == {} || pkgs.stdenv.hostPlatform.isLinux;
           message = "The 'env' option is only supported on Linux.";
         }
         {
@@ -195,7 +195,7 @@ in {
       ++ signedDarwinAssertions
       ++ (lib.mapAttrsToList (profileName: profile: {
           # Both modes: the bootloader injection only knows $out/lib/zen-bin-*.
-          assertion = !(pkgs.stdenv.isDarwin && profile.sine.enable);
+          assertion = !(pkgs.stdenv.hostPlatform.isDarwin && profile.sine.enable);
           message = "Profile '${profileName}': sine.enable is not supported on macOS. Sine installs a bootloader inside the Zen application, which would break the upstream code signature and is not implemented for the macOS app layout.";
         })
         cfg.profiles)

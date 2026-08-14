@@ -78,8 +78,8 @@ in {
       essentialPinsWarning = let
         hasIssue = lib.any (
           profile:
-            ((profile.settings or {})."zen.window-sync.enabled" or true)
-            == false
+            (((profile.settings or {})."zen.window-sync.enabled" or true) == false
+            && ((profile.settings or {})."zen.window-sync.sync-only-pinned-tabs" or true) == false)
             && lib.any (p: p.isEssential or false) (lib.attrValues (profile.pinsResolved or {}))
         ) (lib.attrValues cfg.profiles);
       in

@@ -144,6 +144,7 @@ See the `examples/` directory for standalone configuration examples:
 | [16-environment-variables](../examples/16-environment-variables.nix) | Environment variables (themes, etc.)                  |
 | [17-live-folders](../examples/17-live-folders.nix) | Live folders (Issues, etc)  |                                           |
 | [18-space-routing](../examples/18-space-routing.nix) | Space routing  |                                           |
+| [19-sine-mods](../examples/19-sine-mods.nix) | Sine mods (Linux only)  |                                           |
 ## Home Manager Reference
 
 This module is based on Home Manager's

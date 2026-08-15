@@ -29,6 +29,32 @@
 
   isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
 
+  sinePack = mkSinePack {};
+
+  # Sine ships its own autoconfig script. Installing it as a second config.js
+  # next to the wrapper's autoconfig.js makes defaults/pref hold two rival
+  # general.config.filename values; the directory is read alphabetically, so
+  # config-pref.js won and mozilla.cfg -- which carries extraPrefs and
+  # extraPrefsFiles -- was never read. Feeding the script through
+  # extraPrefsFiles keeps a single autoconfig chain instead.
+  sineAutoConfig =
+    pkgs.runCommand "sine-autoconfig.js" {}
+    ''
+      # sine-default-prefs.js exists only because Sine never applies a mod's
+      # defaultValue entries outside its settings UI. Fail the build when that
+      # TODO disappears, so the seed is re-examined on the sources.json bump
+      # that removes it instead of silently double-applying forever.
+      if ! grep -q 'TODO: Apply default preferences\.' \
+        "${sinePack.manager}/src/core/manager.sys.mjs"; then
+        echo "sine: upstream dropped the 'Apply default preferences' TODO." >&2
+        echo "sine: recheck hm-module/sine-default-prefs.js -- if Sine now seeds" >&2
+        echo "sine: mod defaults itself, delete it and drop this concatenation." >&2
+        exit 1
+      fi
+
+      cat ${./sine-default-prefs.js} "${sinePack.bootloader}/program/config.js" > $out
+    '';
+
   envWrapperArgs = lib.concatStringsSep " " (
     lib.mapAttrsToList (k: v: "--set ${lib.escapeShellArg k} ${lib.escapeShellArg v}") cfg.env
   );
@@ -145,27 +171,8 @@ in {
           else self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped"
         );
 
-        getPackage = sine:
-          if sine
-          then let
-            sinePack = mkSinePack {};
-          in
-            basePackage.overrideAttrs (oldAttrs: {
-              postInstall =
-                (oldAttrs.postInstall or "")
-                + ''
-                  for libdir in "$out"/lib/zen-bin-*; do
-                    chmod -R u+w "$libdir"
-                    cp "${sinePack.bootloader}/program/config.js" "$libdir/config.js"
-                    mkdir -p "$libdir/defaults/pref"
-                    cp "${sinePack.bootloader}/program/defaults/pref/config-prefs.js" "$libdir/defaults/pref/config-pref.js"
-                  done
-                '';
-            })
-          else basePackage;
-
         wrappedPackage =
-          ((pkgs.wrapFirefox.override {ffmpeg_7 = pkgs.ffmpeg_8;}) (prepareDarwinWrapper (getPackage isSineEnabled)) {
+          ((pkgs.wrapFirefox.override {ffmpeg_7 = pkgs.ffmpeg_8;}) (prepareDarwinWrapper basePackage) {
             icon =
               if cfg.icon != null
               then cfg.icon
@@ -173,7 +180,19 @@ in {
               then "zen-browser"
               else "zen-${name}";
           }).override {
-            inherit (cfg) extraPrefs extraPrefsFiles;
+            inherit (cfg) extraPrefs;
+
+            # Sine first so anything the user sets afterwards wins: the wrapper
+            # concatenates these into mozilla.cfg in order, then appends extraPrefs.
+            extraPrefsFiles =
+              lib.optional isSineEnabled "${sineAutoConfig}"
+              ++ cfg.extraPrefsFiles;
+
+            # fx-autoconfig needs the sandbox off to reach ChromeUtils.
+            extraAutoConfig = lib.optionalString isSineEnabled ''
+              pref("general.config.sandbox_enabled", false);
+            '';
+
             nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
           };
 

@@ -10,7 +10,7 @@
   config,
   wrapGAppsHook3,
   autoPatchelfHook,
-  ffmpeg_8,
+  ffmpeg_9,
   alsa-lib,
   curl,
   dbus-glib,
@@ -210,7 +210,7 @@ in
       alsa-lib
       dbus-glib
       libXtst
-      ffmpeg_8
+      ffmpeg_9
     ];
 
     runtimeDependencies = lib.optionals stdenv.hostPlatform.isLinux [
@@ -230,7 +230,7 @@ in
 
     preFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
       gappsWrapperArgs+=(
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ffmpeg_8]}"
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ffmpeg_9]}"
         --add-flags "--name=''${MOZ_APP_LAUNCHER:-${binaryName}}"
         --add-flags "--class=''${MOZ_APP_LAUNCHER:-${binaryName}}"
       )

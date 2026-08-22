@@ -4,6 +4,18 @@
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
 
+  # wrapper.nix picks between its `ffmpeg_7` and `ffmpeg_8` formals with
+  # `versionAtLeast browser.version "146"`, which reads Zen's "1.21.15b" rather
+  # than a Gecko number and so always resolves to `ffmpeg_7`. Override both
+  # slots so the branch it takes stops mattering. Both formals exist since
+  # 26.05; 25.11 and older declare only `ffmpeg_7` and throw here.
+  zenFfmpeg = pkgs.ffmpeg_9 or pkgs.ffmpeg_8;
+
+  wrapZen = pkgs.wrapFirefox.override {
+    ffmpeg_7 = zenFfmpeg;
+    ffmpeg_8 = zenFfmpeg;
+  };
+
   mkZen = name: entry: let
     variant = (builtins.fromJSON (builtins.readFile ./sources.json)).variants.${entry}.${system};
   in
@@ -19,18 +31,18 @@ in rec {
     if isDarwin
     then beta-unwrapped
     else
-      pkgs.wrapFirefox beta-unwrapped {
+      wrapZen beta-unwrapped {
         icon = "zen-browser";
       };
   twilight =
     if isDarwin
     then twilight-unwrapped
-    else pkgs.wrapFirefox twilight-unwrapped {};
+    else wrapZen twilight-unwrapped {};
   twilight-official =
     if isDarwin
     then twilight-official-unwrapped
     else
-      pkgs.wrapFirefox twilight-official-unwrapped {
+      wrapZen twilight-official-unwrapped {
         icon = "zen-twilight";
       };
 

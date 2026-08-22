@@ -10,7 +10,9 @@
   config,
   wrapGAppsHook3,
   autoPatchelfHook,
-  ffmpeg_9,
+  ffmpeg_8,
+  # ffmpeg_9 is absent on nixpkgs 26.05; Zen dlopens libavcodec 62 and 63
+  ffmpeg_9 ? ffmpeg_8,
   alsa-lib,
   curl,
   dbus-glib,

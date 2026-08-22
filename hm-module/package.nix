@@ -164,14 +164,14 @@ in {
             })
           else basePackage;
 
-        wrappedPackage =
-          # wrapFirefox's function signature (see wrapper.nix) declares
-          # `ffmpeg_8` as a formal parameter — there is no `ffmpeg_9`
-          # parameter to override. The `.override` mechanism works on
-          # parameter names, so we must override `ffmpeg_8` (the name
-          # wrapFirefox accepts) and set its value to `pkgs.ffmpeg_9`
-          # (the actual package we want)
-          ((pkgs.wrapFirefox.override {ffmpeg_8 = pkgs.ffmpeg_9;}) (prepareDarwinWrapper (getPackage isSineEnabled)) {
+        # Same wrapper slot pinning as default.nix, against the user's pkgs.
+        zenFfmpeg = pkgs.ffmpeg_9 or pkgs.ffmpeg_8;
+
+        wrappedPackage = ((pkgs.wrapFirefox.override {
+            ffmpeg_7 = zenFfmpeg;
+            ffmpeg_8 = zenFfmpeg;
+          })
+          (prepareDarwinWrapper (getPackage isSineEnabled)) {
             icon =
               if cfg.icon != null
               then cfg.icon
@@ -179,9 +179,9 @@ in {
               then "zen-browser"
               else "zen-${name}";
           }).override {
-            inherit (cfg) extraPrefs extraPrefsFiles;
-            nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
-          };
+          inherit (cfg) extraPrefs extraPrefsFiles;
+          nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
+        };
 
         selectedPackage =
           if isSignedDarwin

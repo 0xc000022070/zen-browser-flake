@@ -165,13 +165,7 @@ in {
           else basePackage;
 
         wrappedPackage =
-          # wrapFirefox's function signature (see wrapper.nix) declares
-          # `ffmpeg_8` as a formal parameter — there is no `ffmpeg_9`
-          # parameter to override. The `.override` mechanism works on
-          # parameter names, so we must override `ffmpeg_8` (the name
-          # wrapFirefox accepts) and set its value to `pkgs.ffmpeg_9`
-          # (the actual package we want)
-          ((pkgs.wrapFirefox.override {ffmpeg_8 = pkgs.ffmpeg_9;}) (prepareDarwinWrapper (getPackage isSineEnabled)) {
+          ((pkgs.wrapFirefox.override {ffmpeg_7 = pkgs.ffmpeg_8;}) (prepareDarwinWrapper (getPackage isSineEnabled)) {
             icon =
               if cfg.icon != null
               then cfg.icon

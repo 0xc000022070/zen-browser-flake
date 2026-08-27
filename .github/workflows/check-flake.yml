@@ -31,6 +31,23 @@ jobs:
       - name: Check flake
         run: nix flake check --debug
 
+  # wrapper.nix internals move on nixos-unstable long before a release and
+  # have broken eval twice (#384, #386). zen-update commits touch sources.json
+  # near-daily, so this re-evals against current unstable often enough to
+  # catch the next one before users report it.
+  flake-check-unstable:
+    name: Check flake (nixos-unstable, eval only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Check flake against nixos-unstable
+        run: nix flake check --no-build --no-write-lock-file --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable
+
   flake-check-darwin:
     name: Check flake (aarch64-darwin)
     runs-on: macos-26

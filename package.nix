@@ -245,12 +245,18 @@ in
       then installDarwin
       else installLinux;
 
-    passthru = {
-      inherit applicationName binaryName libName;
-      ffmpegSupport = true;
-      gssSupport = true;
-      gtk3 = gtk3;
-    };
+    passthru =
+      {
+        inherit applicationName binaryName libName;
+        ffmpegSupport = true;
+        gssSupport = true;
+        gtk3 = gtk3;
+      }
+      # Gecko milestone backing this Zen release; wrap-zen.nix feeds it to
+      # wrapFirefox's version checks in place of Zen's own version.
+      // lib.optionalAttrs (variant ? firefoxVersion) {
+        inherit (variant) firefoxVersion;
+      };
 
     meta = {
       description = "Experience tranquillity while browsing the web without people tracking you!";

@@ -198,6 +198,20 @@ update_version() {
     fi
     sha256=$(echo "$prefetch_output" | jq -r '.hash')
 
+    # Gecko milestone of the artifact, consumed by wrap-zen.nix. Missing
+    # milestone is not fatal: the wrapper falls back to its newest ffmpeg.
+    firefox_version_field=""
+    if [ "$os" != "darwin" ]; then
+        store_path=$(echo "$prefetch_output" | jq -r '.storePath')
+        firefox_version=$(sed -n 's/^Milestone=//p' "$store_path/platform.ini" | tr -d '[:space:]')
+
+        if [ "$firefox_version" = "" ]; then
+            echo "warning: no Gecko milestone found in $store_path/platform.ini" 1>&2
+        else
+            firefox_version_field=",\"firefoxVersion\":\"$firefox_version\""
+        fi
+    fi
+
     entry_name="$version_name"
 
     if [ "$version_name" = "twilight" ]; then
@@ -246,12 +260,12 @@ update_version() {
                     echo "[skipping] An artifact $artifact_name already exists in $release_name @ following link: $self_download_url"
                 fi
 
-                jq ".variants[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+                jq ".variants[\"twilight\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$self_download_url\",\"sha256\":\"$sha256\"$firefox_version_field}" <sources.json >sources.json.tmp
                 mv sources.json.tmp sources.json
             done
     fi
 
-    jq ".variants[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"}" <sources.json >sources.json.tmp
+    jq ".variants[\"$entry_name\"][\"$arch-$os\"] = {\"version\":\"$semver\",\"sha1\":\"$remote_sha1\",\"url\":\"$download_url\",\"sha256\":\"$sha256\"$firefox_version_field}" <sources.json >sources.json.tmp
     mv sources.json.tmp sources.json
 
     echo "$version_name was updated to $semver"

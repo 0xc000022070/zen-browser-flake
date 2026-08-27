@@ -164,14 +164,10 @@ in {
             })
           else basePackage;
 
-        # Same wrapper slot pinning as default.nix, against the user's pkgs.
-        zenFfmpeg = pkgs.ffmpeg_9 or pkgs.ffmpeg_8;
+        wrapZen = import ../wrap-zen.nix pkgs.wrapFirefox;
 
-        wrappedPackage = ((pkgs.wrapFirefox.override {
-            ffmpeg_7 = zenFfmpeg;
-            ffmpeg_8 = zenFfmpeg;
-          })
-          (prepareDarwinWrapper (getPackage isSineEnabled)) {
+        wrappedPackage =
+          (wrapZen (prepareDarwinWrapper (getPackage isSineEnabled)) {
             icon =
               if cfg.icon != null
               then cfg.icon
@@ -179,9 +175,9 @@ in {
               then "zen-browser"
               else "zen-${name}";
           }).override {
-          inherit (cfg) extraPrefs extraPrefsFiles;
-          nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
-        };
+            inherit (cfg) extraPrefs extraPrefsFiles;
+            nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
+          };
 
         selectedPackage =
           if isSignedDarwin

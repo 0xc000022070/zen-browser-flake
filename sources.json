@@ -2,24 +2,24 @@
   "variants": {
     "beta": {
       "x86_64-linux": {
-        "version": "1.21.15b",
-        "sha1": "28167f86c52cd7ef12243a824d4f58144d15daa4",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.21.15b/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-XzsrEmK5LXdMDOGuRRiA/bOIqa8TUGUZc+s2hWQzafw=",
-        "firefoxVersion": "154.0"
+        "version": "1.21.16b",
+        "sha1": "a5585c5619835e4dc6a3ce1747fc6977c7e5e2f1",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.21.16b/zen.linux-x86_64.tar.xz",
+        "sha256": "sha256-wb3/Dow/IO9679NyG8dN+Qj+oExlY1Lu9iUzWocRkjk=",
+        "firefoxVersion": "154.0.1"
       },
       "aarch64-linux": {
-        "version": "1.21.15b",
-        "sha1": "28167f86c52cd7ef12243a824d4f58144d15daa4",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.21.15b/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-h3MHg3UMqpdEvr6HifomMXTo5eihTrrDIkZzadR8A+s=",
-        "firefoxVersion": "154.0"
+        "version": "1.21.16b",
+        "sha1": "a5585c5619835e4dc6a3ce1747fc6977c7e5e2f1",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.21.16b/zen.linux-aarch64.tar.xz",
+        "sha256": "sha256-EHgLlKsIwhNZUtFLe86lIeUj3TWrkyDDmknsi5qjyjk=",
+        "firefoxVersion": "154.0.1"
       },
       "aarch64-darwin": {
-        "version": "1.21.15b",
-        "sha1": "28167f86c52cd7ef12243a824d4f58144d15daa4",
-        "url": "https://github.com/zen-browser/desktop/releases/download/1.21.15b/zen.macos-universal.dmg",
-        "sha256": "sha256-Do6fOjbV80tTNWMeSVQU9G+Nj7eOe6WnMvmSMF3o4Ec="
+        "version": "1.21.16b",
+        "sha1": "a5585c5619835e4dc6a3ce1747fc6977c7e5e2f1",
+        "url": "https://github.com/zen-browser/desktop/releases/download/1.21.16b/zen.macos-universal.dmg",
+        "sha256": "sha256-NWBosq1JfgHRhXebdHMH+6yzvDZ6dRDRaYaWCPuh048="
       }
     },
     "twilight": {

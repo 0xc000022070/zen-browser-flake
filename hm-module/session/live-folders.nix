@@ -61,7 +61,10 @@ in {
                     name = lf.title;
                     collapsed = lf.collapsed;
                     saveOnWindowClose = true;
-                    parentId = null;
+                    parentId =
+                      if lf.folderParentId == null
+                      then null
+                      else "{${lf.folderParentId}}";
                     prevSiblingInfo = {
                       type = "start";
                       id = null;

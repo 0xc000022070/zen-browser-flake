@@ -10,11 +10,20 @@
       enable = true;
       profiles.default = let
         ws = "cccccccc-cccc-4ccc-cccc-cccccccccccc";
+        folder = "dddddddd-dddd-4ddd-dddd-dddddddddddd";
       in {
         spaces."Main" = {
           id = ws;
           name = "Main";
           position = 1;
+        };
+
+        pins."Blogs" = {
+          id = folder;
+          isGroup = true;
+          workspace = ws;
+          position = 19;
+          isFolderCollapsed = true;
         };
 
         liveFolders = {
@@ -26,6 +35,7 @@
             position = 20;
             maxItems = 5;
             folderIcon = "https://nixos.org/favicon.ico";
+            folderParentId = folder;
           };
           "Pull requests" = {
             id = "gh-prs";
@@ -100,18 +110,18 @@
 
       # Session store: folder rows, groups rows, placeholder tabs
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-sessions.jsonlz4 /tmp/sessions-live.json")
-      machine.succeed("jq -e '.folders | length == 2' /tmp/sessions-live.json")
+      machine.succeed("jq -e '.folders | length == 3' /tmp/sessions-live.json")
       machine.succeed(
-        "jq -e '.folders[] | select(.id == \"nixos-blog\") | .isLiveFolder == true and .name == \"NixOS blog\" and .pinned == true and .collapsed == true and .emptyTabIds == [\"nixos-blog-empty\"] and .userIcon == \"https://nixos.org/favicon.ico\" and .workspaceId == \"{cccccccc-cccc-4ccc-cccc-cccccccccccc}\"' /tmp/sessions-live.json"
+        "jq -e '.folders[] | select(.id == \"nixos-blog\") | .isLiveFolder == true and .name == \"NixOS blog\" and .pinned == true and .collapsed == true and .emptyTabIds == [\"nixos-blog-empty\"] and .userIcon == \"https://nixos.org/favicon.ico\" and .workspaceId == \"{cccccccc-cccc-4ccc-cccc-cccccccccccc}\" and .parentId == \"{dddddddd-dddd-4ddd-dddd-dddddddddddd}\"' /tmp/sessions-live.json"
       )
       machine.succeed(
-        "jq -e '.folders[] | select(.id == \"gh-prs\") | .isLiveFolder == true and .index == 21' /tmp/sessions-live.json"
+        "jq -e '.folders[] | select(.id == \"gh-prs\") | .isLiveFolder == true and .index == 21 and .parentId == null' /tmp/sessions-live.json"
       )
-      machine.succeed("jq -e '.groups | length == 2' /tmp/sessions-live.json")
+      machine.succeed("jq -e '.groups | length == 3' /tmp/sessions-live.json")
       machine.succeed(
         "jq -e '.groups[] | select(.id == \"nixos-blog\") | .splitView == false and .pinned == true and .color == \"zen-workspace-color\"' /tmp/sessions-live.json"
       )
-      machine.succeed("jq -e '[.tabs[] | select(.zenIsEmpty == true)] | length == 2' /tmp/sessions-live.json")
+      machine.succeed("jq -e '[.tabs[] | select(.zenIsEmpty == true)] | length == 3' /tmp/sessions-live.json")
       machine.succeed(
         "jq -e '.tabs[] | select(.id == \"nixos-blog-empty\") | .groupId == \"nixos-blog\" and .pinned == true and .entries[0].url == \"about:blank\"' /tmp/sessions-live.json"
       )

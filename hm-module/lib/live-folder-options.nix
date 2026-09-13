@@ -1,6 +1,8 @@
 # Live-folder submodule shared by `liveFolders` and the space-scoped
 # `spaces.*.liveFolders`. Space-scoped folders exclude `workspace`: it is
 # derived from the owning space during desugaring (session/spaces.nix).
+# `folderParentId` stays in both forms; the parent is always a regular
+# folder pin, since Zen cannot nest a live folder under another live folder.
 {
   lib,
   includeWorkspace ? true,
@@ -41,6 +43,15 @@ in
           type = bool;
           default = true;
           description = "Whether the folder starts collapsed.";
+        };
+        folderParentId = mkOption {
+          type = nullOr str;
+          default = null;
+          description = ''
+            Pin UUID of a declared folder pin (`isGroup = true`) that contains
+            this live folder. Live folders cannot nest inside other live
+            folders in Zen, so the parent must be a regular folder pin.
+          '';
         };
         folderIcon = mkOption {
           type = nullOr (either str path);

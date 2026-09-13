@@ -278,6 +278,13 @@ in {
                 assertion = lf.workspace or null != null;
                 message = "Profile '${profileName}' liveFolders '${lfName}': workspace is required — Zen folders belong to exactly one space. Use spaces.<name>.liveFolders, or set workspace to a space id (without declared spaces: copy the zen.workspaces.active pref from about:config, minus the braces).";
               }
+              {
+                assertion =
+                  lf.folderParentId
+                  == null
+                  || lib.any (p: p.isGroup && p.id == lf.folderParentId) (lib.attrValues (profile.pinsResolved or {}));
+                message = "Profile '${profileName}' liveFolders '${lfName}': folderParentId must match the id of a pin with isGroup = true.";
+              }
             ])
             (profile.liveFolders or {})
         )

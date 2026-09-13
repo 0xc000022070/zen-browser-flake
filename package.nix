@@ -20,6 +20,7 @@
   libXtst,
   libva,
   libGL,
+  p11-kit,
   pciutils,
   pipewire,
   adwaita-icon-theme,
@@ -52,8 +53,18 @@
     aarch64-darwin = "darwin-aarch64";
   };
 
+  # Zen ships no libnssckbi.so, so NSS falls back to the roots compiled into
+  # libxul and never reads the system trust store. This module is additive:
+  # `security.pki.*` anchors become visible, built-in roots stay as fallback.
+  basePolicies = lib.optionalAttrs stdenv.hostPlatform.isLinux {
+    SecurityDevices = {
+      "System Trust" = "${p11-kit}/lib/pkcs11/p11-kit-trust.so";
+    };
+  };
+
   firefoxPolicies =
-    (config.firefox.policies or {})
+    basePolicies
+    // (config.firefox.policies or {})
     // policies
     // extraPolicies;
 

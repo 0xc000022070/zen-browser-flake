@@ -12,10 +12,22 @@
 # GitHub kinds reuse the browser's logged-in github.com session — no token.
 # Keep "zen.window-sync.enabled" = true (the default) or Zen may drop the
 # entries on restore.
+#
+# A live folder can be nested inside a regular folder pin via `folderParentId`
+# (Zen can't nest a live folder under another live folder, so the parent must
+# be a declared `isGroup = true` pin).
 {
   programs.zen-browser.profiles.default = let
     workSpaceId = "8a2c47f0-1d9e-4b36-a5c8-f70e92b4d615";
+    blogFolderId = "1f3d9b0c-4e7a-4a10-9b3d-2c8e6f1a0b5d";
   in {
+    pins."Blogs" = {
+      id = blogFolderId;
+      isGroup = true;
+      workspace = workSpaceId;
+      position = 399;
+    };
+
     liveFolders = {
       "Prisma blog" = {
         id = "0f3f2f66-64bc-4a43-8f86-01c2a134c4f4";
@@ -25,6 +37,8 @@
         workspace = workSpaceId;
         position = 400;
         maxItems = 5;
+        # Nest this live folder inside the "Blogs" folder pin above.
+        folderParentId = blogFolderId;
         # timeRange = 86400000;   # only items from the last 24 h; 0 (default) keeps all
         # fetchInterval = 900000; # 15 min; omit to let the browser manage it
       };

@@ -121,16 +121,21 @@ in {
               fi
 
               if [ -f "$MANAGED_FILE" ]; then
-                # Generations before mod updating stored a bare id array; the object
-                # form pairs each id with the hash of what was installed.
+                # Older generations wrote a bare id array, then id -> install hash.
                 PREV_STATE=$(${lib.getExe pkgs.jq} -c '
-                  if type == "array" then (map({(.): ""}) | add // {})
-                  elif type == "object" then .
+                  if type == "array" then (map({(.): {}}) | add // {})
+                  elif type == "object" then
+                    map_values(if type == "string" then {hash: .} else . end)
                   else {} end
                 ' "$MANAGED_FILE" 2>/dev/null || echo "{}")
               else
                 PREV_STATE="{}"
               fi
+
+              etag_of() {
+                ${lib.getExe pkgs.gnugrep} -i '^etag:' "$1" 2>/dev/null |
+                  tail -1 | tr -d '\r' | cut -d' ' -f2-
+              }
 
               for mod_id in $(echo "$PREV_STATE" | ${lib.getExe pkgs.jq} -r 'keys[]'); do
                 if [[ " $SINE_MODS " != *" $mod_id "* ]]; then
@@ -211,47 +216,74 @@ in {
                 fi
 
                 STAGING="$BASE_DIR/chrome/sine-mods/.staging-$mod_id"
-                PREV_HASH=$(echo "$PREV_STATE" | ${lib.getExe pkgs.jq} -r --arg id "$mod_id" '.[$id] // ""')
+                PREV=$(echo "$PREV_STATE" | ${lib.getExe pkgs.jq} -c --arg id "$mod_id" '.[$id] // {}')
+                PREV_HASH=$(echo "$PREV" | ${lib.getExe pkgs.jq} -r '.hash // ""')
+                PREV_SOURCE=$(echo "$PREV" | ${lib.getExe pkgs.jq} -r '.source // ""')
+                PREV_ETAG=$(echo "$PREV" | ${lib.getExe pkgs.jq} -r '.etag // ""')
+
+                SINE_URL="https://raw.githubusercontent.com/sineorg/store/main/mods/$mod_id/mod.zip"
+                THEME_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_id/theme.json"
 
                 rm -rf "$STAGING"
                 CURRENT_HASH=""
+                CURRENT_SOURCE=""
+                CURRENT_ETAG=""
                 SYNCED=false
                 CHANGED=false
 
-                # Try Sine store first
-                SINE_URL="https://raw.githubusercontent.com/sineorg/store/main/mods/$mod_id/mod.zip"
-                TMPZIP=$(mktemp -d)
-                echo "Fetching sine mod $mod_id from Sine store..."
+                if [ -d "$MOD_DIR" ] && [ -n "$PREV_HASH" ] && [ -n "$PREV_ETAG" ]; then
+                  case "$PREV_SOURCE" in
+                    sine) PROBE_URL="$SINE_URL" ;;
+                    theme) PROBE_URL="$THEME_URL" ;;
+                    *) PROBE_URL="" ;;
+                  esac
 
-                if ${lib.getExe pkgs.curl} -sfL "$SINE_URL" -o "$TMPZIP/mod.zip" 2>/dev/null; then
-                  CURRENT_HASH=$(sha256sum "$TMPZIP/mod.zip" | cut -c1-64)
-
-                  mkdir -p "$STAGING/extracted" "$STAGING/mod"
-
-                  if [ -d "$MOD_DIR" ] && [ "$CURRENT_HASH" = "$PREV_HASH" ]; then
+                  if [ -n "$PROBE_URL" ] && [ "$(${lib.getExe pkgs.curl} -sL -o /dev/null \
+                       -w '%{http_code}' -H "If-None-Match: $PREV_ETAG" "$PROBE_URL")" = "304" ]; then
                     SYNCED=true
-                  elif ${lib.getExe pkgs.unzip} -o "$TMPZIP/mod.zip" -d "$STAGING/extracted" >/dev/null 2>&1; then
-                    ITEMS=("$STAGING/extracted"/*)
-                    if [ ''${#ITEMS[@]} -eq 1 ] && [ -d "''${ITEMS[0]}" ]; then
-                      cp -r "''${ITEMS[0]}"/* "$STAGING/mod/" 2>/dev/null || true
-                      cp -r "''${ITEMS[0]}"/.* "$STAGING/mod/" 2>/dev/null || true
-                    else
-                      cp -r "$STAGING/extracted"/* "$STAGING/mod/" 2>/dev/null || true
-                    fi
-                    SYNCED=true
-                    CHANGED=true
+                    CURRENT_HASH="$PREV_HASH"
+                    CURRENT_SOURCE="$PREV_SOURCE"
+                    CURRENT_ETAG="$PREV_ETAG"
                   fi
                 fi
 
-                rm -rf "$TMPZIP"
+                if [ "$SYNCED" = false ]; then
+                  TMPZIP=$(mktemp -d)
+
+                  if ${lib.getExe pkgs.curl} -sfL -D "$TMPZIP/headers" "$SINE_URL" \
+                       -o "$TMPZIP/mod.zip" 2>/dev/null; then
+                    CURRENT_HASH=$(sha256sum "$TMPZIP/mod.zip" | cut -c1-64)
+                    CURRENT_SOURCE="sine"
+                    CURRENT_ETAG=$(etag_of "$TMPZIP/headers")
+
+                    mkdir -p "$STAGING/extracted" "$STAGING/mod"
+
+                    if [ -d "$MOD_DIR" ] && [ "$CURRENT_HASH" = "$PREV_HASH" ]; then
+                      SYNCED=true
+                    elif ${lib.getExe pkgs.unzip} -o "$TMPZIP/mod.zip" -d "$STAGING/extracted" >/dev/null 2>&1; then
+                      ITEMS=("$STAGING/extracted"/*)
+                      if [ ''${#ITEMS[@]} -eq 1 ] && [ -d "''${ITEMS[0]}" ]; then
+                        cp -r "''${ITEMS[0]}"/* "$STAGING/mod/" 2>/dev/null || true
+                        cp -r "''${ITEMS[0]}"/.* "$STAGING/mod/" 2>/dev/null || true
+                      else
+                        cp -r "$STAGING/extracted"/* "$STAGING/mod/" 2>/dev/null || true
+                      fi
+                      SYNCED=true
+                      CHANGED=true
+                    fi
+                  fi
+
+                  rm -rf "$TMPZIP"
+                fi
 
                 if [ "$SYNCED" = false ]; then
-                  echo "Sine store unavailable for $mod_id, trying vanilla Zen theme store..."
-                  THEME_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_id/theme.json"
+                  THEME_HDR=$(mktemp)
+                  THEME_JSON=$(${lib.getExe pkgs.curl} -sfL -D "$THEME_HDR" "$THEME_URL")
 
-                  THEME_JSON=$(${lib.getExe pkgs.curl} -sfL "$THEME_URL")
                   if [ -n "$THEME_JSON" ] && echo "$THEME_JSON" | ${lib.getExe pkgs.jq} empty 2>/dev/null; then
                     CURRENT_HASH=$(printf '%s' "$THEME_JSON" | sha256sum | cut -c1-64)
+                    CURRENT_SOURCE="theme"
+                    CURRENT_ETAG=$(etag_of "$THEME_HDR")
 
                     if [ -d "$MOD_DIR" ] && [ "$CURRENT_HASH" = "$PREV_HASH" ]; then
                       SYNCED=true
@@ -268,6 +300,8 @@ in {
                       CHANGED=true
                     fi
                   fi
+
+                  rm -f "$THEME_HDR"
                 fi
 
                 if [ "$CHANGED" = true ]; then
@@ -305,6 +339,8 @@ in {
                     # its hash forward so the next switch can still detect a change.
                     echo "Warning: could not reach either store for $mod_id, keeping installed copy"
                     CURRENT_HASH="$PREV_HASH"
+                    CURRENT_SOURCE="$PREV_SOURCE"
+                    CURRENT_ETAG="$PREV_ETAG"
                   else
                     echo "Failed to fetch mod $mod_id from both stores"
                     continue
@@ -312,7 +348,9 @@ in {
                 fi
 
                 NEW_STATE=$(echo "$NEW_STATE" | ${lib.getExe pkgs.jq} -c \
-                  --arg id "$mod_id" --arg h "$CURRENT_HASH" '.[$id] = $h')
+                  --arg id "$mod_id" --arg h "$CURRENT_HASH" \
+                  --arg s "$CURRENT_SOURCE" --arg e "$CURRENT_ETAG" \
+                  '.[$id] = {hash: $h, source: $s, etag: $e}')
 
                 NEEDS_ENTRY=false
                 if [ "$CHANGED" = true ]; then

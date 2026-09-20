@@ -170,6 +170,22 @@ in {
     assert seeded.get("nixtest.mod.accent") == "#ff0000", seed
     assert "nixtest.mod.unset" not in seeded, seed
 
+    state = json.loads(machine.succeed(f"cat {profile}/zen-sine-mods-nix-managed.json"))
+    assert state["${modId}"]["source"] == "sine", state
+    assert state["${modId}"]["etag"] != "", state
+
+    machine.succeed("systemctl restart home-manager-testuser.service")
+    machine.wait_for_unit("home-manager-testuser.service")
+
+    store_log = machine.succeed("cat /var/log/nginx/store.log")
+    hits = [line for line in store_log.splitlines() if "mod.zip" in line]
+    payloads = len([line for line in hits if '" 200 ' in line])
+    revalidations = len([line for line in hits if '" 304 ' in line])
+    assert payloads == 1, \
+      f"the mod payload was downloaded {payloads} times, a reswitch must not refetch:\n" + store_log
+    assert revalidations >= 1, \
+      "the second switch never revalidated, it refetched instead:\n" + store_log
+
     machine.succeed("( nohup Xvfb :99 -screen 0 1024x768x24 </dev/null >>/tmp/xvfb.log 2>&1 & )")
     machine.sleep(2)
 

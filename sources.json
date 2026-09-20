@@ -70,8 +70,8 @@
   "addons": {
     "sine": {
       "manager": {
-        "rev": "8b3744274588ee1de59b4decb5a8b87321a58ec1",
-        "hash": "sha256-QTP5fUtbt7MM2plD6kLCbkITGdBpZXF5DP9as4D/cWA=",
+        "rev": "fb0bd4ca6af888f10648e126947f7d1f82228433",
+        "hash": "sha256-nSh/p3pfqW1buAioBnCcgIkMjOvzkG8KEgbJAB/IdaM=",
         "owner": "CosmoCreeper",
         "repo": "Sine"
       },
@@ -89,14 +89,14 @@
       "repo": "zen-browser"
     },
     "betterfox": {
-      "rev": "8e415d1633f10fe0192d9c938e4ca2628eeec9f9",
-      "hash": "sha256-nLkaxpbAMifWxx/RJvuaDpjndzKFPTvAO8o9gR47HtU=",
+      "rev": "067172a4b0dc90e78e5b8b94d9abfe6430c6a7be",
+      "hash": "sha256-mIP/WcXUcGrJsWCJzR4zqPOmt0BbbpTZVaN/MbIwBbw=",
       "owner": "yokoffing",
       "repo": "Betterfox"
     },
     "arkenfox": {
-      "rev": "8fe9905c35a1025d1e6df69479f7625585fd956d",
-      "hash": "sha256-+76DopMmUBZ5wJi2/BMCjC/nY2C8vXypX8JmBYEDycc=",
+      "rev": "fb56d7bb4ed07898c9d94ca7ecc89697dd88cc3c",
+      "hash": "sha256-ykWxZZlwhdyLoP3+TDh90HRJJ2ekg4Ve1PTCTgwtzKE=",
       "owner": "Arkenfox",
       "repo": "user.js"
     }

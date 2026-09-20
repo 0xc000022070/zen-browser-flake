@@ -1,0 +1,20 @@
+#browser > * {
+  display: none !important;
+}
+
+#browser {
+  appearance: none !important;
+  background-color: rgb(0, 0, 255) !important;
+}
+
+@media (-moz-pref("zen.welcome-screen.seen")) {
+  #browser {
+    background-color: rgb(255, 0, 0) !important;
+  }
+}
+
+@media (-moz-pref("nixtest.mod.painted")) {
+  #browser {
+    background-color: rgb(0, 255, 0) !important;
+  }
+}

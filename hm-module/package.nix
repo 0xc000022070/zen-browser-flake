@@ -31,14 +31,8 @@
 
   sinePack = mkSinePack {};
 
-  # Sine ships its own autoconfig script. Installing it as a second config.js
-  # next to the wrapper's autoconfig.js makes defaults/pref hold two rival
-  # general.config.filename values; the directory is read alphabetically, so
-  # config-pref.js won and mozilla.cfg -- which carries extraPrefs and
-  # extraPrefsFiles -- was never read. Feeding the script through
-  # extraPrefsFiles keeps a single autoconfig chain instead.
-  sineAutoConfig =
-    pkgs.runCommand "sine-autoconfig.js" {}
+  sineConfigJs =
+    pkgs.runCommand "sine-config.js" {}
     ''
       # sine-default-prefs.js exists only because Sine never applies a mod's
       # defaultValue entries outside its settings UI. Fail the build when that
@@ -54,6 +48,21 @@
 
       cat ${./sine-default-prefs.js} "${sinePack.bootloader}/program/config.js" > $out
     '';
+
+  withSine = pkg:
+    pkg.overrideAttrs (old: {
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          for libdir in "$out"/lib/zen-bin-*; do
+            chmod -R u+w "$libdir/defaults"
+            install -m 644 ${sineConfigJs} "$libdir/config.js"
+            install -D -m 644 \
+              "${sinePack.bootloader}/program/defaults/pref/config-prefs.js" \
+              "$libdir/defaults/pref/config-pref.js"
+          done
+        '';
+    });
 
   envWrapperArgs = lib.concatStringsSep " " (
     lib.mapAttrsToList (k: v: "--set ${lib.escapeShellArg k} ${lib.escapeShellArg v}") cfg.env
@@ -156,7 +165,12 @@ in {
 
     programs.zen-browser = {
       package = let
-        basePackage = applyEnv (
+        applySine = pkg:
+          if isSineEnabled && isLinux
+          then withSine pkg
+          else pkg;
+
+        basePackage = applySine (applyEnv (
           if cfg.unwrappedPackage != null
           then cfg.unwrappedPackage
           # Policies belong to the unwrapped derivation: wrapFirefox writes its
@@ -169,7 +183,7 @@ in {
               inherit (cfg) policies enablePrivateDesktopEntry;
             }
           else self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped"
-        );
+        ));
 
         wrapZen = import ../wrap-zen.nix pkgs.wrapFirefox;
 
@@ -182,19 +196,7 @@ in {
               then "zen-browser"
               else "zen-${name}";
           }).override {
-            inherit (cfg) extraPrefs;
-
-            # Sine first so anything the user sets afterwards wins: the wrapper
-            # concatenates these into mozilla.cfg in order, then appends extraPrefs.
-            extraPrefsFiles =
-              lib.optional isSineEnabled "${sineAutoConfig}"
-              ++ cfg.extraPrefsFiles;
-
-            # fx-autoconfig needs the sandbox off to reach ChromeUtils.
-            extraAutoConfig = lib.optionalString isSineEnabled ''
-              pref("general.config.sandbox_enabled", false);
-            '';
-
+            inherit (cfg) extraPrefs extraPrefsFiles;
             nativeMessagingHosts = lib.optionals isLinux cfg.nativeMessagingHosts;
           };
 

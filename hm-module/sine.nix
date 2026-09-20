@@ -142,8 +142,74 @@ in {
 
               NEW_STATE="{}"
 
+              MARKETPLACE="{}"
+              MARKET_TMP=$(mktemp)
+              if ${lib.getExe pkgs.curl} -sfL \
+                   "https://raw.githubusercontent.com/sineorg/store/main/marketplace.json" \
+                   -o "$MARKET_TMP" \
+                 && ${lib.getExe pkgs.jq} empty "$MARKET_TMP" 2>/dev/null; then
+                MARKETPLACE=$(cat "$MARKET_TMP")
+              else
+                echo "Warning: could not read the Sine marketplace index, falling back to each mod's theme.json"
+              fi
+              rm -f "$MARKET_TMP"
+
+              resolve_mod_file() {
+                local dir="$1" custom="$2"
+                shift 2
+
+                case "$custom" in
+                  http://*|https://*) custom="''${custom##*/}" ;;
+                esac
+
+                if [ -n "$custom" ] && [ -f "$dir/$custom" ]; then
+                  printf '%s' "$custom"
+                  return
+                fi
+
+                local best="" best_depth=9999 rel depth
+                local name path
+                for name in "$@"; do
+                  while IFS= read -r path; do
+                    rel="''${path#"$dir"/}"
+                    depth=$(printf '%s' "$rel" | tr -cd '/' | wc -c)
+                    if [ "$depth" -lt "$best_depth" ]; then
+                      best="$rel"
+                      best_depth="$depth"
+                    fi
+                  done < <(${pkgs.findutils}/bin/find "$dir" -type f -name "$name" 2>/dev/null)
+                done
+                printf '%s' "$best"
+              }
+
               for mod_id in $SINE_MODS; do
                 MOD_DIR="$BASE_DIR/chrome/sine-mods/$mod_id"
+
+                INCOMPATIBLE=$(echo "$MARKETPLACE" | ${lib.getExe pkgs.jq} -r --arg id "$mod_id" '
+                  def listed($list; $needle):
+                    ($list // null) != null
+                    and ($list | map(ascii_downcase | contains($needle)) | any);
+
+                  .[$id] // {} |
+                  if (.os // null) != null and (listed(.os; "lin") | not) then
+                    "it is published for " + (.os | join(", ")) + ", not linux"
+                  elif (.fork // null) != null and (listed(.fork; "zen") | not) then
+                    "it supports " + (.fork | join(", ")) + ", not zen"
+                  elif listed(.notFork; "zen") then
+                    "it excludes zen explicitly"
+                  else
+                    empty
+                  end
+                ')
+
+                if [ -n "$INCOMPATIBLE" ]; then
+                  echo "zen-sine-mods: mod '$mod_id' cannot run in Zen: $INCOMPATIBLE." >&2
+                  echo "zen-sine-mods: Sine leaves it out of its own store on this browser; installing it" >&2
+                  echo "zen-sine-mods: anyway produces a mod that loads and then reports itself unsupported." >&2
+                  echo "zen-sine-mods: Remove it from profiles.<name>.sine.mods." >&2
+                  exit 1
+                fi
+
                 STAGING="$BASE_DIR/chrome/sine-mods/.staging-$mod_id"
                 PREV_HASH=$(echo "$PREV_STATE" | ${lib.getExe pkgs.jq} -r --arg id "$mod_id" '.[$id] // ""')
 
@@ -217,6 +283,22 @@ in {
 
                 rm -rf "$STAGING"
 
+                MOD_FOLDER=$(echo "$MARKETPLACE" | ${lib.getExe pkgs.jq} -r --arg id "$mod_id" '
+                  (.[$id].homepage // "")
+                  | (capture("/tree/[^/]+/(?<folder>.+)$").folder // "")
+                ')
+                if [ -n "$MOD_FOLDER" ]; then
+                  MOD_FOLDER=$(printf '%b' "''${MOD_FOLDER//%/\\x}")
+                fi
+
+                if [ -n "$MOD_FOLDER" ] && [ -d "$MOD_DIR/$MOD_FOLDER" ]; then
+                  PROMOTE="$BASE_DIR/chrome/sine-mods/.promote-$mod_id"
+                  rm -rf "$PROMOTE"
+                  mv "$MOD_DIR/$MOD_FOLDER" "$PROMOTE"
+                  rm -rf "$MOD_DIR"
+                  mv "$PROMOTE" "$MOD_DIR"
+                fi
+
                 if [ "$SYNCED" = false ]; then
                   if [ -d "$MOD_DIR" ]; then
                     # Offline, or both stores hiccuped. Keep the working copy and carry
@@ -239,9 +321,45 @@ in {
                   NEEDS_ENTRY=true
                 fi
 
-                if [ "$NEEDS_ENTRY" = true ] && [ -f "$MOD_DIR/theme.json" ]; then
-                  THEME_DATA=$(cat "$MOD_DIR/theme.json")
-                  TRANSFORMED=$(echo "$THEME_DATA" | ${lib.getExe pkgs.jq} --arg id "$mod_id" '
+                ENTRY_SRC=""
+                if echo "$MARKETPLACE" | ${lib.getExe pkgs.jq} -e --arg id "$mod_id" 'has($id)' >/dev/null 2>&1; then
+                  ENTRY_SRC=$(echo "$MARKETPLACE" | ${lib.getExe pkgs.jq} -c --arg id "$mod_id" '.[$id]')
+                elif [ -f "$MOD_DIR/theme.json" ]; then
+                  ENTRY_SRC=$(cat "$MOD_DIR/theme.json")
+                fi
+
+                if [ "$NEEDS_ENTRY" = true ] && [ -n "$ENTRY_SRC" ]; then
+                  DECL_CHROME=$(echo "$ENTRY_SRC" | ${lib.getExe pkgs.jq} -r '
+                    if (.style | type) == "string" then .style
+                    elif (.style | type) == "object" then (.style.chrome // "")
+                    else "" end')
+                  DECL_CONTENT=$(echo "$ENTRY_SRC" | ${lib.getExe pkgs.jq} -r '
+                    if (.style | type) == "object" then (.style.content // "") else "" end')
+                  DECL_PREFS=$(echo "$ENTRY_SRC" | ${lib.getExe pkgs.jq} -r '.preferences // ""')
+
+                  STYLE_CHROME=$(resolve_mod_file "$MOD_DIR" "$DECL_CHROME" userChrome.css chrome.css)
+                  STYLE_CONTENT=$(resolve_mod_file "$MOD_DIR" "$DECL_CONTENT" userContent.css)
+                  PREFS_FILE=$(resolve_mod_file "$MOD_DIR" "$DECL_PREFS" preferences.json)
+
+                  MOD_MODULES=$(echo "$MARKETPLACE" | ${lib.getExe pkgs.jq} -r \
+                    --argjson entry "$ENTRY_SRC" '
+                    . as $market |
+                    ($entry.modules // [])
+                    | map(. as $dep
+                        | ( $market
+                            | to_entries
+                            | map(select((.value.homepage // "") | endswith($dep)))
+                            | first | .key ) // $dep)
+                    | join(", ")')
+                  if [ -n "$MOD_MODULES" ]; then
+                    echo "Warning: sine mod $mod_id depends on $MOD_MODULES; add them to sine.mods, they are not pulled in automatically"
+                  fi
+
+                  TRANSFORMED=$(echo "$ENTRY_SRC" | ${lib.getExe pkgs.jq} \
+                    --arg id "$mod_id" \
+                    --arg chrome "$STYLE_CHROME" \
+                    --arg content "$STYLE_CONTENT" \
+                    --arg prefs "$PREFS_FILE" '
                     def to_local: if (. // "" | test("^https?://")) then (split("/") | last) else . end;
 
                     .id = $id |
@@ -249,19 +367,11 @@ in {
                     # Nix owns the mod directory, so Sine must not fetch over it
                     # (manager.sys.mjs skips a mod when this is set).
                     ."no-updates" = true |
-                    .style = (
-                      if (.style | type) == "string" then
-                        { "chrome": (.style | to_local), "content": "" }
-                      elif (.style | type) == "object" then
-                        {
-                          "chrome": ((.style.chrome // "") | to_local),
-                          "content": ((.style.content // "") | to_local)
-                        }
-                      else
-                        { "chrome": "", "content": "" }
-                      end
-                    ) |
-                    if .preferences then .preferences = (.preferences | to_local) else . end |
+                    # getScripts() drops every script unless this is "store";
+                    # the installer stamps it, a theme.json rarely carries it.
+                    .origin = "store" |
+                    .style = { "chrome": $chrome, "content": $content } |
+                    (if $prefs == "" then del(.preferences) else .preferences = $prefs end) |
                     if .readme then .readme = (.readme | to_local) else . end
                   ')
 
@@ -283,13 +393,19 @@ in {
                   if [ -s "$PREF_PATH" ] && ${lib.getExe pkgs.jq} empty "$PREF_PATH" 2>/dev/null; then
                     PREF_VALID=true
 
-                    # Mirrors what Sine's settings UI would write on first render:
-                    # the raw defaultValue, and for checkboxes only when it is true.
+                    # What the settings pane would write on first render.
+                    # Sine reads defaultValue only; some mods use "default".
                     MOD_DEFAULTS=$(${lib.getExe pkgs.jq} -c '
+                      def dv:
+                        if has("defaultValue") then {v: .defaultValue}
+                        elif has("default") then {v: .default}
+                        else null end;
                       (if type == "array" then . else [] end)
-                      | map(select((.property // "") != "" and has("defaultValue")))
-                      | map(select(.type != "checkbox" or .defaultValue == true))
-                      | map({(.property): .defaultValue})
+                      | map(. as $p
+                          | ($p | dv) as $d
+                          | select($d != null and ($p.property // "") != "")
+                          | select($p.type != "checkbox" or $d.v == true)
+                          | {($p.property): $d.v})
                       | add // {}
                     ' "$PREF_PATH")
                     DEFAULT_PREFS=$(${lib.getExe pkgs.jq} -c -n \
@@ -299,8 +415,9 @@ in {
                 PREF_VALIDITY=$(echo "$PREF_VALIDITY" | ${lib.getExe pkgs.jq} --arg id "$mod_id" --argjson v "$PREF_VALID" '.[$id] = $v')
               done
 
-              printf 'var sineNixDefaultPrefs = %s;\n' "$DEFAULT_PREFS" \
-                > "$BASE_DIR/chrome/sine-mods/nix-default-prefs.js"
+              printf '%s\n' "$DEFAULT_PREFS" \
+                > "$BASE_DIR/chrome/sine-mods/nix-default-prefs.json"
+              rm -f "$BASE_DIR/chrome/sine-mods/nix-default-prefs.js"
 
               ${lib.getExe pkgs.jq} --argjson ids "$SINE_MODS_JSON" --argjson valid "$PREF_VALIDITY" '
                 reduce $ids[] as $id (.;

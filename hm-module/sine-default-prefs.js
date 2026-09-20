@@ -18,14 +18,29 @@ if (!Services.appinfo.inSafeMode) {
   try {
     const seedFile = Services.dirsvc.get("UChrm", Ci.nsIFile);
     seedFile.append("sine-mods");
-    seedFile.append("nix-default-prefs.js");
+    seedFile.append("nix-default-prefs.json");
 
     if (seedFile.exists()) {
-      const scope = {};
-      Services.scriptloader.loadSubScript(Services.io.newFileURI(seedFile).spec, scope);
+      const stream = Cc["@mozilla.org/network/file-input-stream;1"].createInstance(
+        Ci.nsIFileInputStream
+      );
+      stream.init(seedFile, 0x01, 0o444, 0);
+
+      const reader = Cc["@mozilla.org/scriptableinputstream;1"].createInstance(
+        Ci.nsIScriptableInputStream
+      );
+      reader.init(stream);
+
+      let raw = "";
+      try {
+        raw = reader.read(reader.available());
+      } finally {
+        reader.close();
+        stream.close();
+      }
 
       const branch = Services.prefs.getDefaultBranch("");
-      for (const [name, value] of Object.entries(scope.sineNixDefaultPrefs ?? {})) {
+      for (const [name, value] of Object.entries(JSON.parse(raw))) {
         if (!name) continue;
 
         // A pref the running browser rejects must not strand the rest.

@@ -1,7 +1,5 @@
 import ../lib/user-js-preset.nix {
   name = "arkenfox";
-  owner = "Arkenfox";
-  repo = "user.js";
   userJsPath = "user.js";
   description = ''
     Enable the Arkenfox preset (arkenfox/user.js):

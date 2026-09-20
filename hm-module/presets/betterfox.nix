@@ -1,7 +1,5 @@
 import ../lib/user-js-preset.nix {
   name = "betterfox";
-  owner = "yokoffing";
-  repo = "Betterfox";
   userJsPath = "zen/user.js";
   description = ''
     Enable the Betterfox preset (yokoffing/Betterfox `zen/user.js`, aka BetterZen):

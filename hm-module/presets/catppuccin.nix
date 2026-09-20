@@ -23,9 +23,7 @@
   sources = builtins.fromJSON (builtins.readFile "${self}/sources.json");
 
   catppuccinZen = pkgs.fetchFromGitHub {
-    inherit (sources.addons.catppuccin) rev hash;
-    repo = "zen-browser";
-    owner = "catppuccin";
+    inherit (sources.addons.catppuccin) owner repo rev hash;
   };
 
   flavors = ["Frappe" "Latte" "Macchiato" "Mocha"];

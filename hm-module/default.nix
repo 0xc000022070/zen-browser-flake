@@ -21,14 +21,10 @@
     sources = builtins.fromJSON (builtins.readFile "${self}/sources.json");
   in {
     manager = pkgs.fetchFromGitHub {
-      inherit (sources.addons.sine.manager) rev hash;
-      repo = "Sine";
-      owner = "CosmoCreeper";
+      inherit (sources.addons.sine.manager) owner repo rev hash;
     };
     bootloader = pkgs.fetchFromGitHub {
-      inherit (sources.addons.sine.bootloader) rev hash;
-      repo = "bootloader";
-      owner = "sineorg";
+      inherit (sources.addons.sine.bootloader) owner repo rev hash;
     };
   };
 

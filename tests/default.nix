@@ -57,7 +57,9 @@
 
       testScript = ''
         machine.wait_for_unit("multi-user.target")
-        machine.wait_for_unit("home-manager-testuser.service")
+        ${pkgs.lib.optionalString (suite.waitForActivation or true) ''
+          machine.wait_for_unit("home-manager-testuser.service")
+        ''}
         ${suite.testScript}
       '';
     };
@@ -80,6 +82,9 @@
     "preset-cleanup" = ./preset-cleanup.nix;
     "extension-buttons" = ./extension-buttons.nix;
     "system-certificates" = ./system-certificates.nix;
+    "sine" = ./sine.nix;
+    "sine-mods" = ./sine-mods.nix;
+    "sine-mod-incompat" = ./sine-mod-incompat.nix;
   };
 in
   pkgs.lib.mapAttrs (name: path: mkGenericTest name path) suites

@@ -146,6 +146,7 @@ See the `examples/` directory for standalone configuration examples:
 | [17-live-folders](../examples/17-live-folders.nix) | Live folders (Issues, etc)  |                                           |
 | [18-space-routing](../examples/18-space-routing.nix) | Space routing  |                                           |
 | [19-extension-buttons](../examples/19-extension-buttons.nix) | Extension buttons pinned to the toolbar  |                                           |
+| [20-sine-mods](../examples/20-sine-mods.nix) | Sine mods (Linux only)  |                                           |
 ## Home Manager Reference
 
 This module is based on Home Manager's

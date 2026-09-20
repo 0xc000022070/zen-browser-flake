@@ -29,6 +29,41 @@
 
   isSineEnabled = lib.any (profile: profile.sine.enable) (lib.attrValues cfg.profiles);
 
+  sinePack = mkSinePack {};
+
+  sineConfigJs =
+    pkgs.runCommand "sine-config.js" {}
+    ''
+      # sine-default-prefs.js exists only because Sine never applies a mod's
+      # defaultValue entries outside its settings UI. Fail the build when that
+      # TODO disappears, so the seed is re-examined on the sources.json bump
+      # that removes it instead of silently double-applying forever.
+      if ! grep -q 'TODO: Apply default preferences\.' \
+        "${sinePack.manager}/src/core/manager.sys.mjs"; then
+        echo "sine: upstream dropped the 'Apply default preferences' TODO." >&2
+        echo "sine: recheck hm-module/sine-default-prefs.js -- if Sine now seeds" >&2
+        echo "sine: mod defaults itself, delete it and drop this concatenation." >&2
+        exit 1
+      fi
+
+      cat ${./sine-default-prefs.js} "${sinePack.bootloader}/program/config.js" > $out
+    '';
+
+  withSine = pkg:
+    pkg.overrideAttrs (old: {
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          for libdir in "$out"/lib/zen-bin-*; do
+            chmod -R u+w "$libdir/defaults"
+            install -m 644 ${sineConfigJs} "$libdir/config.js"
+            install -D -m 644 \
+              "${sinePack.bootloader}/program/defaults/pref/config-prefs.js" \
+              "$libdir/defaults/pref/config-pref.js"
+          done
+        '';
+    });
+
   envWrapperArgs = lib.concatStringsSep " " (
     lib.mapAttrsToList (k: v: "--set ${lib.escapeShellArg k} ${lib.escapeShellArg v}") cfg.env
   );
@@ -130,7 +165,12 @@ in {
 
     programs.zen-browser = {
       package = let
-        basePackage = applyEnv (
+        applySine = pkg:
+          if isSineEnabled && isLinux
+          then withSine pkg
+          else pkg;
+
+        basePackage = applySine (applyEnv (
           if cfg.unwrappedPackage != null
           then cfg.unwrappedPackage
           # Policies belong to the unwrapped derivation: wrapFirefox writes its
@@ -143,31 +183,12 @@ in {
               inherit (cfg) policies enablePrivateDesktopEntry;
             }
           else self.packages.${pkgs.stdenv.hostPlatform.system}."${name}-unwrapped"
-        );
-
-        getPackage = sine:
-          if sine
-          then let
-            sinePack = mkSinePack {};
-          in
-            basePackage.overrideAttrs (oldAttrs: {
-              postInstall =
-                (oldAttrs.postInstall or "")
-                + ''
-                  for libdir in "$out"/lib/zen-bin-*; do
-                    chmod -R u+w "$libdir"
-                    cp "${sinePack.bootloader}/program/config.js" "$libdir/config.js"
-                    mkdir -p "$libdir/defaults/pref"
-                    cp "${sinePack.bootloader}/program/defaults/pref/config-prefs.js" "$libdir/defaults/pref/config-pref.js"
-                  done
-                '';
-            })
-          else basePackage;
+        ));
 
         wrapZen = import ../wrap-zen.nix pkgs.wrapFirefox;
 
         wrappedPackage =
-          (wrapZen (prepareDarwinWrapper (getPackage isSineEnabled)) {
+          (wrapZen (prepareDarwinWrapper basePackage) {
             icon =
               if cfg.icon != null
               then cfg.icon

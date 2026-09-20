@@ -66,7 +66,7 @@ inputs = {
 }
 ```
 
-Then build your Home Manager configuration
+Then build your Home Manager configuration:
 
 ```shell
 $ home-manager switch
@@ -87,15 +87,15 @@ following to your `environment.systemPackages` or `home.packages`:
 ```nix
 # options are: 'x86_64-linux', 'aarch64-linux' and 'aarch64-darwin'
 
-inputs.zen-browser.packages."${system}".default # beta
-inputs.zen-browser.packages."${system}".beta
-inputs.zen-browser.packages."${system}".twilight
+inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default # beta
+inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".beta
+inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".twilight
 # IMPORTANT: this package relies on the twilight release artifacts from the
 # official zen repo and those artifacts are always replaced, causing hash mismatch
-inputs.zen-browser.packages."${system}".twilight-official
+inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".twilight-official
 
 # you can even override the package policies
-inputs.zen-browser.packages."${system}".default.override {
+inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default.override {
   extraPolicies = {
       DisableAppUpdate = true;
       DisableTelemetry = true;
@@ -187,7 +187,7 @@ Profiles support many sub-options. See examples directory for:
 
 ### Browser State Management
 
-> [!CRITICAL]
+> [!NOTE]
 > **Close Zen browser before `home-manager switch`** if you declare:
 >
 > - Any `spaces` (with or without `spacesForce`)
@@ -196,11 +196,11 @@ Profiles support many sub-options. See examples directory for:
 > - Any `keyboardShortcuts`
 > - Any `extensionButtons`
 
-If you only declare simple options like policies/extensions/bookmarks, rebuilding while Zen is open is ok, and closure won't be required.
+If you only declare simple options like policies/extensions/bookmarks, rebuilding while Zen is open is ok.
 
 Spaces, pins, and containers are stored in `zen-sessions.jsonlz4` (Mozilla LZ4 compressed JSON). The activation script:
 
-1. Checks if Zen is running via `lsof path_to_your_profile/.parentlock`—skips the update with a warning (activation still succeeds) if browser is open
+1. Checks if Zen is running via `lsof path/to/profile/.parentlock`—skips the update with a warning (activation still succeeds) if browser is open
 2. Decompresses zen-sessions.jsonlz4 from LZ4 to JSON
 3. Modifies it with jq to apply your declared config
 4. Recompresses back to LZ4
@@ -250,7 +250,7 @@ Check the [Home Manager Reference](#home-manager-reference).
 {
   home.packages = [
     (
-      inputs.zen-browser.packages."${system}".default.override {
+      inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default.override {
         nativeMessagingHosts = [pkgs.firefoxpwa];
       }
     )
@@ -262,7 +262,7 @@ Check the [Home Manager Reference](#home-manager-reference).
 
 ### Missing configuration after update
 
-1. The release [18.18.6b](****https://github.com/zen-browser/desktop/releases/tag/1.18.6b)
+1. The release [1.18.6b](https://github.com/zen-browser/desktop/releases/tag/1.18.6b)
    changed the configuration location.
    Please move your configuration from ~/.zen to ~/.config/zen and restart the browser
 

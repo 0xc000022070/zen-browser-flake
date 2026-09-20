@@ -87,7 +87,7 @@ following to your `environment.systemPackages` or `home.packages`:
 ```nix
 # options are: 'x86_64-linux', 'aarch64-linux' and 'aarch64-darwin'
 
-inputs.zen-browser.packages."${pkgs.stdenv.hostPlatformsystem.system}".default # beta
+inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".default # beta
 inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".beta
 inputs.zen-browser.packages."${pkgs.stdenv.hostPlatform.system}".twilight
 # IMPORTANT: this package relies on the twilight release artifacts from the
@@ -187,7 +187,7 @@ Profiles support many sub-options. See examples directory for:
 
 ### Browser State Management
 
-> [!WARNING]
+> [!NOTE]
 > **Close Zen browser before `home-manager switch`** if you declare:
 >
 > - Any `spaces` (with or without `spacesForce`)
@@ -196,7 +196,7 @@ Profiles support many sub-options. See examples directory for:
 > - Any `keyboardShortcuts`
 > - Any `extensionButtons`
 
-If you only declare simple options like policies/extensions/bookmarks, rebuilding while Zen is open is ok, and closure won't be required.
+If you only declare simple options like policies/extensions/bookmarks, rebuilding while Zen is open is ok.
 
 Spaces, pins, and containers are stored in `zen-sessions.jsonlz4` (Mozilla LZ4 compressed JSON). The activation script:
 

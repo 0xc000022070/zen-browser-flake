@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib) getAttrFromPath mkIf mkOption setAttrByPath types;
+  inherit (lib) getAttrFromPath mkForce mkIf mkOption setAttrByPath types;
 
   modulePath = [
     "programs"
@@ -20,7 +20,7 @@ in {
       type = with types;
         attrsOf (
           submodule (
-            {...}: {
+            {config, ...}: {
               options = {
                 sine = {
                   enable = mkOption {
@@ -34,6 +34,11 @@ in {
                     description = "List of mod IDs to install from the Sine store. Falls back to the Zen theme store if unavailable in the Sine store.";
                   };
                 };
+              };
+
+              config = mkIf config.sine.enable {
+                settings."sine.engine.auto-update" = mkForce false;
+                presets.managedPrefNames = ["sine.engine.auto-update"];
               };
             }
           )

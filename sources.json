@@ -71,24 +71,34 @@
     "sine": {
       "manager": {
         "rev": "8b3744274588ee1de59b4decb5a8b87321a58ec1",
-        "hash": "sha256-QTP5fUtbt7MM2plD6kLCbkITGdBpZXF5DP9as4D/cWA="
+        "hash": "sha256-QTP5fUtbt7MM2plD6kLCbkITGdBpZXF5DP9as4D/cWA=",
+        "owner": "CosmoCreeper",
+        "repo": "Sine"
       },
       "bootloader": {
         "rev": "d3914368981fe71d0829f03dbc7990338d9f5a6d",
-        "hash": "sha256-XHbbRYWyZ9clIsllEq3fs4vUiGjHdku3yLVkX6Xt5Hg="
+        "hash": "sha256-XHbbRYWyZ9clIsllEq3fs4vUiGjHdku3yLVkX6Xt5Hg=",
+        "owner": "sineorg",
+        "repo": "bootloader"
       }
     },
     "catppuccin": {
       "rev": "c855685442c6040c4dda9c8d3ddc7b708de1cbaa",
-      "hash": "sha256-5A57Lyctq497SSph7B+ucuEyF1gGVTsuI3zuBItGfg4="
+      "hash": "sha256-5A57Lyctq497SSph7B+ucuEyF1gGVTsuI3zuBItGfg4=",
+      "owner": "catppuccin",
+      "repo": "zen-browser"
     },
     "betterfox": {
       "rev": "8e415d1633f10fe0192d9c938e4ca2628eeec9f9",
-      "hash": "sha256-nLkaxpbAMifWxx/RJvuaDpjndzKFPTvAO8o9gR47HtU="
+      "hash": "sha256-nLkaxpbAMifWxx/RJvuaDpjndzKFPTvAO8o9gR47HtU=",
+      "owner": "yokoffing",
+      "repo": "Betterfox"
     },
     "arkenfox": {
       "rev": "8fe9905c35a1025d1e6df69479f7625585fd956d",
-      "hash": "sha256-+76DopMmUBZ5wJi2/BMCjC/nY2C8vXypX8JmBYEDycc="
+      "hash": "sha256-+76DopMmUBZ5wJi2/BMCjC/nY2C8vXypX8JmBYEDycc=",
+      "owner": "Arkenfox",
+      "repo": "user.js"
     }
   },
   "metadata_for": {

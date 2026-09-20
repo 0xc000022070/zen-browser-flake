@@ -1,0 +1,52 @@
+name: Update addon pins
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+jobs:
+  update-addons:
+    name: Bump Sine and preset pins
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Check if any pin is behind
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/update-addons.sh --ci --only-check
+
+      - name: Install Nix
+        if: steps.check.outputs.should_update == 'true'
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixpkgs-unstable
+
+      - name: Setup Nix Magic Cache
+        if: steps.check.outputs.should_update == 'true'
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Bump pins
+        id: update
+        if: steps.check.outputs.should_update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/update-addons.sh --ci
+
+      - name: Check flake
+        if: steps.check.outputs.should_update == 'true'
+        run: nix flake check --debug
+
+      - name: Commit changes
+        if: steps.check.outputs.should_update == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "${{ steps.update.outputs.commit_message }}"
+          file_pattern: sources.json

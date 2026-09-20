@@ -11,8 +11,6 @@
 # With mkDefault any profiles.<name>.settings entry beats the preset.
 {
   name,
-  owner,
-  repo,
   userJsPath,
   description,
 }: {self}: {
@@ -30,8 +28,7 @@
   sources = builtins.fromJSON (builtins.readFile "${self}/sources.json");
 
   src = pkgs.fetchFromGitHub {
-    inherit (sources.addons.${name}) rev hash;
-    inherit owner repo;
+    inherit (sources.addons.${name}) owner repo rev hash;
   };
 
   # Every active line is `user_pref("<name>", <value>);` with an optional

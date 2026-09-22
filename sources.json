@@ -26,22 +26,22 @@
       "x86_64-linux": {
         "version": "1.23t",
         "sha1": "null",
-        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.23t-1790072822/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-wyz19/zyoGWTUzrxpm2eEq82AT8QGd68GJltlfd04ks=",
-        "firefoxVersion": "156.0"
+        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.23t-1790095066/zen.linux-x86_64.tar.xz",
+        "sha256": "sha256-UNYbE8nw3LvKUS54VeInljaP9HuY1+bG20bEtxBI7Ug=",
+        "firefoxVersion": "156.0.1"
       },
       "aarch64-linux": {
         "version": "1.23t",
         "sha1": "null",
-        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.23t-1790072822/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-Lu8x9MkO2VY3MG533hQjDcXfrH5HFtNdEO18rs1I6M0=",
-        "firefoxVersion": "156.0"
+        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.23t-1790095066/zen.linux-aarch64.tar.xz",
+        "sha256": "sha256-V1d0vuMgTRVIXpBraFt52JDVcwx8udNGD7pbkuGJ2II=",
+        "firefoxVersion": "156.0.1"
       },
       "aarch64-darwin": {
         "version": "1.23t",
         "sha1": "null",
-        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.23t-1790072822/zen.macos-universal.dmg",
-        "sha256": "sha256-JGwYWLbPocy6UDPxx7oAIdQieHVYszsK6e04tONulJw="
+        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.23t-1790095066/zen.macos-universal.dmg",
+        "sha256": "sha256-AfLHuuPbv8miGxUx8odAyY/oYLdH6p7HptDeHfVt9mY="
       }
     },
     "twilight-official": {
@@ -49,21 +49,21 @@
         "version": "1.23t",
         "sha1": "null",
         "url": "https://github.com/zen-browser/desktop/releases/download/twilight-1/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-wyz19/zyoGWTUzrxpm2eEq82AT8QGd68GJltlfd04ks=",
-        "firefoxVersion": "156.0"
+        "sha256": "sha256-UNYbE8nw3LvKUS54VeInljaP9HuY1+bG20bEtxBI7Ug=",
+        "firefoxVersion": "156.0.1"
       },
       "aarch64-linux": {
         "version": "1.23t",
         "sha1": "null",
         "url": "https://github.com/zen-browser/desktop/releases/download/twilight-1/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-Lu8x9MkO2VY3MG533hQjDcXfrH5HFtNdEO18rs1I6M0=",
-        "firefoxVersion": "156.0"
+        "sha256": "sha256-V1d0vuMgTRVIXpBraFt52JDVcwx8udNGD7pbkuGJ2II=",
+        "firefoxVersion": "156.0.1"
       },
       "aarch64-darwin": {
         "version": "1.23t",
         "sha1": "null",
         "url": "https://github.com/zen-browser/desktop/releases/download/twilight-1/zen.macos-universal.dmg",
-        "sha256": "sha256-JGwYWLbPocy6UDPxx7oAIdQieHVYszsK6e04tONulJw="
+        "sha256": "sha256-AfLHuuPbv8miGxUx8odAyY/oYLdH6p7HptDeHfVt9mY="
       }
     }
   },
@@ -103,7 +103,7 @@
   },
   "metadata_for": {
     "twilight": {
-      "last_updated_at": "2026-09-22T10:27:02Z"
+      "last_updated_at": "2026-09-22T16:37:46Z"
     }
   }
 }

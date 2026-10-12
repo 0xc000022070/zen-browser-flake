@@ -12,7 +12,7 @@
 
       wrapWithX11 = testScript: ''
         machine.succeed("( nohup Xvfb :99 -screen 0 1024x768x24 </dev/null >>/tmp/xvfb.log 2>&1 & )")
-        machine.succeed("sleep 2")
+        machine.wait_for_file("/tmp/.X11-unix/X99")
         machine.succeed("su - testuser -c 'DISPLAY=:99 timeout 5 zen-beta about:blank' || true")
         ${testScript}
       '';

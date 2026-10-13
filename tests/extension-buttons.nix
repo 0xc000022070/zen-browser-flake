@@ -34,7 +34,7 @@
               machine.succeed(
                   f"su - testuser -c 'DISPLAY=:99 timeout {t} zen-twilight about:blank' || true"
               )
-              machine.succeed("sleep 2")
+              machine.wait_until_fails("pgrep -u testuser -f zen")
               if machine.execute(check)[0] == 0:
                   return
           raise Exception(f"zen-twilight launches never satisfied: {check}")

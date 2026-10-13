@@ -56,7 +56,7 @@
     machine.succeed(f"test -d {profile}/chrome/utils")
 
     machine.succeed("( nohup Xvfb :99 -screen 0 1024x768x24 </dev/null >>/tmp/xvfb.log 2>&1 & )")
-    machine.succeed("sleep 2")
+    machine.wait_for_file("/tmp/.X11-unix/X99")
     machine.succeed(
       "su - testuser -c 'DISPLAY=:99 timeout 60 zen-beta --no-remote about:blank' || true"
     )

@@ -134,6 +134,7 @@ in {
   };
 
   testScript = ''
+    import datetime
     import json
 
     profile = "/home/testuser/.config/zen/default"
@@ -187,21 +188,33 @@ in {
       "the second switch never revalidated, it refetched instead:\n" + store_log
 
     machine.succeed("( nohup Xvfb :99 -screen 0 1024x768x24 </dev/null >>/tmp/xvfb.log 2>&1 & )")
-    machine.sleep(2)
+    machine.wait_for_file("/tmp/.X11-unix/X99")
 
 
-    def launch(settle):
+    def launch():
         machine.succeed(
             "su - testuser -c '"
             "DISPLAY=:99 nohup zen-beta --no-remote about:blank"
             " >>/tmp/zen.log 2>&1 &'"
         )
-        machine.sleep(settle)
 
 
-    launch(45)
-    machine.succeed("pkill -u testuser -f zen || true")
-    machine.sleep(5)
+    def stop():
+        machine.succeed("pkill -u testuser -f zen || true")
+        machine.wait_until_fails("pgrep -u testuser -f zen")
+
+
+    # On timeout the last try passes, so the asserts below report what is missing.
+    def settle(ready):
+        retry(lambda last_try: last_try or ready(), timeout=datetime.timedelta(minutes=3))
+
+
+    launch()
+    settle(lambda: machine.execute(
+        f"grep -qF '${modId}/chrome.css' {mods_dir}/chrome.css"
+        f" && grep -qF 'user_pref(\"nixtest.script.ran\", true);' {profile}/prefs.js"
+    )[0] == 0)
+    stop()
 
     aggregate = machine.succeed(f"cat {mods_dir}/chrome.css")
     assert "${modId}/chrome.css" in aggregate, \
@@ -211,20 +224,28 @@ in {
     assert 'user_pref("nixtest.script.ran", true);' in prefs, \
       "the mod stylesheet loaded but its script never ran: " + prefs
 
-    launch(45)
-    machine.succeed("xwd -root -display :99 -silent | convert xwd:- png:/tmp/sine-mod.png")
-    machine.copy_from_machine("/tmp/sine-mod.png", "")
-
-    histogram = machine.succeed(
-      "convert /tmp/sine-mod.png -depth 8 -format %c histogram:info:-"
-    )
-    machine.succeed("pkill -u testuser -f zen || true")
+    histogram = ""
 
     def share(hexcolor):
         for line in histogram.splitlines():
             if hexcolor in line:
                 return int(line.split(":")[0].strip())
         return 0
+
+
+    def painted():
+        global histogram
+        machine.succeed("xwd -root -display :99 -silent | convert xwd:- png:/tmp/sine-mod.png")
+        histogram = machine.succeed(
+          "convert /tmp/sine-mod.png -depth 8 -format %c histogram:info:-"
+        )
+        return share("#00FF00") + share("#0000FF") + share("#FF0000") > 200000
+
+
+    launch()
+    settle(painted)
+    machine.copy_from_machine("/tmp/sine-mod.png", "")
+    stop()
 
 
     green = share("#00FF00")

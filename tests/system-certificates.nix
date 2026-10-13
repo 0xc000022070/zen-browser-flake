@@ -84,6 +84,8 @@ in {
   };
 
   testScript = ''
+    import datetime
+
     machine.wait_for_unit("nginx.service")
     machine.wait_for_open_port(443)
 
@@ -98,24 +100,29 @@ in {
     )
 
     machine.succeed("( nohup Xvfb :99 -screen 0 1024x768x24 </dev/null >>/tmp/xvfb.log 2>&1 & )")
-    machine.sleep(2)
+    machine.wait_for_file("/tmp/.X11-unix/X99")
 
 
-    def launch(urls, shot, settle=60):
+    def trusted_served():
+        return int(machine.execute("grep -c 'GET / ' /var/log/nginx/trusted.log")[1].strip() or 0)
+
+
+    def launch(urls, shot, served):
         machine.succeed(
             "su - testuser -c '"
             f"DISPLAY=:99 nohup zen-beta --profile /home/testuser/probe {urls}"
             " >>/tmp/zen.log 2>&1 &'"
         )
-        machine.sleep(settle)
+        retry(lambda last_try: last_try or trusted_served() >= served,
+              timeout=datetime.timedelta(minutes=3))
         # Xvfb is not the QEMU console, so machine.screenshot() would miss it.
         machine.succeed(f"xwd -root -display :99 -silent | convert xwd:- png:/tmp/{shot}")
         machine.copy_from_machine(f"/tmp/{shot}", "")
         machine.succeed("pkill -u testuser -f zen || true")
-        machine.sleep(3)
+        machine.wait_until_fails("pgrep -u testuser -f zen")
 
 
-    launch("https://${trustedHost}/", "zen-trusted.png")
+    launch("https://${trustedHost}/", "zen-trusted.png", 1)
 
     machine.succeed("grep -q 'System Trust' /home/testuser/probe/pkcs11.txt")
 
@@ -133,6 +140,7 @@ in {
     launch(
         "https://${untrustedHost}/ https://${trustedHost}/",
         "zen-untrusted.png",
+        2,
     )
 
     served = int(machine.succeed("grep -c 'GET / ' /var/log/nginx/trusted.log"))

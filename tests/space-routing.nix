@@ -75,7 +75,7 @@
       machine.succeed(
         "su - testuser -c 'DISPLAY=:99 timeout 25 zen-twilight about:blank' || true"
       )
-      machine.succeed("sleep 2")
+      machine.wait_until_fails("pgrep -u testuser -f zen")
 
       machine.succeed("mozlz4a -d /home/testuser/.config/zen/default/zen-space-routing.jsonlz4 /tmp/out.json")
 

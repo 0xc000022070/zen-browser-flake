@@ -55,6 +55,7 @@ in {
     })
     (import ./package.nix {inherit self name mkSinePack;})
     (import ./activation.nix)
+    (import ./profiles-ini.nix)
     (import ./session/store.nix)
     (import ./session/spaces.nix)
     (import ./session/pins.nix)

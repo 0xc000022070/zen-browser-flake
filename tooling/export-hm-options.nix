@@ -36,7 +36,7 @@
   filtered =
     if includeInternal
     then rawDocs
-    else builtins.filter (o: !(o.internal or false)) rawDocs;
+    else builtins.filter (o: !(o.internal or false) && (o.visible or true)) rawDocs;
 
   strip = s: lib.removeSuffix "\n" (lib.removePrefix "\n" s);
 

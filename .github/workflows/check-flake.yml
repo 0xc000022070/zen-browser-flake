@@ -14,9 +14,15 @@ on:
       - "flake.lock"
       - "sources.json"
 
+  schedule:
+    - cron: "0 6 * * *"
+
+  workflow_dispatch:
+
 jobs:
   flake-check:
     name: Check flake
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,12 +37,12 @@ jobs:
       - name: Check flake
         run: nix flake check --debug
 
-  # wrapper.nix internals move on nixos-unstable long before a release and
-  # have broken eval twice (#384, #386). zen-update commits touch sources.json
-  # near-daily, so this re-evals against current unstable often enough to
-  # catch the next one before users report it.
+  # Users follow nixos-unstable and home-manager master, which move long
+  # before we bump the lock: wrapper.nix internals broke eval twice (#384,
+  # #386), HM option removals broke signed Darwin (#403). Runs daily because
+  # zen-update pushes with github.token, which triggers no workflows.
   flake-check-unstable:
-    name: Check flake (nixos-unstable, eval only)
+    name: Check flake (nixos-unstable + home-manager master, eval only)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -45,11 +51,12 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v31
 
-      - name: Check flake against nixos-unstable
-        run: nix flake check --no-build --no-write-lock-file --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable
+      - name: Check flake against nixos-unstable and home-manager master
+        run: nix flake check --no-build --all-systems --no-write-lock-file --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable --override-input home-manager github:nix-community/home-manager
 
   flake-check-darwin:
     name: Check flake (aarch64-darwin)
+    if: github.event_name != 'schedule'
     runs-on: macos-26
     steps:
       - name: Checkout

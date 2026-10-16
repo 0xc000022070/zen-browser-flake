@@ -43,10 +43,7 @@ in {
       wrappedPackageName = "zen-${name}";
       unwrappedPackageName = "zen-${name}-unwrapped";
       platforms = {
-        linux = {
-          vendorPath = linuxConfigPath;
-          configPath = linuxConfigPath;
-        };
+        linux.configPath = linuxConfigPath;
         darwin = {
           configPath = darwinConfigPath;
           defaultsId = "app.zen-browser.zen";
@@ -187,7 +184,6 @@ in {
             Set darwin.packageMode = "wrapped" to enable it, at the cost of the upstream signature.
           '';
         }) {
-          "programs.zen-browser.enableGnomeExtensions" = cfg.enableGnomeExtensions;
           "programs.zen-browser.extraPrefs" = cfg.extraPrefs != "";
           "programs.zen-browser.extraPrefsFiles" = cfg.extraPrefsFiles != [];
           "programs.zen-browser.pkcs11Modules" = cfg.pkcs11Modules != [];

@@ -3,12 +3,27 @@
   zen-browser-flake,
   ...
 }: let
-  twilight = zen-browser-flake.packages.${pkgs.stdenv.hostPlatform.system}.twilight.override {
-    extraPolicies = {
-      DisableDeveloperTools = true;
-      OfferToSaveLogins = false;
-    };
+  system = pkgs.stdenv.hostPlatform.system;
+
+  extraPolicies = {
+    DisableDeveloperTools = true;
+    OfferToSaveLogins = false;
   };
+
+  twilight = zen-browser-flake.packages.${system}.twilight.override {
+    inherit extraPolicies;
+  };
+
+  twilightFunctionForm = zen-browser-flake.packages.${system}.twilight.override (old: {
+    extraPolicies = (old.extraPolicies or {}) // extraPolicies;
+  });
+
+  twilightOverrideAttrs =
+    (zen-browser-flake.packages.${system}.twilight.overrideAttrs (old: {
+      passthru = old.passthru or {};
+    })).override {
+      inherit extraPolicies;
+    };
 in {
   homeModule = {
     imports = [zen-browser-flake.homeModules.beta];
@@ -31,6 +46,7 @@ in {
   # launcher never reaches: it execs straight through to the unwrapped store
   # path.
   testScript = ''
+    import glob
     import json
 
     def app_policies(binary):
@@ -67,5 +83,33 @@ in {
 
     assert "SecurityDevices" in policies, \
       f"base policy lost by package override: {policies}"
+
+    def unwrapped_policies(pkg):
+        (policies_path,) = glob.glob(
+          f"{pkg}/lib/zen-bin-*/distribution/policies.json"
+        )
+
+        with open(policies_path) as f:
+            return policies_path, json.load(f)["policies"]
+
+    policies_path, policies = unwrapped_policies("${twilightFunctionForm.unwrapped}")
+
+    assert policies.get("DisableDeveloperTools") is True, \
+      f"function-form override policy missing from {policies_path}: {policies}"
+    assert policies.get("OfferToSaveLogins") is False, \
+      f"function-form override policy missing from {policies_path}: {policies}"
+
+    assert "SecurityDevices" in policies, \
+      f"base policy lost by function-form override: {policies}"
+
+    policies_path, policies = unwrapped_policies("${twilightOverrideAttrs.unwrapped}")
+
+    assert policies.get("DisableDeveloperTools") is True, \
+      f"overrideAttrs policy missing from {policies_path}: {policies}"
+    assert policies.get("OfferToSaveLogins") is False, \
+      f"overrideAttrs policy missing from {policies_path}: {policies}"
+
+    assert "SecurityDevices" in policies, \
+      f"base policy lost by overrideAttrs: {policies}"
   '';
 }

@@ -95,8 +95,8 @@
       "repo": "Betterfox"
     },
     "arkenfox": {
-      "rev": "fb56d7bb4ed07898c9d94ca7ecc89697dd88cc3c",
-      "hash": "sha256-ykWxZZlwhdyLoP3+TDh90HRJJ2ekg4Ve1PTCTgwtzKE=",
+      "rev": "06914fb7d2d4904f078995005b65745ec9861bfc",
+      "hash": "sha256-5K32F1jWZ3Q29h3ahklmcqS0vudAT9HhuK7DdMUk52g=",
       "owner": "Arkenfox",
       "repo": "user.js"
     }

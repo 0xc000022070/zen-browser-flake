@@ -17,7 +17,7 @@
 
   cfg = getAttrFromPath modulePath config;
 
-  mkJsonlz4Updater = import ../lib/state-writer.nix {inherit pkgs lib;};
+  mkStateUpdater = import ../lib/state-writer.nix {inherit pkgs lib;};
   routeModule = import ../lib/route-options.nix {inherit lib;};
 
   # A space id becomes braced "{uuid}"; the sentinel passes through.
@@ -62,7 +62,7 @@ in {
   config = mkIf cfg.enable {
     programs.zen-browser.activationFragments = let
       inherit (builtins) toJSON;
-      inherit (lib) attrValues boolToString filterAttrs getExe mapAttrs' nameValuePair;
+      inherit (lib) attrValues boolToString filterAttrs mapAttrs' nameValuePair;
 
       profilesWithRouting =
         filterAttrs (
@@ -118,7 +118,7 @@ in {
             }
           '';
 
-          updateScript = mkJsonlz4Updater {
+          updateScript = mkStateUpdater {
             name = "zen-space-routing-update-${profileName}";
             logPrefix = "zen-space-routing";
             subject = "space routing";
@@ -129,15 +129,7 @@ in {
               declaredRouting = declaredJsonFile;
             };
             inherit jqFilterFile;
-            postLockChecks = ''
-              if [ ! -f "$STATE_FILE" ]; then
-                ${getExe pkgs.mozlz4a} ${declaredJsonFile} "$STATE_FILE" || {
-                  echo "zen-space-routing: Failed to create $STATE_FILE"
-                  exit 1
-                }
-                exit 0
-              fi
-            '';
+            initialFile = declaredJsonFile;
           };
         in
           nameValuePair profileName [

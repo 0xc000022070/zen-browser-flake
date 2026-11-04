@@ -168,8 +168,14 @@ in {
         )
         cfg.profiles
       );
+      keyboardShortcutsVersionWarnings =
+        lib.mapAttrsToList (profileName: _: ''
+          [Zen Browser] '${profileName}': keyboardShortcutsVersion has no effect since Zen 1.24b
+          (shortcuts moved to about:keyboard / customKeys.json, which has no schema version). Remove it.
+        '')
+        (lib.filterAttrs (_: profile: (profile.keyboardShortcutsVersion or null) != null) cfg.profiles);
     in
-      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings ++ hiddenPanelButtonWarnings);
+      lib.filter (w: w != null) ([essentialPinsWarning liveFoldersWindowSyncWarning] ++ pinIconIgnoredWarnings ++ urlOnFolderWarnings ++ folderIconMisuseWarnings ++ hiddenPanelButtonWarnings ++ keyboardShortcutsVersionWarnings);
 
     assertions = let
       isSignedDarwin = pkgs.stdenv.hostPlatform.isDarwin && cfg.darwin.packageMode == "signed";

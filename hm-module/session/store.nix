@@ -20,7 +20,7 @@
 
   cfg = getAttrFromPath modulePath config;
 
-  mkJsonlz4Updater = import ../lib/state-writer.nix {inherit pkgs lib;};
+  mkStateUpdater = import ../lib/state-writer.nix {inherit pkgs lib;};
 
   mkRowsOption = collection:
     mkOption {
@@ -195,7 +195,7 @@ in {
             .groups = (.groups | sort_by(.index // 0))
           '';
 
-          updateScript = mkJsonlz4Updater {
+          updateScript = mkStateUpdater {
             name = "zen-sessions-update-${profileName}";
             logPrefix = "zen-sessions";
             subject = "sessions";

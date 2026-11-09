@@ -48,6 +48,9 @@
   signedHome = mkHome {};
   signedPackage = signedHome.config.programs.zen-browser.finalPackage;
   signedDefaults = signedHome.config.targets.darwin.defaults."app.zen-browser.zen";
+  profilesIniLink =
+    signedHome.config.home.file."/Users/testuser/Library/Application Support/Zen/profiles.ini";
+  profilesIniActivation = signedHome.config.home.activation.zen-browser-profiles-ini.data;
   nativeMessagingFiles =
     signedHome.config.home.file."Library/Application Support/Mozilla/NativeMessagingHosts";
 
@@ -99,6 +102,8 @@ in {
   assert !signedWrapperOverride.success;
   assert !signedSine.success;
   assert !wrappedSine.success;
+  assert !profilesIniLink.enable;
+  assert pkgs.lib.hasInfix "/Users/testuser/Library/Application Support/Zen/profiles.ini" profilesIniActivation;
     pkgs.runCommand "zen-browser-signed-darwin" {} ''
       app="${signedPackage}/Applications/${signedPackage.applicationName}.app"
 

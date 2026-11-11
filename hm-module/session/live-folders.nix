@@ -15,7 +15,7 @@
 
   cfg = getAttrFromPath modulePath config;
 
-  mkJsonlz4Updater = import ../lib/state-writer.nix {inherit pkgs lib;};
+  mkStateUpdater = import ../lib/state-writer.nix {inherit pkgs lib;};
   rows = import ../lib/session-rows.nix {inherit lib;};
   liveFolderModule = import ../lib/live-folder-options.nix {inherit lib;};
 in {
@@ -107,7 +107,7 @@ in {
   config = mkIf cfg.enable {
     programs.zen-browser.activationFragments = let
       inherit (builtins) toJSON;
-      inherit (lib) filterAttrs getExe mapAttrs' mapAttrsToList nameValuePair optionalAttrs;
+      inherit (lib) filterAttrs mapAttrs' mapAttrsToList nameValuePair optionalAttrs;
 
       profilesWithLiveFolders = filterAttrs (_: profile: profile.liveFolders != {}) cfg.profiles;
     in
@@ -171,7 +171,7 @@ in {
             ] + [$decl[] | select(.id as $id | $eIds | index($id) | not)]
           '';
 
-          updateScript = mkJsonlz4Updater {
+          updateScript = mkStateUpdater {
             name = "zen-live-folders-update-${profileName}";
             logPrefix = "zen-live-folders";
             subject = "live folders";
@@ -182,18 +182,10 @@ in {
               declaredLiveFolders = liveFoldersJsonFile;
             };
             inherit jqFilterFile;
+            initialFile = liveFoldersJsonFile;
             preChecks = ''
               if [ ! -f "${sessionsFile}" ]; then
                 echo "zen-live-folders: Sessions file not found; skipping (live folders need their session folder rows)"
-                exit 0
-              fi
-            '';
-            postLockChecks = ''
-              if [ ! -f "$STATE_FILE" ]; then
-                ${getExe pkgs.mozlz4a} ${liveFoldersJsonFile} "$STATE_FILE" || {
-                  echo "zen-live-folders: Failed to create $STATE_FILE"
-                  exit 1
-                }
                 exit 0
               fi
             '';

@@ -81,6 +81,7 @@
     "env-vars" = ./env-vars.nix;
     "preset-cleanup" = ./preset-cleanup.nix;
     "extension-buttons" = ./extension-buttons.nix;
+    "keyboard-shortcuts" = ./keyboard-shortcuts.nix;
     "system-certificates" = ./system-certificates.nix;
     "sine" = ./sine.nix;
     "sine-mods" = ./sine-mods.nix;

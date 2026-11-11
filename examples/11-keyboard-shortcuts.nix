@@ -1,8 +1,8 @@
-# Declarative keyboard shortcut overrides with version protection
-# Version protection detects breaking changes after Zen updates.
-# ⚠ Only if modifying keyboardShortcuts: close Zen before home-manager switch
-# (activation script modifies zen-keyboard-shortcuts.json, which is locked while browser runs)
-# Version check prevents silent breakage if Zen updates change the shortcuts schema.
+# Declarative keyboard shortcut overrides, written to
+# ~/.config/zen/<profile>/customKeys.json (the store behind Settings ->
+# Customize keyboard shortcuts, about:keyboard). Only the listed ids are
+# touched; everything else you changed in about:keyboard stays.
+# ⚠ Close Zen before home-manager switch (file read at startup, locked while running)
 {
   programs.zen-browser.profiles.default = {
     keyboardShortcuts = [
@@ -40,15 +40,11 @@
         };
       }
     ];
-    # In order to avoid breaking changes here, sometimes when you upgrade you
-    # should be asked to bump this version
-    keyboardShortcutsVersion = 17;
   };
 }
-# Find shortcut IDs in ~/.config/zen/default/zen-keyboard-shortcuts.json
-# Get version from about:config -> zen.keyboard.shortcuts.version
-# Activation fails if version changes (prevents silent breakage).
-#
-# Use this command:
-# jq -c '.shortcuts[] | {id, key, keycode, action}' ~/.config/zen/default/zen-keyboard-shortcuts.json | fzf
+# Finding a shortcut id: change the shortcut once in about:keyboard, then
+# read the entry it produced:
+#   jq . ~/.config/zen/default/customKeys.json
+# Reset it there afterwards if you only wanted the id. Zen's own ids are the
+# `zen-*` ones; Firefox's are `key_*` / `*Kb`.
 

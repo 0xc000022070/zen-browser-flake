@@ -187,6 +187,23 @@ in {
     assert revalidations >= 1, \
       "the second switch never revalidated, it refetched instead:\n" + store_log
 
+    machine.succeed("systemctl stop nginx.service")
+    machine.succeed("systemctl restart home-manager-testuser.service")
+    machine.wait_for_unit("home-manager-testuser.service")
+    machine.succeed(f"test -f {mods_dir}/${modId}/chrome.css")
+    offline_state = json.loads(machine.succeed(f"cat {profile}/zen-sine-mods-nix-managed.json"))
+    assert offline_state == state, \
+      f"an unreachable store must carry the state forward: {offline_state} != {state}"
+
+    machine.succeed("systemctl start nginx.service")
+    machine.wait_for_open_port(443)
+    machine.succeed("systemctl restart home-manager-testuser.service")
+    machine.wait_for_unit("home-manager-testuser.service")
+    store_log = machine.succeed("cat /var/log/nginx/store.log")
+    payloads = len([line for line in store_log.splitlines() if "mod.zip" in line and '" 200 ' in line])
+    assert payloads == 1, \
+      "the switch after an outage refetched instead of revalidating:\n" + store_log
+
     machine.succeed("( nohup Xvfb :99 -screen 0 1024x768x24 </dev/null >>/tmp/xvfb.log 2>&1 & )")
     machine.wait_for_file("/tmp/.X11-unix/X99")
 

@@ -147,12 +147,42 @@ in {
 
               NEW_STATE="{}"
 
+              SINE_BASE="https://raw.githubusercontent.com/sineorg/store/main/mods"
+              THEME_BASE="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes"
+
+              # One curl process for the index and every ETag probe, so they share
+              # a multiplexed connection instead of paying a TLS handshake each.
               MARKETPLACE="{}"
               MARKET_TMP=$(mktemp)
-              if ${lib.getExe pkgs.curl} -sfL \
-                   "https://raw.githubusercontent.com/sineorg/store/main/marketplace.json" \
-                   -o "$MARKET_TMP" \
-                 && ${lib.getExe pkgs.jq} empty "$MARKET_TMP" 2>/dev/null; then
+              CURL_ARGS=(-sfL -o "$MARKET_TMP" -w 'marketplace %{http_code}\n'
+                "https://raw.githubusercontent.com/sineorg/store/main/marketplace.json")
+              # Probes report by index: a mod id is not safe inside a -w format.
+              PROBE_IDS=()
+              while IFS=$'\x1f' read -r mod_id source etag; do
+                [[ " $SINE_MODS " == *" $mod_id "* ]] && [ -d "$BASE_DIR/chrome/sine-mods/$mod_id" ] || continue
+                case "$source" in
+                  sine) url="$SINE_BASE/$mod_id/mod.zip" ;;
+                  theme) url="$THEME_BASE/$mod_id/theme.json" ;;
+                  *) continue ;;
+                esac
+                CURL_ARGS+=(--next -sL -o /dev/null -w "''${#PROBE_IDS[@]} %{http_code}\n"
+                  -H "If-None-Match: $etag" "$url")
+                PROBE_IDS+=("$mod_id")
+              done < <(echo "$PREV_STATE" | ${lib.getExe pkgs.jq} -r '
+                to_entries[]
+                | select((.value.hash // "") != "" and (.value.etag // "") != "")
+                | [.key, (.value.source // ""), .value.etag] | join("\u001f")')
+
+              declare -A PROBE_STATUS=()
+              MARKET_STATUS=""
+              while read -r transfer code; do
+                case "$transfer" in
+                  marketplace) MARKET_STATUS="$code" ;;
+                  *) PROBE_STATUS[''${PROBE_IDS[$transfer]}]="$code" ;;
+                esac
+              done < <(${lib.getExe pkgs.curl} --parallel "''${CURL_ARGS[@]}")
+
+              if [ "$MARKET_STATUS" = 200 ] && ${lib.getExe pkgs.jq} empty "$MARKET_TMP" 2>/dev/null; then
                 MARKETPLACE=$(cat "$MARKET_TMP")
               else
                 echo "Warning: could not read the Sine marketplace index, falling back to each mod's theme.json"
@@ -221,8 +251,8 @@ in {
                 PREV_SOURCE=$(echo "$PREV" | ${lib.getExe pkgs.jq} -r '.source // ""')
                 PREV_ETAG=$(echo "$PREV" | ${lib.getExe pkgs.jq} -r '.etag // ""')
 
-                SINE_URL="https://raw.githubusercontent.com/sineorg/store/main/mods/$mod_id/mod.zip"
-                THEME_URL="https://raw.githubusercontent.com/zen-browser/theme-store/main/themes/$mod_id/theme.json"
+                SINE_URL="$SINE_BASE/$mod_id/mod.zip"
+                THEME_URL="$THEME_BASE/$mod_id/theme.json"
 
                 rm -rf "$STAGING"
                 CURRENT_HASH=""
@@ -231,20 +261,11 @@ in {
                 SYNCED=false
                 CHANGED=false
 
-                if [ -d "$MOD_DIR" ] && [ -n "$PREV_HASH" ] && [ -n "$PREV_ETAG" ]; then
-                  case "$PREV_SOURCE" in
-                    sine) PROBE_URL="$SINE_URL" ;;
-                    theme) PROBE_URL="$THEME_URL" ;;
-                    *) PROBE_URL="" ;;
-                  esac
-
-                  if [ -n "$PROBE_URL" ] && [ "$(${lib.getExe pkgs.curl} -sL -o /dev/null \
-                       -w '%{http_code}' -H "If-None-Match: $PREV_ETAG" "$PROBE_URL")" = "304" ]; then
-                    SYNCED=true
-                    CURRENT_HASH="$PREV_HASH"
-                    CURRENT_SOURCE="$PREV_SOURCE"
-                    CURRENT_ETAG="$PREV_ETAG"
-                  fi
+                if [ "''${PROBE_STATUS[$mod_id]:-}" = 304 ]; then
+                  SYNCED=true
+                  CURRENT_HASH="$PREV_HASH"
+                  CURRENT_SOURCE="$PREV_SOURCE"
+                  CURRENT_ETAG="$PREV_ETAG"
                 fi
 
                 if [ "$SYNCED" = false ]; then

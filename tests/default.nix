@@ -66,6 +66,7 @@
 
   suites = {
     "enable-beta-via-module" = ./enable-beta.nix;
+    "profiles-ini" = ./profiles-ini.nix;
     "pins-persistent" = ./pins-persistent.nix;
     "pins-force-demote" = ./pins-force-demote.nix;
     "space-scoped-pins" = ./space-scoped-pins.nix;

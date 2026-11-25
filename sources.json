@@ -24,46 +24,46 @@
     },
     "twilight": {
       "x86_64-linux": {
-        "version": "1.25t",
+        "version": "1.26t",
         "sha1": "null",
-        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.25t-1795486752/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-FStZkmKYLfXo8TXoQ7Blz7y0bwRlXFRTGZDS/MgJ89g=",
+        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.26t-1795572099/zen.linux-x86_64.tar.xz",
+        "sha256": "sha256-H2KOBYRSMztZ3rj8NKlGJpVr2+93rvEHxohSZeiu/wY=",
         "firefoxVersion": "161.0"
       },
       "aarch64-linux": {
-        "version": "1.25t",
+        "version": "1.26t",
         "sha1": "null",
-        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.25t-1795486752/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-W/1cbVYROeEy7PnffeUN0phtEbNaQK/LQf2n32zFBg4=",
+        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.26t-1795572099/zen.linux-aarch64.tar.xz",
+        "sha256": "sha256-HaXdMYD4Olk09W5+ct3YEI6sa89wQXekj6xknDvbpoE=",
         "firefoxVersion": "161.0"
       },
       "aarch64-darwin": {
-        "version": "1.25t",
+        "version": "1.26t",
         "sha1": "null",
-        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.25t-1795486752/zen.macos-universal.dmg",
-        "sha256": "sha256-vKMtT25U76+ANC2ddUirB9XPgBLdt+qqdYJBOunSU04="
+        "url": "https://github.com/0xc000022070/zen-browser-flake/releases/download/1.26t-1795572099/zen.macos-universal.dmg",
+        "sha256": "sha256-mG102EaPsIYei3uNX3iBvO1cHIHGGKDkNkVY+sgb3JE="
       }
     },
     "twilight-official": {
       "x86_64-linux": {
-        "version": "1.25t",
+        "version": "1.26t",
         "sha1": "null",
         "url": "https://github.com/zen-browser/desktop/releases/download/twilight-1/zen.linux-x86_64.tar.xz",
-        "sha256": "sha256-FStZkmKYLfXo8TXoQ7Blz7y0bwRlXFRTGZDS/MgJ89g=",
+        "sha256": "sha256-H2KOBYRSMztZ3rj8NKlGJpVr2+93rvEHxohSZeiu/wY=",
         "firefoxVersion": "161.0"
       },
       "aarch64-linux": {
-        "version": "1.25t",
+        "version": "1.26t",
         "sha1": "null",
         "url": "https://github.com/zen-browser/desktop/releases/download/twilight-1/zen.linux-aarch64.tar.xz",
-        "sha256": "sha256-W/1cbVYROeEy7PnffeUN0phtEbNaQK/LQf2n32zFBg4=",
+        "sha256": "sha256-HaXdMYD4Olk09W5+ct3YEI6sa89wQXekj6xknDvbpoE=",
         "firefoxVersion": "161.0"
       },
       "aarch64-darwin": {
-        "version": "1.25t",
+        "version": "1.26t",
         "sha1": "null",
         "url": "https://github.com/zen-browser/desktop/releases/download/twilight-1/zen.macos-universal.dmg",
-        "sha256": "sha256-vKMtT25U76+ANC2ddUirB9XPgBLdt+qqdYJBOunSU04="
+        "sha256": "sha256-mG102EaPsIYei3uNX3iBvO1cHIHGGKDkNkVY+sgb3JE="
       }
     }
   },
@@ -103,7 +103,7 @@
   },
   "metadata_for": {
     "twilight": {
-      "last_updated_at": "2026-11-24T02:19:12Z"
+      "last_updated_at": "2026-11-25T02:01:39Z"
     }
   }
 }

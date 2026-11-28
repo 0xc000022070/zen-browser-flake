@@ -111,7 +111,13 @@ in {
             ] |
             .spaces += [$spaces[] | select(.uuid as $u | $esUuids | index($u) | not)] |
 
-            ${optionalString profile.spacesForce ".spaces = [.spaces[] | select(.uuid as $u | $dsUuids | index($u) != null)] |"}
+            ${optionalString profile.spacesForce ''
+              .spaces = [.spaces[] | select(.uuid as $u | $dsUuids | index($u) != null)] |
+              .spaces = (
+                .spaces as $current |
+                [$spaces[] | .uuid as $u | $current[] | select(.uuid == $u)]
+              ) |
+            ''}
 
             ([$pins[].zenSyncId]) as $dpIds |
             ([.tabs[].zenSyncId]) as $etIds |

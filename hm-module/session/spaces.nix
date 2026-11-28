@@ -181,10 +181,11 @@ in {
 
               config = let
                 inherit (builtins) isNull;
-                inherit (lib) flatten listToAttrs mapAttrsToList nameValuePair;
+                inherit (lib) flatten listToAttrs mapAttrsToList nameValuePair sort;
               in {
                 sessionStore.spaces =
-                  mapAttrsToList (
+                  sort (a: b: a.position < b.position)
+                  (mapAttrsToList (
                     _: s: {
                       uuid = "{${s.id}}";
                       inherit (s) name position;
@@ -222,7 +223,7 @@ in {
                       hasCollapsedPinnedTabs = false;
                     }
                   )
-                  config.spaces;
+                  config.spaces);
 
                 pins = listToAttrs (flatten (mapAttrsToList (
                     spaceName: s:

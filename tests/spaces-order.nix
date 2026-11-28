@@ -2,10 +2,9 @@
   zen-browser-flake,
   wrapWithX11,
   ...
-}:
-{
+}: {
   homeModule = {
-    imports = [ zen-browser-flake.homeModules.twilight ];
+    imports = [zen-browser-flake.homeModules.twilight];
 
     programs.zen-browser = {
       enable = true;
